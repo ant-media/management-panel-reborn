@@ -1,0 +1,8 @@
+import './auth'
+import './dashboard'
+import './applications'
+import './broadcasts'
+import './vods'
+import './server'
+import './logs'
+import './cluster'

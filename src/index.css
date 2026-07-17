@@ -1,0 +1,130 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --radius: 0.625rem;
+  --accent: oklch(0.62 0.22 22);
+
+  --bg: oklch(0.995 0.002 250);
+  --bg-2: oklch(0.965 0.003 250);
+  --bg-3: oklch(0.93 0.004 250);
+  --card: oklch(1 0 0);
+  --fg: oklch(0.20 0.012 250);
+  --fg-2: oklch(0.42 0.01 250);
+  --fg-3: oklch(0.62 0.008 250);
+  --border: oklch(0.92 0.004 250);
+  --border-strong: oklch(0.84 0.006 250);
+  --ring: color-mix(in oklch, var(--accent), transparent 70%);
+  /* Expand-handle footer band. Light: a subtle recess (darker than the white card),
+     gentle darkening on hover. Dark mode flips to elevation: see .dark below. */
+  --expand-bg: oklch(0.978 0.003 250);
+  --expand-bg-hover: oklch(0.96 0.003 250);
+  /* Behind-the-number trend sparkline (stat cards). Brighter in dark mode below:
+     a faint grey at low opacity nearly vanishes against the dark card. */
+  --spark-opacity: 0.18;
+  --spark-opacity-open: 0.32;
+  --accent-bg: color-mix(in oklch, var(--accent), white 86%);
+  --accent-border: color-mix(in oklch, var(--accent), white 70%);
+  --ok: oklch(0.58 0.14 150);
+  --ok-bg: color-mix(in oklch, var(--ok), white 86%);
+  --warn: oklch(0.68 0.16 70);
+  --warn-bg: color-mix(in oklch, var(--warn), white 86%);
+  --danger: oklch(0.58 0.20 25);
+  --danger-bg: color-mix(in oklch, var(--danger), white 88%);
+  --danger-border: color-mix(in oklch, var(--danger), white 70%);
+  --info: oklch(0.55 0.16 245);
+  --info-bg: color-mix(in oklch, var(--info), white 86%);
+  --live: oklch(0.58 0.22 22);
+  --live-glow: color-mix(in oklch, var(--live), white 80%);
+}
+
+.dark {
+  --bg: oklch(0.16 0.006 250);
+  --bg-2: oklch(0.21 0.007 250);
+  --bg-3: oklch(0.26 0.008 250);
+  --card: oklch(0.19 0.006 250);
+  --fg: oklch(0.97 0.002 250);
+  --fg-2: oklch(0.78 0.005 250);
+  --fg-3: oklch(0.55 0.008 250);
+  --border: oklch(0.27 0.008 250);
+  --border-strong: oklch(0.36 0.01 250);
+  --ring: color-mix(in oklch, var(--accent), transparent 60%);
+  /* Lighter than the card (0.19) → an elevated band that stays visible against the
+     dark card (going darker just blended into the page background). Brighter on hover. */
+  --expand-bg: oklch(0.23 0.007 250);
+  --expand-bg-hover: oklch(0.275 0.008 250);
+  /* Brighter than light mode so the trend stays visible on the dark card. */
+  --spark-opacity: 0.42;
+  --spark-opacity-open: 0.6;
+  --accent-bg: color-mix(in oklch, var(--accent), black 70%);
+  --accent-border: color-mix(in oklch, var(--accent), black 50%);
+  --ok: oklch(0.70 0.14 150);
+  --ok-bg: color-mix(in oklch, var(--ok), black 75%);
+  --warn: oklch(0.78 0.14 70);
+  --warn-bg: color-mix(in oklch, var(--warn), black 75%);
+  --danger: oklch(0.68 0.20 25);
+  --danger-bg: color-mix(in oklch, var(--danger), black 75%);
+  --danger-border: color-mix(in oklch, var(--danger), black 60%);
+  --info: oklch(0.70 0.16 245);
+  --info-bg: color-mix(in oklch, var(--info), black 75%);
+  --live: oklch(0.65 0.24 22);
+  --live-glow: color-mix(in oklch, var(--live), black 70%);
+}
+
+/* Bridge prototype tokens → shadcn-style Tailwind utilities so future
+   shadcn primitives (`bg-background`, `text-foreground`, …) work too. */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-card: var(--card);
+  --color-card-foreground: var(--fg);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--fg);
+  --color-primary: var(--fg);
+  --color-primary-foreground: var(--bg);
+  --color-secondary: var(--bg-2);
+  --color-secondary-foreground: var(--fg);
+  --color-muted: var(--bg-2);
+  --color-muted-foreground: var(--fg-3);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--bg);
+  --color-destructive: var(--danger);
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .font-mono, code, pre, kbd { font-family: var(--font-mono); }
+  ::selection { background: var(--accent-bg); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 5px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+  html[data-density="compact"] table td,
+  html[data-density="compact"] table th { padding-top: 0.35rem; padding-bottom: 0.35rem; }
+  table { border-collapse: collapse; }
+  input, select, button, textarea { font-family: inherit; }
+  /* Tailwind v4 defaults buttons to cursor:default; restore the clickable pointer.
+     Utilities (cursor-help on info dots, cursor-default) still win over this base rule. */
+  button:not(:disabled), [role="button"]:not([aria-disabled="true"]) { cursor: pointer; }
+}
