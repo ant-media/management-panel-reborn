@@ -7,6 +7,8 @@ Rules:
 - **V2 = future scope.** Nothing below the V2 line gets picked up without explicit approval.
 - When something ships: delete its entry here, update STATUS.md, move lessons to
   [RISKS.md](../RISKS.md) and design notes to [features/](../features/README.md).
+- This file is temporary. When the V1 list is done, it gets removed and tracking moves to
+  GitHub issues.
 
 ---
 

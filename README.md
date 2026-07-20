@@ -86,3 +86,19 @@ docker run -p 8080:8080 ams-admin-panel   # then open http://localhost:8080
 Components never call `fetch` directly. Every domain goes through a hook (`useStreams`,
 `useServerStats`, and so on) that hides whether it polls or subscribes. That is what keeps
 the mock-to-live swap a config flag instead of a rewrite.
+
+## Development
+
+The project is built with agentic development in mind. The docs in `docs/` and the rules in
+[AGENTS.md](AGENTS.md) exist so an AI agent can pick up the full project state on its own,
+without anyone explaining it.
+
+The recommended flow: open the project in an LLM workspace (Claude Code or similar) and tell
+it something like *"we are devs on Ant Media Server, please load up the project's knowledge"*.
+Wait for it to read the docs, then you are ready to work.
+
+Open work lives in [docs/dev-progress/TODO.md](docs/dev-progress/TODO.md), with the current
+state in [STATUS.md](docs/dev-progress/STATUS.md). Agents are instructed to pick work from the
+TODO, keep both files current, and never pull future-scope (V2) items without approval. This
+setup is temporary: once the current TODO list is done, it gets removed and tracking continues
+on GitHub issues as normal.
