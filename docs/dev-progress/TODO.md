@@ -16,29 +16,55 @@ Rules:
 
 ## Build
 
-- [ ] **Legacy panel switcher. Current priority.** Ship the panel next to the old console in one AMS
-  build: old console keeps `/`, the panel goes to `/reborn-panel/`, and the old login screen asks
-  which one you want. Design + all the reasoning:
-  [features/legacy-switcher.md](../features/legacy-switcher.md). In order:
-  - [ ] **Panel, build.** `base: './'` in `vite.config.ts`, and point `redeploy.sh` at
-    `$AMS_DIR/webapps/root/reborn-panel`. It must stop wiping `webapps/root`, the old console
-    lives there.
-  - [ ] **Panel, auth.** On boot, if the server says authenticated and there is no `ams.auth.user`,
-    read `ams.legacy.auth.handoff` (`{email, message}`), run `toAuthUser` on it, save, drop the
-    handoff key. Without this, everyone who logs in through the old door renders as a nobody: no
-    admin, no scopes. Logout clears both keys and goes to `/`.
-  - [ ] **Old console, login screen.** Two panel cards with a wireframe silhouette each, classic
-    preselected every time, BETA badge on the new one. Picking the new card redirects to
-    `/reborn-panel/` after a successful login instead of calling `router.navigateByUrl`.
-  - [ ] **Old console, handoff.** Write `ams.legacy.auth.handoff = {email, message}` on every
-    successful login (`message` = the raw string from the authenticate response). On every login, not
-    just when the new panel is picked, or a bookmarked `/reborn-panel/` has no identity.
-  - [ ] **Backend.** Reserve the `reborn-panel` app name. An app with that name shadows the
-    panel's folder and makes it unreachable.
-  - [ ] **LAST, only once everything above works.** The old login page calls `localStorage.clear()`
-    on mount (`login.component.ts`), which wipes the whole origin: the panel's `ams.theme`, the
-    handoff key, and the `{app}jwtToken` keys both panels share. Replace it with targeted
-    `removeItem` calls.
+- [ ] **Legacy panel switcher + combined release zip. Current priority.** Ship both panels in one AMS
+  build: old console keeps `/`, new panel goes to `/reborn-panel/`, chooser on the old login. Runtime
+  design + reasoning: [features/legacy-switcher.md](../features/legacy-switcher.md).
+
+  **Packaging is owned by THIS repo:** a script pulls + builds legacy, merges it with the new panel, and
+  emits one zip; AMS CI later just downloads that zip (so removing legacy is a one-repo change here). The
+  legacy switcher code lives on **legacy `master` behind a build flag** (default build stays plain
+  legacy), NOT a fork or patch in this repo.
+
+  **Toolchain (verified 2026-07-21): one node builds both panels: `nodejs_22`.** Legacy Angular 10 needs
+  `NODE_OPTIONS=--openssl-legacy-provider`; the new panel needs node >=20.19. node 16/18 are EOL and not
+  in the nix binary cache (would source-compile), node 20 is insecure/uncached, so 22 is the oldest cached
+  node. Legacy `master` builds clean on node 22 (exit 0, ~3 min, only pre-existing app warnings).
+
+  In order:
+
+  - [ ] **New panel, build base.** Set `base: './'` in `vite.config.ts` so the same `dist/` runs from any
+    folder (safe because hash router + origin-absolute REST, see design doc). Point `redeploy.sh` at
+    `$AMS_DIR/webapps/root/reborn-panel` and stop it wiping `webapps/root` (the old console lives there).
+  - [ ] **New panel, auth handoff read.** On boot, if the server says authenticated and there is no
+    `ams.auth.user`, read `ams.legacy.auth.handoff` (`{email, message}`), run `toAuthUser`
+    (`src/lib/auth/api.ts`), save, drop the handoff key. Without this, anyone who logs in via the old door
+    renders as a nobody (no admin, no scopes). Logout clears both keys and goes to `/`.
+  - [ ] **Legacy console: switcher behind a build flag** (in `Ant-Media-Management-Console`, on `master`).
+    All of it gated on `environment.rebornSwitcher`, default off, so the normal legacy build is untouched:
+    - `environment.reborn.ts` (`{production:true, rebornSwitcher:true}`) + a `reborn` config in
+      `angular.json` (the `production` config plus a fileReplacement to it) + `"build:reborn":
+      "ng build -c reborn"` in package.json.
+    - `login.component.{ts,html}`: two chooser cards (classic preselected, BETA badge on new); the new pick
+      does `window.location.href = '/reborn-panel/'` instead of `router.navigateByUrl`.
+    - Write `ams.legacy.auth.handoff = {email, message}` on EVERY successful login (`message` = raw
+      authenticate-response string), so a bookmarked `/reborn-panel/` still resolves an identity.
+    - Replace the `localStorage.clear()` on login mount with targeted `removeItem` (it currently wipes the
+      whole origin: `ams.theme`, the handoff key, shared `{app}jwtToken`). Keep this inside the flag too.
+    - `shell.nix` for the legacy repo (`nodejs_22`) so it builds on nixos.
+  - [ ] **This repo: packaging scripts.**
+    - `build-legacy.sh`: clone `Ant-Media-Management-Console` `master` to a temp dir, `npm install`,
+      `npm run build:reborn` -> legacy `dist/`. (Clean `npm install` on node 22 not yet validated; low
+      risk, deps are near-all pure JS. Validate this first.)
+    - `release.sh`: `pnpm build` the new panel, assemble `root/` = legacy dist at top + new panel dist in
+      `root/reborn-panel/`, zip `reborn-root-<ver>.zip`. **Content-only for now** (no `WEB-INF`/`META-INF`/
+      `images`); extract it OVER an existing `webapps/root` (extract-over, don't wipe), same as dev today.
+      Turning it into a full `.war` with the meta folders is a later step.
+    - `shell.nix` (`nodejs_22` + pnpm) for the whole flow; CI workflow on tag runs the scripts on node 22
+      and uploads `reborn-root-<ver>.zip` as a Release asset.
+  - [ ] **Backend.** Reserve the `reborn-panel` app name (an app with that name shadows the panel folder
+    and 404s it).
+  - [ ] **Later, not this repo's job: AMS CI.** Swap the clone+build-legacy step in
+    `build-projects/action.yml` for "download this repo's `reborn-root.zip`, unzip into `webapps/root`".
 
 - [ ] **Generic error surface for unhandled API errors.** Every unexpected/unhandled error off the
   API should surface in one place, elegant and non-annoying, never a wall of raw failures. Handle the
@@ -104,8 +130,9 @@ board. Backend design + invariants:
 
 ### Legacy panel switcher
 
-Design: [features/legacy-switcher.md](../features/legacy-switcher.md). Everything here needs the
-panel actually deployed into `webapps/root/reborn-panel`, next to a real console build.
+Design: [features/legacy-switcher.md](../features/legacy-switcher.md). Everything here needs both panels
+deployed via the combined `reborn-root.zip` extracted over `webapps/root` (legacy at `/`, new panel at
+`/reborn-panel/`).
 
 - [ ] Assets load from the subfolder (relative base), hash routes work, and a hard refresh on a deep
   route still comes back to the same page.

@@ -9,6 +9,10 @@ import tailwindcss from '@tailwindcss/vite'
 const backend = process.env.VITE_BACKEND || 'http://localhost:5080'
 
 export default defineConfig({
+  // Served from a subfolder of the AMS root webapp (webapps/root/reborn-panel), so assets
+  // must load relative, not from origin root. Safe because the router is hash-based and REST
+  // paths stay origin-absolute (see docs/features/legacy-switcher.md).
+  base: './',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

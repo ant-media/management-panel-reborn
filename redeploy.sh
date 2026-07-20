@@ -1,19 +1,17 @@
 #!/bin/bash
-# Builds the panel and drops it into the AMS root webapp. Does not touch the server process.
+# Builds the new panel and drops it into the reborn-panel subfolder of the AMS root webapp.
+# The legacy console living in webapps/root is left untouched. Does not touch the server process.
 set -e
 
 cd "$(dirname "$0")"
 
 AMS_DIR=${AMS_DIR:-$HOME/softwares/ant-media-server}
-DEST=$AMS_DIR/webapps/root
+ROOT=$AMS_DIR/webapps/root
+DEST=$ROOT/reborn-panel
 SRC=dist
 
-# WEB-INF holds the console REST servlet config, META-INF the tomcat context. Wiping them
-# kills the backend the panel talks to, so they survive every redeploy.
-KEEP=(WEB-INF META-INF)
-
-if [ ! -d "$DEST" ]; then
-    echo "No root webapp at $DEST. Set AMS_DIR if your server lives elsewhere."
+if [ ! -d "$ROOT" ]; then
+    echo "No root webapp at $ROOT. Set AMS_DIR if your server lives elsewhere."
     exit 1
 fi
 
@@ -60,20 +58,11 @@ if [ ! -f "$SRC/index.html" ]; then
     exit 1
 fi
 
-# Keep a copy of whatever was there before the first redeploy, so the stock Angular panel
-# is recoverable without reinstalling the server.
-BACKUP=$AMS_DIR/root-original-backup
-if [ ! -d "$BACKUP" ]; then
-    echo "backing up current root webapp to $BACKUP"
-    cp -r "$DEST" "$BACKUP"
-fi
-
-echo "clearing $DEST (keeping ${KEEP[*]})"
-FIND_ARGS=()
-for k in "${KEEP[@]}"; do
-    FIND_ARGS+=(-name "$k" -o)
-done
-find "$DEST" -mindepth 1 -maxdepth 1 \( "${FIND_ARGS[@]}" -false \) -prune -o -exec rm -rf {} +
+# The new panel owns only the reborn-panel subfolder, so a clean wipe of just DEST is safe:
+# the legacy console and its WEB-INF/META-INF sit next to it in root and are never touched.
+echo "clearing $DEST"
+rm -rf "$DEST"
+mkdir -p "$DEST"
 
 echo "copying $SRC -> $DEST"
 cp -r "$SRC"/. "$DEST"/
