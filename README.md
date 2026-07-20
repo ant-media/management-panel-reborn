@@ -73,20 +73,6 @@ docker build -t ams-admin-panel .
 docker run -p 8080:8080 ams-admin-panel   # then open http://localhost:8080
 ```
 
-## Layout
-
-| Path | What lives there |
-|------|------------------|
-| `src/features/` | One folder per area (dashboard, apps, streams, cluster), each owning its pages, components, and hooks |
-| `src/components/` | Shared UI. `ui/` holds the shadcn primitives, `shared/` the app-wide pieces |
-| `src/lib/api/` | The data layer: endpoint catalog, wire-to-model transforms, and mocks |
-| `docs/` | Architecture, verified API reference, and design notes |
-| `AGENTS.md` | Coding conventions and the docs map |
-
-Components never call `fetch` directly. Every domain goes through a hook (`useStreams`,
-`useServerStats`, and so on) that hides whether it polls or subscribes. That is what keeps
-the mock-to-live swap a config flag instead of a rewrite.
-
 ## Development
 
 The project is built with agentic development in mind. The docs in `docs/` and the rules in
@@ -102,3 +88,18 @@ state in [STATUS.md](docs/dev-progress/STATUS.md). Agents are instructed to pick
 TODO, keep both files current, and never pull future-scope (V2) items without approval. This
 setup is temporary: once the current TODO list is done, it gets removed and tracking continues
 on GitHub issues as normal.
+
+
+## Layout
+
+| Path | What lives there |
+|------|------------------|
+| `src/features/` | One folder per area (dashboard, apps, streams, cluster), each owning its pages, components, and hooks |
+| `src/components/` | Shared UI. `ui/` holds the shadcn primitives, `shared/` the app-wide pieces |
+| `src/lib/api/` | The data layer: endpoint catalog, wire-to-model transforms, and mocks |
+| `docs/` | Architecture, verified API reference, and design notes |
+| `AGENTS.md` | Coding conventions and the docs map |
+
+Components never call `fetch` directly. Every domain goes through a hook (`useStreams`,
+`useServerStats`, and so on) that hides whether it polls or subscribes. That is what keeps
+the mock-to-live swap a config flag instead of a rewrite.
