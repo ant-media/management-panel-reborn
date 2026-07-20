@@ -23,7 +23,7 @@ function parseScopes(message: string | undefined): Scopes {
   return { [scope]: role }
 }
 
-function toAuthUser(email: string, message: string | undefined): AuthUser {
+export function toAuthUser(email: string, message: string | undefined): AuthUser {
   const scopes = parseScopes(message)
   return { email, scopes, isAdmin: SYSTEM_SCOPE in scopes }
 }

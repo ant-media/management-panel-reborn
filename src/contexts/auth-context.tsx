@@ -6,6 +6,7 @@ import {
   logout as apiLogout,
   probeBoot,
   registerFirstAdmin as apiRegister,
+  toAuthUser,
   type AuthUser,
 } from '@/lib/auth/api'
 
@@ -23,6 +24,7 @@ type AuthContextValue = {
 }
 
 const STORAGE_KEY = 'ams.auth.user'
+const HANDOFF_KEY = 'ams.legacy.auth.handoff'
 
 // The backend has no "GET /me" endpoint; it only reports whether the session cookie
 // is still valid. We persist the parsed user (email + scopes) so a page refresh
@@ -30,6 +32,17 @@ const STORAGE_KEY = 'ams.auth.user'
 function loadStoredUser(): AuthUser | null {
   const parsed = storage.readJson<Partial<AuthUser> | null>(STORAGE_KEY, null)
   return parsed?.email ? (parsed as AuthUser) : null
+}
+
+// In the combined deployment the legacy console is the only login door. It shares the
+// session cookie but not identity, so it forwards {email, message} in this key on every
+// login. Consume it once to resolve who we are, then drop it. See docs/features/legacy-switcher.md.
+function readLegacyHandoff(): AuthUser | null {
+  const handoff = storage.readJson<{ email?: string; message?: string } | null>(HANDOFF_KEY, null)
+  if (!handoff?.email) return null
+  const user = toAuthUser(handoff.email, handoff.message)
+  storage.remove(HANDOFF_KEY)
+  return user
 }
 
 function persistUser(user: AuthUser | null) {
@@ -56,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const probe = await probeBoot()
         if (cancelled) return
         if (probe.firstLogin)         apply(null, 'first-login')
-        else if (probe.authenticated) apply(loadStoredUser(), 'authenticated')
+        else if (probe.authenticated) apply(readLegacyHandoff() ?? loadStoredUser(), 'authenticated')
         else                          apply(null, 'unauthenticated')
       } catch {
         // Backend unreachable: fall through to /login so the failing transport surfaces there.
@@ -79,8 +92,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await apiLogout()
-    apply(null, 'unauthenticated')
-  }, [apply])
+    storage.remove(STORAGE_KEY)
+    storage.remove(HANDOFF_KEY)
+    // Back to the legacy console at "/", the only login door in the combined deploy.
+    window.location.href = '/'
+  }, [])
 
   const registerFirstAdmin = useCallback(async (email: string, password: string) => {
     const ok = await apiRegister(email, password)
