@@ -1,0 +1,59 @@
+name: Release (draft)
+
+# Manual build of the combined panel release. Every run produces a DRAFT GitHub release with
+# panel-release-<version>.zip attached. For a throwaway build: grab the zip, delete the draft.
+# For a real release: edit the auto-generated notes in the browser and publish (that is when the
+# git tag actually gets created).
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (blank = v<version> from package.json)"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so --generate-notes can diff against the previous tag
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm via corepack
+        run: corepack enable
+
+      - name: Build release zip
+        run: ./release.sh
+
+      - name: Resolve release metadata
+        id: meta
+        run: |
+          version=$(node -p "require('./package.json').version")
+          tag="${{ inputs.tag }}"
+          [ -n "$tag" ] || tag="v$version"
+          {
+            echo "tag=$tag"
+            echo "zip=panel-release-$version.zip"
+            echo "title=v$version build ${{ github.run_number }} (${GITHUB_SHA:0:7})"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.meta.outputs.tag }}" \
+            "${{ steps.meta.outputs.zip }}" \
+            --draft \
+            --generate-notes \
+            --target "$GITHUB_SHA" \
+            --title "${{ steps.meta.outputs.title }}"
