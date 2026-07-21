@@ -89,6 +89,37 @@ TODO, keep both files current, and never pull future-scope (V2) items without ap
 setup is temporary: once the current TODO list is done, it gets removed and tracking continues
 on GitHub issues as normal.
 
+## Release
+
+The panel ships inside Ant Media Server, not alone. AMS serves the old Angular console at the web
+root and this panel from a subfolder beside it, sharing one login and origin. A release is one zip
+with both, unzipped over the server's `webapps/root`.
+
+Two scripts build it:
+
+- `build-legacy.sh` clones the old console and builds it with the switcher on
+- `release.sh` runs `build-legacy.sh`, builds this panel, and zips both (old console at the root,
+  this panel under `reborn-panel/`) as `panel-release-<version>.zip`.
+
+Both check their deps first, and run on plain Ubuntu and NixOS.
+
+Build and deploy by hand:
+
+```bash
+./release.sh
+unzip -o panel-release-*.zip -d <AMS>/webapps/root
+```
+
+### CI
+
+GitHub Actions can build the zip too. Two workflows:
+
+- **Snapshot** runs on every push to master. It updates one rolling pre-release (tag `snapshot`)
+  with the latest build, at a URL that never changes, no login needed.
+- **Release** you run by hand with a version like `2.4.3`. It makes a draft you edit and publish.
+
+This lets AMS download the panel instead of building the Angular app itself.
+
 
 ## Layout
 

@@ -27,8 +27,6 @@ Rules:
   - [ ] **Merge the legacy switcher to master.** It lives on `Ant-Media-Management-Console`
     `feature/reborn-panel-switcher`, gated by the `rebornSwitcher` flag (off by default). After live
     verification, merge it and flip `LEGACY_BRANCH` in `build-legacy.sh` back to `master`.
-  - [ ] **Release CI.** Workflow on tag runs `release.sh` (node 22/24) and uploads
-    `panel-release-<ver>.zip` as a Release asset. Deferred until the scripts are proven on a live deploy.
   - [ ] **Later, not this repo's job: AMS CI.** Swap the clone+build-legacy step in
     `build-projects/action.yml` for "download this repo's `panel-release-<ver>.zip`, unzip into `webapps/root`".
 

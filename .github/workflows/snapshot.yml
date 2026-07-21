@@ -1,0 +1,52 @@
+name: Snapshot
+
+# Every push to master rebuilds the combined panel and refreshes ONE rolling pre-release
+# (tag: snapshot), overwriting its asset in place. AMS SNAPSHOT builds pull it from a fixed,
+# tokenless URL:
+#   https://github.com/ant-media/management-panel-reborn/releases/download/snapshot/panel-release-snapshot.zip
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: snapshot
+  cancel-in-progress: true
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm via corepack
+        run: corepack enable
+
+      - name: Build snapshot zip
+        run: OUT_ZIP=panel-release-snapshot.zip ./release.sh
+
+      - name: Refresh rolling snapshot pre-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          title="Snapshot (build ${{ github.run_number }})"
+          notes="Rolling build of master, overwritten on every push (commit ${GITHUB_SHA:0:7}, build ${{ github.run_number }})."
+          if gh release view snapshot >/dev/null 2>&1; then
+            gh release edit snapshot --prerelease --title "$title" --notes "$notes"
+            gh release upload snapshot panel-release-snapshot.zip --clobber
+          else
+            gh release create snapshot panel-release-snapshot.zip \
+              --prerelease \
+              --target "$GITHUB_SHA" \
+              --title "$title" \
+              --notes "$notes"
+          fi
