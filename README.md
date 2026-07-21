@@ -73,22 +73,6 @@ docker build -t ams-admin-panel .
 docker run -p 8080:8080 ams-admin-panel   # then open http://localhost:8080
 ```
 
-## Development
-
-The project is built with agentic development in mind. The docs in `docs/` and the rules in
-[AGENTS.md](AGENTS.md) exist so an AI agent can pick up the full project state on its own,
-without anyone explaining it.
-
-The recommended flow: open the project in an LLM workspace (Claude Code or similar) and tell
-it something like *"we are devs on Ant Media Server, please load up the project's knowledge"*.
-Wait for it to read the docs, then you are ready to work.
-
-Open work lives in [docs/dev-progress/TODO.md](docs/dev-progress/TODO.md), with the current
-state in [STATUS.md](docs/dev-progress/STATUS.md). Agents are instructed to pick work from the
-TODO, keep both files current, and never pull future-scope (V2) items without approval. This
-setup is temporary: once the current TODO list is done, it gets removed and tracking continues
-on GitHub issues as normal.
-
 ## Release
 
 The panel ships inside Ant Media Server, not alone. AMS serves the old Angular console at the web
@@ -117,6 +101,21 @@ of building the panels themselves.
 
 How to release, snapshot URLs, cleanup, the build stamp: [docs/CI.md](docs/CI.md).
 
+## Development
+
+The project is built with agentic development in mind. The docs in `docs/` and the rules in
+[AGENTS.md](AGENTS.md) exist so an AI agent can pick up the full project state on its own,
+without anyone explaining it.
+
+The recommended flow: open the project in an LLM workspace (Claude Code or similar) and tell
+it something like *"we are devs on Ant Media Server, please load up the project's knowledge"*.
+Wait for it to read the docs, then you are ready to work.
+
+Open work lives in [docs/dev-progress/TODO.md](docs/dev-progress/TODO.md), with the current
+state in [STATUS.md](docs/dev-progress/STATUS.md). Agents are instructed to pick work from the
+TODO, keep both files current, and never pull future-scope (V2) items without approval. This
+setup is temporary: once the current TODO list is done, it gets removed and tracking continues
+on GitHub issues as normal.
 
 ## Layout
 
