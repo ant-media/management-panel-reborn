@@ -15,6 +15,7 @@ Read STATUS + TODO first; consult the rest as the task dictates. Keep them curre
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**: cross-cutting structure: the data/request layering, the two transports. Read before touching `src/lib/api/`.
 - **[docs/API.md](docs/API.md)**: REST endpoints the backend exposes (verified against live 4.0.0 + Java; wire shapes in the appendix).
 - **[docs/api-coverage.md](docs/api-coverage.md)**: `endpoints/` method ↔ REST ↔ mock ↔ consumer matrix; what's wired / catalog / mock-only.
+- **[docs/CI.md](docs/CI.md)**: how the panel is built, released, and delivered to AMS (workflows, build stamp, release.sh).
 - **[docs/features/](docs/features/README.md)**: design doc per shipped feature, incl. [backend-analytics.md](docs/features/backend-analytics.md) for the Java side.
 - **[docs/RISKS.md](docs/RISKS.md)**: known gotchas, standing rules, locked product decisions.
 

@@ -95,30 +95,27 @@ The panel ships inside Ant Media Server, not alone. AMS serves the old Angular c
 root and this panel from a subfolder beside it, sharing one login and origin. A release is one zip
 with both, unzipped over the server's `webapps/root`.
 
-Two scripts build it:
+**The recommended way** to cut a release is CI: bump the version in `package.json`, run the Release
+workflow, publish the draft. Steps in [docs/CI.md](docs/CI.md#how-to-release).
 
-- `build-legacy.sh` clones the old console and builds it with the switcher on
-- `release.sh` runs `build-legacy.sh`, builds this panel, and zips both (old console at the root,
-  this panel under `reborn-panel/`) as `panel-release-<version>.zip`.
-
-Both check their deps first, and run on plain Ubuntu and NixOS.
+To build locally, `./release.sh` does everything: it pulls and builds the latest legacy console
+too, builds this panel, and packs both into `panel-release-<version>.zip` (`--skip-legacy` skips
+the legacy part). Runs on plain Ubuntu and NixOS.
 
 Build and deploy by hand:
 
 ```bash
 ./release.sh
-unzip -o panel-release-*.zip -d <AMS>/webapps/root
+unzip -o panel-release-*.zip -x version.json -d <AMS>/webapps/root
 ```
 
-### CI
+### CI (Continuous Integration)
 
-GitHub Actions can build the zip too. Two workflows:
+GitHub Actions builds and publishes the zip: every push updates that branch's snapshot at a
+fixed URL, releases are cut by hand from the Actions tab. AMS builds download the zip instead
+of building the panels themselves.
 
-- **Snapshot** runs on every push to master. It updates one rolling pre-release (tag `snapshot`)
-  with the latest build, at a URL that never changes, no login needed.
-- **Release** you run by hand with a version like `2.4.3`. It makes a draft you edit and publish.
-
-This lets AMS download the panel instead of building the Angular app itself.
+How to release, snapshot URLs, cleanup, the build stamp: [docs/CI.md](docs/CI.md).
 
 
 ## Layout

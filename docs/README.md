@@ -17,6 +17,8 @@ Read these to build features and understand how the app fits together.
 - [api-coverage.md](api-coverage.md): which endpoint each API method maps to, its mock, and who consumes it.
 - [RISKS.md](RISKS.md): known gotchas, standing rules, and locked product decisions.
 - [ui-kit.md](ui-kit.md): the shared UI primitives. Check here before building anything new.
+- [CI.md](CI.md): how the panel is built and released. The release how-to, branch snapshots,
+  the build stamp, and what AMS downloads.
 
 ## Features
 
