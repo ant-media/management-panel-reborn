@@ -25,6 +25,13 @@ case "${1:-}" in -h|--help) usage; exit 0 ;; esac
 on_nix() { command -v nix-shell >/dev/null 2>&1 && [ -f shell.nix ]; }
 nix_run() { if on_nix; then nix-shell --run "$1"; else bash -c "$1"; fi; }
 
+banner() {
+    local bar="=================================================="
+    echo; echo "$bar"; echo "$bar"
+    for line in "$@"; do echo " $line"; done
+    echo "$bar"; echo "$bar"; echo
+}
+
 require() {
     local missing=()
     for c in "$@"; do command -v "$c" >/dev/null 2>&1 || missing+=("$c"); done
@@ -63,14 +70,14 @@ fi
 echo "  output: $OUT_ZIP"
 echo
 
-echo ">> [1/3] legacy console"
+banner "[1/3] Building legacy management panel."
 ./build-legacy.sh
 
-echo ">> [2/3] new panel"
+banner "Legacy management panel build done!" "[2/3] Starting reborn panel build."
 nix_run "pnpm install --frozen-lockfile && pnpm build"
 [ -f dist/index.html ] || { echo "error: new panel build produced no dist/index.html"; exit 1; }
 
-echo ">> [3/3] packaging"
+banner "Reborn panel build done!" "[3/3] Packaging release zip."
 # assemble: legacy at the root, new panel under reborn-panel/
 rm -rf "$STAGING"
 mkdir -p "$STAGING/root/reborn-panel"
@@ -83,6 +90,5 @@ rm -f "$OUT_ZIP"
 ABS_ZIP="$(cd "$(dirname "$OUT_ZIP")" && pwd)/$(basename "$OUT_ZIP")"
 nix_run "cd '$STAGING/root' && zip -qr '$ABS_ZIP' ."
 
-echo
-echo "done: $OUT_ZIP ($(du -h "$OUT_ZIP" | cut -f1))"
+banner "Release done: $OUT_ZIP ($(du -h "$OUT_ZIP" | cut -f1))"
 echo "deploy: unzip -o $OUT_ZIP -d <AMS>/webapps/root"
