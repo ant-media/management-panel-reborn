@@ -1,0 +1,43 @@
+name: Cleanup branch snapshots
+
+# Manual housekeeping for the WORK-BRANCHES pre-release: delete panel-<slug>.zip assets not updated
+# in a while (dead branches). Run it from the Actions tab and pick the age cutoff. panel-master.zip
+# is never deleted.
+
+on:
+  workflow_dispatch:
+    inputs:
+      older_than_days:
+        description: "Delete panel-*.zip assets not updated in at least this many days"
+        type: choice
+        default: "120"
+        options: ["30", "60", "90", "120"]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete stale assets from WORK-BRANCHES
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          DAYS: ${{ inputs.older_than_days }}
+        run: |
+          gh release view WORK-BRANCHES >/dev/null 2>&1 || { echo "::notice::no WORK-BRANCHES release, nothing to clean"; exit 0; }
+          cutoff=$(date -u -d "$DAYS days ago" +%s)
+          echo "Cutoff: assets not updated since $(date -u -d "@$cutoff" +%Y-%m-%dT%H:%M:%SZ) (older than $DAYS days). panel-master.zip is kept."
+          stale=$(CUTOFF="$cutoff" gh release view WORK-BRANCHES --json assets -q '
+            .assets[]
+            | select((.name | startswith("panel-")) and (.name | endswith(".zip")))
+            | select(.name != "panel-master.zip")
+            | select((.updatedAt | fromdateiso8601) < (env.CUTOFF | tonumber))
+            | .name')
+          if [ -z "$stale" ]; then echo "Nothing to delete."; exit 0; fi
+          echo "$stale" | while read -r name; do
+            echo "::notice::deleting $name"
+            gh release delete-asset WORK-BRANCHES "$name" --yes || echo "::warning::failed to delete $name"
+          done
+          echo "Done."

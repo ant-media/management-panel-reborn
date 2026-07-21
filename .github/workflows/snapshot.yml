@@ -1,19 +1,20 @@
 name: Snapshot
 
-# Every push to master rebuilds the combined panel and refreshes ONE rolling pre-release
-# (tag: snapshot), overwriting its asset in place. AMS SNAPSHOT builds pull it from a fixed,
-# tokenless URL:
-#   https://github.com/ant-media/management-panel-reborn/releases/download/snapshot/panel-release-snapshot.zip
+# Every push to any branch rebuilds the combined panel (legacy console + reborn) and refreshes ONE
+# asset in the long-lived WORK-BRANCHES pre-release: panel-<slug>.zip, one per branch, clobbered in
+# place. AMS branch/dev builds pull their branch's zip from a fixed, tokenless URL:
+#   https://github.com/ant-media/management-panel-reborn/releases/download/WORK-BRANCHES/panel-<slug>.zip
+# slug = branch name with every non-[A-Za-z0-9._-] char turned into '-' (master -> panel-master.zip).
 
 on:
   push:
-    branches: [master]
+    branches: ['**']
 
 permissions:
   contents: write
 
 concurrency:
-  group: snapshot
+  group: snapshot-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -31,22 +32,26 @@ jobs:
       - name: Enable pnpm via corepack
         run: corepack enable
 
-      - name: Build snapshot zip
-        run: OUT_ZIP=panel-release-snapshot.zip ./release.sh
+      - name: Compute slug
+        id: slug
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: echo "slug=$(printf '%s' "$BRANCH" | sed 's/[^A-Za-z0-9._-]/-/g')" >> "$GITHUB_OUTPUT"
 
-      - name: Refresh rolling snapshot pre-release
+      - name: Build snapshot zip
+        env:
+          PANEL_CHANNEL: SNAPSHOT
+          PANEL_COMMIT: ${{ github.sha }}
+          PANEL_BRANCH: ${{ github.ref_name }}
+          OUT_ZIP: panel-${{ steps.slug.outputs.slug }}.zip
+        run: ./release.sh
+
+      - name: Publish to WORK-BRANCHES pre-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          title="Snapshot (build ${{ github.run_number }})"
-          notes="Rolling build of master, overwritten on every push (commit ${GITHUB_SHA:0:7}, build ${{ github.run_number }})."
-          if gh release view snapshot >/dev/null 2>&1; then
-            gh release edit snapshot --prerelease --title "$title" --notes "$notes"
-            gh release upload snapshot panel-release-snapshot.zip --clobber
-          else
-            gh release create snapshot panel-release-snapshot.zip \
-              --prerelease \
-              --target "$GITHUB_SHA" \
-              --title "$title" \
-              --notes "$notes"
+          if ! gh release view WORK-BRANCHES >/dev/null 2>&1; then
+            gh release create WORK-BRANCHES --prerelease --title "Work branches" \
+              --notes "Rolling per-branch panel builds: one panel-<slug>.zip per active branch, overwritten on every push. Not a release." || true
           fi
+          gh release upload WORK-BRANCHES "panel-${{ steps.slug.outputs.slug }}.zip" --clobber

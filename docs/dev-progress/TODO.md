@@ -25,11 +25,8 @@ Rules:
   - [ ] **Backend: reserve the `reborn-panel` app name.** An app with that name registers a Tomcat context
     at `/reborn-panel` that shadows the panel folder and 404s it.
   - [ ] **Merge the legacy switcher to master.** It lives on `Ant-Media-Management-Console`
-    `feature/reborn-panel-switcher`, gated by the `rebornSwitcher` flag (off by default). After live
-    verification, merge it and flip `LEGACY_BRANCH` in `build-legacy.sh` back to `master`.
-  - [ ] **Later, not this repo's job: AMS CI.** Swap the clone+build-legacy step in
-    `build-projects/action.yml` for "download this repo's `panel-release-<ver>.zip`, unzip into `webapps/root`".
-
+    `feature/reborn-panel-switcher`, gated by the `rebornSwitcher` flag (off by default). After merge, flip the `LEGACY_BRANCH` in `build-legacy.sh` back to `master`!!!
+    
 - [ ] **Generic error surface for unhandled API errors.** Every unexpected/unhandled error off the
   API should surface in one place, elegant and non-annoying, never a wall of raw failures. Handle the
   edge cases: coalesce a burst (20 errors in a short window collapses into one, not twenty); while the

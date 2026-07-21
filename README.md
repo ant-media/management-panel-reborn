@@ -125,10 +125,10 @@ This lets AMS download the panel instead of building the Angular app itself.
 
 | Path | What lives there |
 |------|------------------|
-| `src/features/` | One folder per area (dashboard, apps, streams, cluster), each owning its pages, components, and hooks |
+| `src/features/` | One folder per area (dashboard, apps, streams, cluster, settings), each owning its pages, components, and hooks |
 | `src/components/` | Shared UI. `ui/` holds the shadcn primitives, `shared/` the app-wide pieces |
 | `src/lib/api/` | The data layer: endpoint catalog, wire-to-model transforms, and mocks |
-| `docs/` | Architecture, verified API reference, and design notes |
+| `docs/` | Architecture, API reference and design notes |
 | `AGENTS.md` | Coding conventions and the docs map |
 
 Components never call `fetch` directly. Every domain goes through a hook (`useStreams`,

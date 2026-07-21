@@ -10,6 +10,7 @@ import { Field, SelectField } from '@/components/shared/form'
 import { LoadErrorBanner } from '@/components/shared/load-error-banner'
 import { ToastBanner } from '@/components/shared/toast'
 import { useToast } from '@/lib/use-toast'
+import { panelBuild } from '@/lib/panel-build'
 import { LOG_LEVELS, saveServerSettings, useServerSettings, type ServerSettings } from './use-server-settings'
 
 type VersionInfo = { versionName?: string; versionType?: string; buildNumber?: string }
@@ -68,6 +69,13 @@ export function ServerTab() {
             {version.data?.versionType && <span className="text-[var(--fg-3)]"> · {version.data.versionType}</span>}
           </InfoRow>
           <InfoRow label="Build"><span className="font-mono">{version.data?.buildNumber ?? '-'}</span></InfoRow>
+          <InfoRow label="Panel">
+            <span className="font-mono" title={panelBuild.builtAt ?? undefined}>{panelBuild.version}</span>
+            <span className="text-[var(--fg-3)]"> · {panelBuild.channel}</span>
+            {panelBuild.commit && panelBuild.commit !== 'dev' && (
+              <span className="text-[var(--fg-3)]"> · {panelBuild.commit.slice(0, 7)}</span>
+            )}
+          </InfoRow>
           <InfoRow label="Host"><span className="font-mono">{draft.hostAddress || '-'}</span></InfoRow>
           <InfoRow label="HTTP port"><span className="font-mono">{draft.defaultHttpPort ?? '-'}</span></InfoRow>
           <InfoRow label="TLS">
