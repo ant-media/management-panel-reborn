@@ -52,6 +52,12 @@ branch in both (as of 2026-07-07).
   (RTMP excluded from the sum), a three-way speed label, dashboard app-row metrics polling, and
   tokenized in-panel VoD playback. Verified in the same round: confirm dialogs (app / VoD / user
   delete), node-note standalone behavior, per-stream metrics baseline + cleanup.
+- **Panel delivery to AMS CI shipped, verified on real runs (2026-07-22).** AMS bakes the panel
+  into `webapps/root` at build time by downloading a prebuilt zip from this repo's releases:
+  branch builds pull their branch's `WORK-BRANCHES` snapshot (freshness checked by commit, else
+  built from source on the AMS runner, else master snapshot); release tag builds pull the
+  AMS-version-locked release (`ams-vX.Y.Z`, fail-loudly if unpublished). Release runbook, channels
+  and the build stamp: [CI.md](../CI.md).
 - **Legacy panel switcher implemented, live verification open.** Both panels ship in one AMS build: the
   old console keeps `/`, the new panel loads from `/reborn-panel/` (a folder in the same root webapp, so
   they share origin + session), and the old login chooses between them (classic default). The new panel
