@@ -79,8 +79,8 @@ The panel ships inside Ant Media Server, not alone. AMS serves the old Angular c
 root and this panel from a subfolder beside it, sharing one login and origin. A release is one zip
 with both, unzipped over the server's `webapps/root`.
 
-**The recommended way** to cut a release is CI: bump the version in `package.json`, run the Release
-workflow, publish the draft. Steps in [docs/CI.md](docs/CI.md#how-to-release).
+**The recommended way** to cut a release is CI: run the Release workflow with the AMS version
+this panel ships with, publish the draft. Steps in [docs/CI.md](docs/CI.md#how-to-release).
 
 To build locally, `./release.sh` does everything: it pulls and builds the latest legacy console
 too, builds this panel, and packs both into `panel-release-<version>.zip` (`--skip-legacy` skips

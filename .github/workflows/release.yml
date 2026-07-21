@@ -1,13 +1,22 @@
 name: Release (draft)
 
-# Manual, deliberate release. The version is read from package.json (the single source of truth):
-# bump it, commit, then run this workflow. Produces a DRAFT release v<version> with
-# panel-release-<version>.zip attached and auto-generated notes. Edit the notes in the browser and
-# Publish to cut it (that is when the git tag is created). AMS release builds pull v<version> from:
-#   https://github.com/ant-media/management-panel-reborn/releases/download/v<version>/panel-release-<version>.zip
+# Manual, deliberate release, version-locked to AMS. Enter the AMS version this panel ships with
+# (3.1.0 or ams-v3.1.0). The panel builds with that version (RELEASE_VERSION overrides
+# package.json, baked into the bundle + version.json) and a DRAFT release tagged ams-vX.Y.Z is
+# created with panel-release-X.Y.Z.zip attached.
+#
+# Release runbook:
+#   1. Here: run this workflow with the AMS version, then edit notes + PUBLISH the draft.
+#   2. AMS repo: push the ams-vX.Y.Z tag. Its release build downloads the panel release with the
+#      same tag and fails loudly if it is not published yet (publish first, then tag).
+#   https://github.com/ant-media/management-panel-reborn/releases/download/ams-vX.Y.Z/panel-release-X.Y.Z.zip
 
 on:
   workflow_dispatch:
+    inputs:
+      ams_version:
+        description: 'AMS version this panel release ships with (3.1.0 or ams-v3.1.0)'
+        required: true
 
 permissions:
   contents: write
@@ -27,16 +36,20 @@ jobs:
       - name: Enable pnpm via corepack
         run: corepack enable
 
-      - name: Read + validate version from package.json
+      - name: Validate AMS version
         id: ver
+        env:
+          RAW: ${{ inputs.ams_version }}
         run: |
-          v=$(node -p "require('./package.json').version")
+          v="${RAW#ams-v}"
           echo "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' \
-            || { echo "error: package.json version must be X.Y.Z, got: '$v'"; exit 1; }
+            || { echo "::error::AMS version must be X.Y.Z or ams-vX.Y.Z, got: '$RAW'. Fix the version and re-run."; exit 1; }
           echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "tag=ams-v$v" >> "$GITHUB_OUTPUT"
 
       - name: Build release zip
         env:
+          RELEASE_VERSION: ${{ steps.ver.outputs.version }}
           PANEL_COMMIT: ${{ github.sha }}
           OUT_ZIP: panel-release-${{ steps.ver.outputs.version }}.zip
         run: ./release.sh
@@ -45,9 +58,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "v${{ steps.ver.outputs.version }}" \
+          gh release create "${{ steps.ver.outputs.tag }}" \
             "panel-release-${{ steps.ver.outputs.version }}.zip" \
             --draft \
             --generate-notes \
             --target "$GITHUB_SHA" \
-            --title "Release ${{ steps.ver.outputs.version }}"
+            --title "Panel for AMS ${{ steps.ver.outputs.version }}"

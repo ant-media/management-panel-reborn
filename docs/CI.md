@@ -10,30 +10,36 @@ and this panel under `reborn-panel/`. AMS unzips it over `webapps/root`.
 
 Use CI. It builds from a clean checkout and stamps the exact commit, so the zip is reproducible.
 
-1. Bump `version` in `package.json` (X.Y.Z), commit, push to master.
-2. On GitHub: Actions > "Release (draft)" > Run workflow.
-3. A draft release `v<version>` shows up under Releases, with `panel-release-<version>.zip`
-   attached and auto-generated notes.
-4. Edit the notes if you want, then hit Publish. That is when the git tag gets created.
+Panel releases are tied to AMS releases: one panel release per AMS version, tagged the same
+(`ams-vX.Y.Z`). The panel keeps no release version of its own; the AMS version you type overrides
+`package.json`, so the tag, the zip name and the build stamp always carry the AMS version.
 
-There is no version field to type. The workflow reads the version from `package.json`, so the
-zip name, the tag, and the build stamp can never disagree.
+1. On GitHub: Actions > "Release (draft)" > Run workflow, type the AMS version this panel ships
+  with (`3.1.0` or `ams-v3.1.0`; anything else fails the run right away).
+2. A draft release `ams-vX.Y.Z` shows up in Releases page, with `panel-release-X.Y.Z.zip` attached
+  and auto-generated notes.
+3. Edit the notes if you want, hit Publish. That is when the git tag gets created.
+
+Same AMS versions are never repeated; A fix goes into the next patch number.
 
 ## The two channels
 
-- **Versioned releases** (`v X.Y.Z`): cut by hand, steps above. AMS release builds pull these.
+- **Versioned releases** (`ams-v X.Y.Z`): cut by hand, steps above. The AMS release build with
+the same tag pulls exactly this zip.
 - **Branch snapshots** (`WORK-BRANCHES`): one long-lived pre-release holding one
-  `panel-<slug>.zip` per branch, replaced in place on every push. AMS dev builds pull these.
+`panel-<slug>.zip` per branch, replaced in place on every push. AMS dev builds pull these.
 
 ```mermaid
 flowchart LR
     push([push to any branch]) --> snap[snapshot.yml]
     snap -->|one zip per branch, replaced| WB[WORK-BRANCHES pre-release]
-    bump([bump package.json, run workflow]) --> rel[release.yml]
-    rel -->|draft| pub[publish v X.Y.Z]
+    run([run workflow with AMS version]) --> rel[release.yml]
+    rel -->|draft| pub[publish ams-v X.Y.Z]
     WB -->|dev builds| AMS[AMS CI]
     pub -->|release builds| AMS
 ```
+
+
 
 ## Branch snapshots
 
@@ -77,10 +83,10 @@ unzip -o panel-release-<version>.zip -x version.json -d <AMS>/webapps/root
 Every build carries a stamp: version, channel (DEV / SNAPSHOT / RELEASE), commit, branch, build
 time. It lives in two places:
 
-- **`version.json` at the zip root.** For CI: AMS reads it from the zip to spot a stale snapshot.
-  Excluded on deploy, so a running server never serves it.
+- `**version.json` at the zip root.** For CI: AMS reads it from the zip to spot a stale snapshot.
+Excluded on deploy, so a running server never serves it.
 - **Baked into the JS bundle** (`src/lib/panel-build.ts`), shown under Server Settings in the
-  "Panel" row.
+"Panel" row.
 
 There is deliberately no HTTP endpoint for it: a self-hosted server should not hand a scanner
 its exact version in one request.
@@ -103,6 +109,14 @@ on its own.
 
 ## The AMS side
 
-AMS CI downloads the zip at build time instead of building the panels itself. The branch-aware
-fetch (an AMS build on branch X pulls the panel built from panel branch X, with fallbacks) is
-still being wired up; until it lands, that plan lives in [CI-TODO.md](../CI-TODO.md).
+AMS CI downloads the zip at build time instead of building the panels itself
+(`.github/actions/build-projects/action.yml`, step `Fetch web panel`). Three tiers by branch:
+
+- **Release tag** (`ams-vX.Y.Z`): the panel release with the same tag. Not published -> the
+build fails with a message pointing back at the runbook above.
+- **master**: `panel-master.zip` from `WORK-BRANCHES`.
+- **Any other branch**: that branch's snapshot, but only if its `version.json` commit matches
+the panel branch head. Stale or missing -> AMS clones the panel branch and runs `release.sh`
+itself. No panel branch with that name, or the local build fails -> `panel-master.zip`.
+
+`version.json` is always excluded on extract, so a running server never serves it.
