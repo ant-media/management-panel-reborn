@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+
+# reborn release packaging (build-legacy.sh / release.sh)
+.legacy-dist
+.release-staging
+panel-release*.zip
 *.tsbuildinfo
 coverage
 

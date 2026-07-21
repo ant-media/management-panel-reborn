@@ -16,55 +16,21 @@ Rules:
 
 ## Build
 
-- [ ] **Legacy panel switcher + combined release zip. Current priority.** Ship both panels in one AMS
-  build: old console keeps `/`, new panel goes to `/reborn-panel/`, chooser on the old login. Runtime
-  design + reasoning: [features/legacy-switcher.md](../features/legacy-switcher.md).
+- [ ] **Legacy panel switcher + combined release zip. Current priority.** Both panels ship in one AMS
+  build (old console at `/`, new panel at `/reborn-panel/`, chooser on the old login). The panel side, the
+  legacy switcher build, and the packaging scripts are implemented and build-validated (node 22 and 24);
+  only the items below remain. Design: [features/legacy-switcher.md](../features/legacy-switcher.md); state
+  in [STATUS.md](STATUS.md); live checks under "Verify on a live server".
 
-  **Packaging is owned by THIS repo:** a script pulls + builds legacy, merges it with the new panel, and
-  emits one zip; AMS CI later just downloads that zip (so removing legacy is a one-repo change here). The
-  legacy switcher code lives on **legacy `master` behind a build flag** (default build stays plain
-  legacy), NOT a fork or patch in this repo.
-
-  **Toolchain (verified 2026-07-21): one node builds both panels: `nodejs_22`.** Legacy Angular 10 needs
-  `NODE_OPTIONS=--openssl-legacy-provider`; the new panel needs node >=20.19. node 16/18 are EOL and not
-  in the nix binary cache (would source-compile), node 20 is insecure/uncached, so 22 is the oldest cached
-  node. Legacy `master` builds clean on node 22 (exit 0, ~3 min, only pre-existing app warnings).
-
-  In order:
-
-  - [ ] **New panel, build base.** Set `base: './'` in `vite.config.ts` so the same `dist/` runs from any
-    folder (safe because hash router + origin-absolute REST, see design doc). Point `redeploy.sh` at
-    `$AMS_DIR/webapps/root/reborn-panel` and stop it wiping `webapps/root` (the old console lives there).
-  - [ ] **New panel, auth handoff read.** On boot, if the server says authenticated and there is no
-    `ams.auth.user`, read `ams.legacy.auth.handoff` (`{email, message}`), run `toAuthUser`
-    (`src/lib/auth/api.ts`), save, drop the handoff key. Without this, anyone who logs in via the old door
-    renders as a nobody (no admin, no scopes). Logout clears both keys and goes to `/`.
-  - [ ] **Legacy console: switcher behind a build flag** (in `Ant-Media-Management-Console`, on `master`).
-    All of it gated on `environment.rebornSwitcher`, default off, so the normal legacy build is untouched:
-    - `environment.reborn.ts` (`{production:true, rebornSwitcher:true}`) + a `reborn` config in
-      `angular.json` (the `production` config plus a fileReplacement to it) + `"build:reborn":
-      "ng build -c reborn"` in package.json.
-    - `login.component.{ts,html}`: two chooser cards (classic preselected, BETA badge on new); the new pick
-      does `window.location.href = '/reborn-panel/'` instead of `router.navigateByUrl`.
-    - Write `ams.legacy.auth.handoff = {email, message}` on EVERY successful login (`message` = raw
-      authenticate-response string), so a bookmarked `/reborn-panel/` still resolves an identity.
-    - Replace the `localStorage.clear()` on login mount with targeted `removeItem` (it currently wipes the
-      whole origin: `ams.theme`, the handoff key, shared `{app}jwtToken`). Keep this inside the flag too.
-    - `shell.nix` for the legacy repo (`nodejs_22`) so it builds on nixos.
-  - [ ] **This repo: packaging scripts.**
-    - `build-legacy.sh`: clone `Ant-Media-Management-Console` `master` to a temp dir, `npm install`,
-      `npm run build:reborn` -> legacy `dist/`. (Clean `npm install` on node 22 not yet validated; low
-      risk, deps are near-all pure JS. Validate this first.)
-    - `release.sh`: `pnpm build` the new panel, assemble `root/` = legacy dist at top + new panel dist in
-      `root/reborn-panel/`, zip `reborn-root-<ver>.zip`. **Content-only for now** (no `WEB-INF`/`META-INF`/
-      `images`); extract it OVER an existing `webapps/root` (extract-over, don't wipe), same as dev today.
-      Turning it into a full `.war` with the meta folders is a later step.
-    - `shell.nix` (`nodejs_22` + pnpm) for the whole flow; CI workflow on tag runs the scripts on node 22
-      and uploads `reborn-root-<ver>.zip` as a Release asset.
-  - [ ] **Backend.** Reserve the `reborn-panel` app name (an app with that name shadows the panel folder
-    and 404s it).
+  - [ ] **Backend: reserve the `reborn-panel` app name.** An app with that name registers a Tomcat context
+    at `/reborn-panel` that shadows the panel folder and 404s it.
+  - [ ] **Merge the legacy switcher to master.** It lives on `Ant-Media-Management-Console`
+    `feature/reborn-panel-switcher`, gated by the `rebornSwitcher` flag (off by default). After live
+    verification, merge it and flip `LEGACY_BRANCH` in `build-legacy.sh` back to `master`.
+  - [ ] **Release CI.** Workflow on tag runs `release.sh` (node 22/24) and uploads
+    `panel-release-<ver>.zip` as a Release asset. Deferred until the scripts are proven on a live deploy.
   - [ ] **Later, not this repo's job: AMS CI.** Swap the clone+build-legacy step in
-    `build-projects/action.yml` for "download this repo's `reborn-root.zip`, unzip into `webapps/root`".
+    `build-projects/action.yml` for "download this repo's `panel-release-<ver>.zip`, unzip into `webapps/root`".
 
 - [ ] **Generic error surface for unhandled API errors.** Every unexpected/unhandled error off the
   API should surface in one place, elegant and non-annoying, never a wall of raw failures. Handle the
@@ -105,6 +71,15 @@ Rules:
   succeeds, `getSettings` on the source, strip `appName`, `saveAppSettings` on the new app.
   Reuse the `appName`-strip rule from `settings-io.ts` (shipped with settings import/export).
 
+## Missing compatibility
+
+Parity gaps: what the legacy console shows that the new panel does not yet.
+
+- [ ] **Extradata field in the stream view.** The legacy console surfaces a stream's extradata
+  (Broadcast `extraData`); the new panel does not. For playlists it renders the playlist duration,
+  e.g. `Playlist Length: 00:21:28`. Research what else that field carries for other stream types,
+  then parse and present it properly instead of dumping the raw value.
+
 ## Verify on a live server
 
 Standalone state per endpoint is in [STATUS.md](STATUS.md). Cluster is unverified across the
@@ -131,7 +106,7 @@ board. Backend design + invariants:
 ### Legacy panel switcher
 
 Design: [features/legacy-switcher.md](../features/legacy-switcher.md). Everything here needs both panels
-deployed via the combined `reborn-root.zip` extracted over `webapps/root` (legacy at `/`, new panel at
+deployed via the combined `panel-release-<ver>.zip` extracted over `webapps/root` (legacy at `/`, new panel at
 `/reborn-panel/`).
 
 - [ ] Assets load from the subfolder (relative base), hash routes work, and a hard refresh on a deep

@@ -5,6 +5,7 @@ pkgs.mkShell {
     nodejs_24
     pnpm
     git
+    zip
   ];
 
   shellHook = ''

@@ -52,12 +52,16 @@ branch in both (as of 2026-07-07).
   (RTMP excluded from the sum), a three-way speed label, dashboard app-row metrics polling, and
   tokenized in-panel VoD playback. Verified in the same round: confirm dialogs (app / VoD / user
   delete), node-note standalone behavior, per-stream metrics baseline + cleanup.
-- **Next: the legacy panel switcher.** Ship the panel next to the old console in one AMS build. The
-  old console keeps `/`, the panel goes into `/reborn-panel/` (a folder in the same root webapp,
-  so they share the origin and the session), and the old login screen asks which panel you want,
-  classic by default. Design, and the identity handoff it needs:
-  [features/legacy-switcher.md](../features/legacy-switcher.md). After that, Phase 19 (cluster
-  origin/edge analytics) and the rest of V1 in TODO.md.
+- **Legacy panel switcher implemented, live verification open.** Both panels ship in one AMS build: the
+  old console keeps `/`, the new panel loads from `/reborn-panel/` (a folder in the same root webapp, so
+  they share origin + session), and the old login chooses between them (classic default). The new panel
+  reads the identity handoff on boot; the legacy side (chooser + handoff write + targeted logout) lives
+  behind the `rebornSwitcher` build flag on `Ant-Media-Management-Console` `feature/reborn-panel-switcher`
+  (off by default, pending merge to master as of 2026-07-21). `release.sh` here builds both and emits the
+  content-only `panel-release-<ver>.zip`, validated end-to-end on node 22 and 24. Live checks and the
+  backend `reborn-panel` name reservation are open (TODO.md). Design:
+  [features/legacy-switcher.md](../features/legacy-switcher.md). After that, Phase 19 (cluster origin/edge
+  analytics) and the rest of V1.
 
 ## Backend analytics endpoints
 
@@ -95,4 +99,4 @@ Phase numbers are the project's shorthand. Everything is complete unless marked.
 | 17 | retired; folded into Phase C per-app metrics | n/a |
 | 18 | NOC / wallboard mode | V2 |
 | 19 | Cluster origin/edge analytics | NOT STARTED |
-| 20 | Legacy panel switcher (ship next to the old console, chooser on the legacy login) | NOT STARTED, current priority |
+| 20 | Legacy panel switcher (ship next to the old console, chooser on the legacy login) | implemented; live verification + backend name reservation open |
