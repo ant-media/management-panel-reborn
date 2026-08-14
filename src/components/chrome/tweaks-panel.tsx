@@ -3,6 +3,16 @@ import { Icon } from '@/components/ui/icon'
 import { ACCENTS, useTheme, type AccentKey, type Density, type ThemeMode } from '@/contexts/theme-context'
 import { cn } from '@/lib/utils'
 
+// DISABLED, NOT WIRED UP. Nothing imports this file, so it never renders and never ships
+// (the bundler drops it). Kept on purpose: the accent picker was pulled from the product, but
+// the Theme and Density controls may come back.
+//
+// To re-enable, restore the three pieces that were removed:
+//   1. topbar.tsx: an `onOpenTweaks` prop + the cog button that calls it.
+//   2. protected-layout.tsx: a `tweaksOpen` state, pass `onOpenTweaks` to Topbar.
+//   3. protected-layout.tsx: <TweaksPanel open={tweaksOpen} onClose={...} /> beside <Notifications>.
+// Light/dark still ships without any of this: the topbar toggle drives `useTheme` directly.
+
 type Props = { open: boolean; onClose: () => void }
 
 export function TweaksPanel({ open, onClose }: Props) {

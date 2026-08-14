@@ -13,11 +13,10 @@ type BreadcrumbHandle = {
 
 type Props = {
   onOpenNotifs: () => void
-  onOpenTweaks: () => void
   notifCount: number
 }
 
-export function Topbar({ onOpenNotifs, onOpenTweaks, notifCount }: Props) {
+export function Topbar({ onOpenNotifs, notifCount }: Props) {
   const crumbs = useBreadcrumbs()
   const { effectiveDark, setTheme } = useTheme()
 
@@ -45,14 +44,6 @@ export function Topbar({ onOpenNotifs, onOpenTweaks, notifCount }: Props) {
           className="w-9 h-9 rounded-[6px] border border-[var(--border-strong)] bg-[var(--bg-2)] text-[var(--fg)] hover:bg-[var(--bg-3)] hover:border-[var(--fg-3)] flex items-center justify-center transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
         >
           <Icon name={effectiveDark ? 'sun' : 'moon'} size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={onOpenTweaks}
-          aria-label="Open tweaks"
-          className="w-8 h-8 rounded-[6px] text-[var(--fg-3)] hover:bg-[var(--bg-2)] hover:text-[var(--fg-2)] flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-        >
-          <Icon name="cog" size={15} />
         </button>
         <button
           type="button"
