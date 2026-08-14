@@ -88,7 +88,7 @@ export function Sidebar({ collapsed, onToggle }: Props) {
         <div>
           <div
             className={cn(
-              'w-full h-8 rounded-[6px] flex items-stretch text-[12.5px] transition-colors',
+              'w-full h-8 rounded-[6px] flex items-stretch text-[15px] transition-colors',
               appsActive ? 'bg-[var(--bg-2)] text-[var(--fg)] font-medium' : 'text-[var(--fg-2)] hover:bg-[var(--bg-2)] hover:text-[var(--fg)]',
             )}
           >
@@ -127,7 +127,7 @@ export function Sidebar({ collapsed, onToggle }: Props) {
                     onChange={e => setSearch(e.target.value)}
                     placeholder="Filter apps…"
                     aria-label="Filter applications"
-                    className="w-full h-7 pl-7 pr-2 text-[11.5px] bg-[var(--bg-2)] border border-[var(--border)] focus:border-[var(--border-strong)] rounded-[5px] outline-none text-[var(--fg)] placeholder:text-[var(--fg-3)]"
+                    className="w-full h-7 pl-7 pr-2 text-[13px] bg-[var(--bg-2)] border border-[var(--border)] focus:border-[var(--border-strong)] rounded-[5px] outline-none text-[var(--fg)] placeholder:text-[var(--fg-3)]"
                   />
                 </div>
                 <button
@@ -145,7 +145,7 @@ export function Sidebar({ collapsed, onToggle }: Props) {
                   to={`/apps/${encodeURIComponent(app.name)}`}
                   title={`${app.name}\n${app.liveStreamCount} live · ${app.vodCount} VoD`}
                   className={({ isActive }) => cn(
-                    'w-full h-7 rounded-[5px] flex items-center gap-2 px-2 text-[12px] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]',
+                    'w-full h-7 rounded-[5px] flex items-center gap-2 px-2 text-[14.5px] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]',
                     isActive ? 'bg-[var(--accent-bg)] text-[var(--accent)] font-medium' : 'text-[var(--fg-2)] hover:bg-[var(--bg-2)] hover:text-[var(--fg)]',
                   )}
                 >
@@ -155,7 +155,7 @@ export function Sidebar({ collapsed, onToggle }: Props) {
                 </NavLink>
               ))}
               {filteredApps.length === 0 && (
-                <div className="px-2 py-1.5 text-[11px] text-[var(--fg-3)]">
+                <div className="px-2 py-1.5 text-[13px] text-[var(--fg-3)]">
                   {apps == null ? (isLoading ? 'Loading…' : 'No data') : search ? 'No matches' : 'No applications'}
                 </div>
               )}
@@ -225,7 +225,7 @@ function NavRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
       end={item.end}
       title={collapsed ? item.label : undefined}
       className={({ isActive }) => cn(
-        'w-full h-8 rounded-[6px] flex items-center gap-2 px-2 text-[12.5px] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]',
+        'w-full h-8 rounded-[6px] flex items-center gap-2 px-2 text-[15px] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]',
         isActive ? 'bg-[var(--bg-2)] text-[var(--fg)] font-medium' : 'text-[var(--fg-2)] hover:bg-[var(--bg-2)] hover:text-[var(--fg)]',
       )}
     >
