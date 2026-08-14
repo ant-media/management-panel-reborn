@@ -18,6 +18,10 @@ type Props = {
   // would otherwise be a lone title line.
   icon?: IconName
   description?: ReactNode
+  // Drop the header bar and render the title sr-only, so the dialog can own its own headline
+  // (same convention as Page). The close X floats over the top-right corner instead, and
+  // `icon` / `description` are not rendered.
+  titleHidden?: boolean
   width?: keyof typeof WIDTH
   footer?: ReactNode
   // Buttons rendered in the header, before the close X (e.g. an open-in-new-tab action).
@@ -29,7 +33,7 @@ type Props = {
 }
 
 export function Modal({
-  open, onClose, title, icon, description, width = 'md', footer, headerActions, children, dismissible = true,
+  open, onClose, title, icon, description, titleHidden, width = 'md', footer, headerActions, children, dismissible = true,
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
 
@@ -52,6 +56,16 @@ export function Modal({
 
   if (!open) return null
 
+  // Both header layouts render these; only the box around them differs.
+  const controls = (
+    <>
+      {headerActions}
+      <Button variant="ghost" size="iconSm" onClick={onClose} disabled={!dismissible} aria-label="Close">
+        <Icon name="x" size={14} />
+      </Button>
+    </>
+  )
+
   return (
     <>
       <div
@@ -68,30 +82,32 @@ export function Modal({
         <div
           ref={cardRef}
           className={cn(
-            'pointer-events-auto flex flex-col max-h-full bg-[var(--card)] border border-[var(--border)] rounded-[10px] shadow-2xl overflow-hidden',
+            'relative pointer-events-auto flex flex-col max-h-full bg-[var(--card)] border border-[var(--border)] rounded-[10px] shadow-2xl overflow-hidden',
             WIDTH[width],
             'max-w-full',
           )}
         >
-          <div className="shrink-0 px-5 py-3.5 border-b border-[var(--border)] flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              {icon && (
-                <span className="w-7 h-7 shrink-0 rounded-[7px] bg-[var(--accent-bg)] text-[var(--accent)] flex items-center justify-center">
-                  <Icon name={icon} size={14} />
-                </span>
-              )}
-              <div className="min-w-0">
-                <div id="modal-title" className="text-[14px] font-medium text-[var(--fg)] tracking-tight">{title}</div>
-                {description && <div className="text-[11.5px] text-[var(--fg-3)] mt-1 leading-snug">{description}</div>}
+          {titleHidden ? (
+            <>
+              <h2 id="modal-title" className="sr-only">{title}</h2>
+              <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1">{controls}</div>
+            </>
+          ) : (
+            <div className="shrink-0 px-5 py-3.5 border-b border-[var(--border)] flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                {icon && (
+                  <span className="w-7 h-7 shrink-0 rounded-[7px] bg-[var(--accent-bg)] text-[var(--accent)] flex items-center justify-center">
+                    <Icon name={icon} size={14} />
+                  </span>
+                )}
+                <div className="min-w-0">
+                  <div id="modal-title" className="text-[14px] font-medium text-[var(--fg)] tracking-tight">{title}</div>
+                  {description && <div className="text-[11.5px] text-[var(--fg-3)] mt-1 leading-snug">{description}</div>}
+                </div>
               </div>
+              <div className="flex items-center gap-1 shrink-0">{controls}</div>
             </div>
-            <div className="flex items-center gap-1 shrink-0">
-              {headerActions}
-              <Button variant="ghost" size="iconSm" onClick={onClose} disabled={!dismissible} aria-label="Close">
-                <Icon name="x" size={14} />
-              </Button>
-            </div>
-          </div>
+          )}
           <div className="p-5 overflow-y-auto min-h-0">{children}</div>
           {footer && (
             <div className="shrink-0 px-5 py-3 border-t border-[var(--border)] bg-[var(--bg-2)] flex items-center justify-end gap-2">

@@ -8,6 +8,7 @@ import { useApplications } from '@/features/apps/use-applications'
 import { useApi } from '@/lib/api/use-api'
 import { server } from '@/lib/api/endpoints'
 import { cn } from '@/lib/utils'
+import logo from '@/assets/ant-media-logo.png'
 
 type NavItem = { to: string; icon: IconName; label: string; end?: boolean }
 
@@ -56,9 +57,9 @@ export function Sidebar({ collapsed, onToggle }: Props) {
           type="button"
           onClick={onToggle}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="w-8 h-8 rounded-[7px] bg-[var(--accent)] text-white flex items-center justify-center shrink-0 font-bold text-[13px] tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+          className="w-8 h-8 rounded-[7px] flex items-center justify-center shrink-0 transition-colors hover:bg-[var(--bg-2)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
         >
-          A
+          <img src={logo} alt="" className="w-[26px] h-[26px]" />
         </button>
         {!collapsed && (
           <>

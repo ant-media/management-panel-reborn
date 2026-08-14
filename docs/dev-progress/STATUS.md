@@ -52,6 +52,11 @@ branch in both (as of 2026-07-07).
   (RTMP excluded from the sum), a three-way speed label, dashboard app-row metrics polling, and
   tokenized in-panel VoD playback. Verified in the same round: confirm dialogs (app / VoD / user
   delete), node-note standalone behavior, per-stream metrics baseline + cleanup.
+- **First-run beta notice shipped.** A one-time dialog on the first authenticated load
+  (`components/chrome/beta-notice.tsx`). Its "Don't show this again" box is ticked by default, and it is
+  what writes `ams.beta.notice.seen`; untick it and the notice returns next login. The flag is
+  per browser, and the legacy login's `localStorage.clear()` wipes it, so the notice returns after a
+  logout until that bug is fixed ([features/legacy-switcher.md](../features/legacy-switcher.md)).
 - **Panel delivery to AMS CI shipped, verified on real runs (2026-07-22).** AMS bakes the panel
   into `webapps/root` at build time by downloading a prebuilt zip from this repo's releases:
   branch builds pull their branch's `WORK-BRANCHES` snapshot (freshness checked by commit, else

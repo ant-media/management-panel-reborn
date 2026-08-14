@@ -106,7 +106,7 @@ over `api` / `appApi(name)`. Components never call `fetch`. See ARCHITECTURE.md.
 | `Card` | panel surface | |
 | `Checkbox` | checkbox | `onChange(next, event)`; `event` carries modifiers (shift for range-select) |
 | `Icon` | all icons | `name` from the fixed set in `icon.tsx`; grep it before assuming a name exists |
-| `Modal` | dialogs | `open / onClose / title / description / width(sm·md·lg·xl) / footer / headerActions (buttons before the close X) / dismissible`; focuses `[data-autofocus]`. Caps height to the viewport and scrolls its body with header/footer pinned, so tall content never pushes controls off-screen. `xl` (880px) exists for 16:9 media, e.g. the stream player |
+| `Modal` | dialogs | `open / onClose / title / description / titleHidden / width(sm·md·lg·xl) / footer / headerActions (buttons before the close X) / dismissible`; `titleHidden` drops the header bar and renders the title sr-only (close X floats over the corner) for a dialog that owns its own headline, e.g. the first-run welcome; focuses `[data-autofocus]`. Caps height to the viewport and scrolls its body with header/footer pinned, so tall content never pushes controls off-screen. `xl` (880px) exists for 16:9 media, e.g. the stream player |
 | `Switch` | on/off toggle | |
 
 ### `components/shared/`: composed widgets

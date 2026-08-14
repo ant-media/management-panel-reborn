@@ -5,6 +5,7 @@ import { Topbar } from '@/components/chrome/topbar'
 import { Notifications } from '@/components/chrome/notifications'
 import { TweaksPanel } from '@/components/chrome/tweaks-panel'
 import { ConnectionBanner } from '@/components/chrome/connection-banner'
+import { BetaNotice } from '@/components/chrome/beta-notice'
 import { ThemeProvider } from '@/contexts/theme-context'
 import { useAuth } from '@/contexts/auth-context'
 import { ConnectionProvider } from '@/contexts/connection-context'
@@ -45,6 +46,7 @@ export function ProtectedLayout() {
               </main>
               <Notifications open={notifOpen} onClose={() => setNotifOpen(false)} />
               <TweaksPanel open={tweaksOpen} onClose={() => setTweaksOpen(false)} />
+              <BetaNotice />
             </div>
           </SidebarContext.Provider>
         </ConnectionProvider>

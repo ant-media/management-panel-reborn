@@ -207,9 +207,10 @@ regression here. Keep the dirty check.
 
 ## Deployment
 
-### Relative asset base: two things are load-bearing
+### Relative asset base: three things are load-bearing
 **Where:** `vite.config.ts` (`base: './'`), deployed to `webapps/root/reborn-panel/` next to the old console at `/`. Why it is relative: [features/legacy-switcher.md](features/legacy-switcher.md).
 **Watch:** REST paths must stay **origin-absolute** (`/rest/v2/...`); a relative one would resolve inside the panel folder and 404. And **BrowserRouter is off the table**; a path router needs a real base, which a relative build cannot give it. Wanting one means freezing the folder name and setting `base` to the real deploy path.
+And **static assets go through the bundler**: `import logo from '@/assets/…'` so Vite emits a hashed file and resolves it against the module URL. A hand-written `/logo.png` (or a `public/` file referenced absolutely) resolves at the *origin* root and 404s from the subfolder. `index.html` is the one exception: the favicon lives in `public/` and is referenced as `./favicon.png`, relative to the served page.
 
 ### An app named `reborn-panel` makes the panel unreachable
 **Where:** the deploy path `webapps/root/reborn-panel/`.

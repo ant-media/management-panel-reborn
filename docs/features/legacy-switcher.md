@@ -148,5 +148,6 @@ real login instead of trusting it.
 The old login page calls `localStorage.clear()` on mount, plus `DELETE /users/logout`. The logout is
 fine, and it is even right here: landing on the door means your old session dies. The `clear()` is
 not fine. It wipes the whole origin, which includes the panel's `ams.theme`, the handoff key,
-and the `{app}jwtToken` keys both panels share. The fix is targeted `removeItem` calls, scheduled
+`ams.beta.notice.seen` (so the first-run beta notice comes back after every logout), and the
+`{app}jwtToken` keys both panels share. The fix is targeted `removeItem` calls, scheduled
 last, after everything else works.
