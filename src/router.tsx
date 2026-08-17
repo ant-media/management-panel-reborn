@@ -8,7 +8,6 @@ import { AppDetailPage } from '@/features/apps/detail-page'
 import { ClusterPage } from '@/features/cluster/page'
 import { ServerSettingsPage } from '@/features/server-settings/page'
 import { LogsPage } from '@/features/logs/page'
-import { SupportPage } from '@/features/support/page'
 import { LoginPage } from '@/features/auth/login-page'
 import { RegisterPage } from '@/features/auth/register-page'
 import { NotFoundPage } from '@/features/not-found/page'
@@ -35,13 +34,13 @@ export const router = createHashRouter(
           <Route path="/cluster" element={<ClusterPage />} handle={{ breadcrumb: 'Cluster' }} />
           <Route path="/settings" element={<ServerSettingsPage />} handle={{ breadcrumb: 'Server settings' }} />
           <Route path="/logs" element={<LogsPage />} handle={{ breadcrumb: 'Logs' }} />
-          <Route path="/support" element={<SupportPage />} handle={{ breadcrumb: 'Support' }} />
           <Route path="*" element={<NotFoundPage />} handle={{ breadcrumb: 'Not found' }} />
         </Route>
       </Route>
 
-      {/* /ui-sink stays outside AuthShell: it's a primitives reference, used without backend. */}
-      <Route path="/ui-sink" element={<UiSinkPage />} />
+      {/* Dev-only primitives reference, outside AuthShell (it needs no backend). The prod build
+          folds `import.meta.env.DEV` to false, so the route and the page drop out of the bundle. */}
+      {import.meta.env.DEV && <Route path="/ui-sink" element={<UiSinkPage />} />}
     </>,
   ),
 )

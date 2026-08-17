@@ -33,8 +33,8 @@ GET /rest/v2/cluster/nodes/{offset}/{size}  → ClusterNode[]
 - **`parseNode(raw): NodeView`** normalises the wire (defensive cpu/mem parse → percentages + MB, nulls when unreported) and derives **health**: `dead` if the node is dead, else `warn` when cpu≥85 / mem≥90 / db≥30ms, else `healthy`. The component renders clean derived values (same discipline as `parseLogback`).
 
 ### Presentation
-- **`ClusterPage`**: orchestrator. Health-count pills in the subtitle, a compact icon-chip **capacity summary** (Avg CPU/GPU, Active streams, Total viewers over alive nodes), the node grid, and three empty states (loading / **standalone** / in-cluster-no-nodes). Owns the note draft (`noteEdits` map, batched save bar) + toast for copy/show-logs.
-- **`NodeCard`**: status dot + IP (click-to-copy) + last-seen + health pill on the header row; CPU/Memory/GPU meters; Streams/Viewers/DB-latency footer; a "Show logs" button (TODO) and the editable note pinned to the card bottom.
+- **`ClusterPage`**: orchestrator. Health-count pills in the subtitle, a compact icon-chip **capacity summary** (Avg CPU/GPU, Active streams, Total viewers over alive nodes), the node grid, and three empty states (loading / **standalone** / in-cluster-no-nodes). Owns the note draft (`noteEdits` map, batched save bar) + the copy-IP toast.
+- **`NodeCard`**: status dot + IP (click-to-copy) + last-seen + health pill on the header row; CPU/Memory/GPU meters; Streams/Viewers/DB-latency footer; the editable note pinned to the card bottom.
 
 ## Prototype gaps (mock-projected)
 
@@ -51,6 +51,6 @@ The prototype's **"warn" status** is realised as a *derived* tier (above), not a
 - **Delete semantics.** Deleting a live node is pointless (re-registers in 5s); if added later, gate it to dead/stale rows.
 
 ## Not in scope → TODO.md
-- **Per-node logs**: no backend proxy to a specific node's `/log-file`. The `LogSource` seam is ready; revisit with a backend proxy (V2). "Show logs" is a TODO toast.
+- **Per-node logs**: no backend proxy to a specific node's `/log-file`. The `LogSource` seam is ready; revisit with a backend proxy (V2). No button ships: the card carries no log action until the proxy exists.
 - **Node delete**, **dense table** for large clusters (both V2), and **origin/edge analytics** (Phase 19, V1).
 - **Real per-node streams/viewers/GPU**: swap the mock for backend heartbeat fields, no UI change (V2). (Node **notes** are real; see "Prototype gaps" above.)

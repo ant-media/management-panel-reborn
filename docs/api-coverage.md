@@ -105,7 +105,7 @@ Maps every `src/lib/api/endpoints/*` method to its REST endpoint, whether a mock
 | `version` | `version` | ✓ | wired | `useDashboardData`, `server-tab` |
 | `resourcesHistory` | `system-resources/history` | ✓ | wired | `useDashboardData` (cpu/mem/disk/heap/db/live + netOut/netIn all real) |
 | `networkStatus` | `network-status` | ✓ | wired | `useDashboardData` (real: physical-NIC throughput, host-only) |
-| `cpu` | `cpu-status` | ✓ | wired | `ui-sink` demo |
+| `cpu` | `cpu-status` | ✓ | wired |
 | `systemMemory` `jvmMemory` `fileSystem` `liveClientsSize` `gpuStatus` | resp. per-metric paths | ✓ | layer | - (dashboard reads the umbrella `resources`) |
 | `serverTime` `systemStatus` `threadDump` `threads` `heapDump` `gc` `liveness` `shutdownStatus` `shutdownProperly` | ops paths | - | layer | - |
 

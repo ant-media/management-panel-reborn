@@ -11,7 +11,7 @@ branch in both (as of 2026-07-07).
 
 - **Frontend: feature-complete for V1.** Every page is live against the real REST surface, with
   a mock transport for offline dev: dashboard, apps + app detail (Live Streams / VoD / Settings),
-  cluster, server settings (Server / TLS / Users), logs, support, auth. Builds clean.
+  cluster, server settings (Server / TLS / Users), logs, auth. Builds clean.
 - **Backend analytics: complete, verification open.** Five endpoints shipped (table below).
   Cluster verification and unit tests are the open debt; see [TODO.md](TODO.md).
 - **Stream Import/Export shipped** (pulled from V2). Definition-only JSON export + bulk import
@@ -108,7 +108,7 @@ Phase numbers are the project's shorthand. Everything is complete unless marked.
 | 14 | Cluster view | complete |
 | 2.5 (A0-A5) | API layer rework: `endpoints/` catalog, mocks, client-side app-JWT mint | complete |
 | C | Backend analytics endpoints (table above) | complete; verification open |
-| 15 | Event log + notifications (panel ships a "coming soon" placeholder) | V2 |
+| 15 | Event log + notifications (panel unwired, kept in tree) | V2 |
 | 16 | Per-stream metrics history | complete; verification open |
 | 17 | retired; folded into Phase C per-app metrics | n/a |
 | 18 | NOC / wallboard mode | V2 |

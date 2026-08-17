@@ -11,12 +11,7 @@ type BreadcrumbHandle = {
   breadcrumb?: string | ((params: Record<string, string | undefined>) => string)
 }
 
-type Props = {
-  onOpenNotifs: () => void
-  notifCount: number
-}
-
-export function Topbar({ onOpenNotifs, notifCount }: Props) {
+export function Topbar() {
   const crumbs = useBreadcrumbs()
   const { effectiveDark, setTheme } = useTheme()
 
@@ -44,15 +39,6 @@ export function Topbar({ onOpenNotifs, notifCount }: Props) {
           className="w-9 h-9 rounded-[6px] border border-[var(--border-strong)] bg-[var(--bg-2)] text-[var(--fg)] hover:bg-[var(--bg-3)] hover:border-[var(--fg-3)] flex items-center justify-center transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
         >
           <Icon name={effectiveDark ? 'sun' : 'moon'} size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={onOpenNotifs}
-          aria-label={`Notifications${notifCount > 0 ? ` (${notifCount} unread)` : ''}`}
-          className="relative w-8 h-8 rounded-[6px] text-[var(--fg-3)] hover:bg-[var(--bg-2)] hover:text-[var(--fg-2)] flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-        >
-          <Icon name="bell" size={14} />
-          {notifCount > 0 && <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[var(--warn)]" aria-hidden />}
         </button>
       </div>
     </div>

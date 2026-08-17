@@ -2,9 +2,14 @@ import { useEffect } from 'react'
 import { Icon } from '@/components/ui/icon'
 import { Button } from '@/components/ui/button'
 
-// Placeholder panel. The real server-wide event feed (persistence + filter + deep-link)
-// is deferred to v2 (Phase 15 in docs/dev-progress/TODO.md). Kept as a designed
-// "coming soon" state so the chrome stays intact without faking event data.
+// DISABLED, NOT WIRED UP. Nothing imports this file, so it never renders and never ships
+// (the bundler drops it). The server-wide event feed behind it is Phase 15, V2
+// (docs/dev-progress/TODO.md); this designed "coming soon" state is kept so Phase 15 restores
+// a panel instead of rebuilding one.
+//
+// To re-enable, restore the two pieces that were removed:
+//   1. topbar.tsx: an `onOpenNotifs` prop + the bell button that calls it.
+//   2. protected-layout.tsx: a `notifOpen` state + <Notifications open={notifOpen} onClose={...} />.
 
 type Props = { open: boolean; onClose: () => void }
 

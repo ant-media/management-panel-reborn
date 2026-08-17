@@ -226,9 +226,9 @@ a playlist, or a Mongo-backed server. Semantics: [API.md](../API.md); traps: [RI
 
 - **Phase 15: event log + notifications.** A server-wide persisted event store + query endpoint
   (mirror the per-stream `GET /broadcasts/{id}/connection-events/{offset}/{size}` pattern),
-  then wire the Notifications panel to it with filters + deep-link routing. The panel today
-  ships a designed "coming soon" placeholder (`components/chrome/notifications.tsx`, no faked
-  data, no unread badge). Lowest priority.
+  then wire the Notifications panel to it with filters + deep-link routing. Nothing ships
+  today: the designed panel stays in the tree unimported (`components/chrome/notifications.tsx`),
+  its own header lists the two call sites to restore. Lowest priority.
 - **Phase 18: NOC / wallboard mode.** A glanceable big-screen view of the dashboard for an
   unattended ops monitor, built on the per-stream/per-app history data; frontend-only.
   Expansions once built: auto-rotating slides, multi-monitor, TV cast mode.
@@ -259,8 +259,10 @@ a playlist, or a Mongo-backed server. Semantics: [API.md](../API.md); traps: [RI
   allow-list decision first.
 - **Support bundle.** One click downloads a zip of everything support asks for: logs, server +
   app settings, system/version info. Needs a backend endpoint that assembles the zip
-  (client-side can't reach config files). Lives on the Support page, a placeholder card today;
-  in cluster mode ideally covers all nodes (pairs with the per-node log proxy below).
+  (client-side can't reach config files). The stub Support page was deleted, so this brings back
+  its own page, route and sidebar row (build it on `StubPage`/`Page` per ui-kit.md); the
+  `support.request` endpoint method is already in the layer. In cluster mode ideally covers all
+  nodes (pairs with the per-node log proxy below).
 - **Dashboard snapshot for issue reporting.** Capture current dashboard state (rendered image
   or a JSON dump of the metrics) to attach to a bug report. Pairs with the support bundle.
 - **Subscriber + token management** (per-stream tokens, JWT, TOTP, subscriber CRUD/block)

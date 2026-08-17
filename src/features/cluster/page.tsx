@@ -81,7 +81,6 @@ export function ClusterPage() {
     const ok = copyToClipboard(ip)
     flash(ok ? 'ok' : 'err', ok ? `Copied ${ip}` : 'Copy failed')
   }
-  const onShowLogs = (ip: string) => flash('ok', `Per-node logs for ${ip}: TODO`)
 
   const subtitle = inCluster ? (
     <span className="inline-flex items-center gap-1.5 flex-wrap">
@@ -119,7 +118,7 @@ export function ClusterPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {nodes.map(n => (
-              <NodeCard key={n.id} node={n} note={noteEdits[n.id] ?? n.note} dirty={dirtyIds.has(n.id)} onNote={onNote} onCopyIp={onCopyIp} onShowLogs={onShowLogs} />
+              <NodeCard key={n.id} node={n} note={noteEdits[n.id] ?? n.note} dirty={dirtyIds.has(n.id)} onNote={onNote} onCopyIp={onCopyIp} />
             ))}
           </div>
         </div>

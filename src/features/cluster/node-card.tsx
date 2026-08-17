@@ -26,10 +26,9 @@ type Props = {
   dirty: boolean
   onNote: (id: string, note: string) => void
   onCopyIp: (ip: string) => void
-  onShowLogs: (ip: string) => void
 }
 
-export function NodeCard({ node, note, dirty, onNote, onCopyIp, onShowLogs }: Props) {
+export function NodeCard({ node, note, dirty, onNote, onCopyIp }: Props) {
   const dead = node.status === 'dead'
   const h = HEALTH[node.health]
   const [editing, setEditing] = useState(false)
@@ -72,16 +71,8 @@ export function NodeCard({ node, note, dirty, onNote, onCopyIp, onShowLogs }: Pr
         <Stat label="DB query" value={`${node.dbQueryMs} ms`} />
       </div>
 
-      {/* Actions + note pinned to the card bottom (mt-auto aligns them across the grid). */}
-      <div className="mt-auto flex flex-col gap-2">
-        <button
-          onClick={() => onShowLogs(node.ip)}
-          disabled={dead}
-          className="h-7 rounded-[6px] text-[11.5px] inline-flex items-center justify-center gap-1.5 text-[var(--fg-2)] border border-[var(--border)] hover:bg-[var(--bg-2)] hover:text-[var(--fg)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <Icon name="terminal" size={12} /> Show logs
-        </button>
-
+      {/* Note pinned to the card bottom (mt-auto aligns it across the grid). */}
+      <div className="mt-auto">
         {editing ? (
           <input
             autoFocus

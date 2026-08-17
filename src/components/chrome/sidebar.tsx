@@ -16,7 +16,6 @@ const SECONDARY: NavItem[] = [
   { to: '/cluster',  icon: 'cluster',  label: 'Cluster' },
   { to: '/settings', icon: 'settings', label: 'Server settings' },
   { to: '/logs',     icon: 'logs',     label: 'Logs' },
-  { to: '/support',  icon: 'support',  label: 'Support' },
 ]
 
 type Props = {

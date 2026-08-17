@@ -7,6 +7,9 @@ selection `Set`, stop; it already exists here.
 Rule: **when you extract or add a shared primitive, add a row to this file in the
 same change.** This doc is the index that stops the next person from rebuilding it.
 
+Live reference: **`#/ui-sink`** renders every primitive on one page. Dev builds only
+(`import.meta.env.DEV` in `router.tsx`), so it never ships to a user.
+
 Two layers:
 - `src/components/ui/`: tokenless atoms (shadcn-level).
 - `src/components/shared/`: composed, domain-agnostic widgets (use design tokens).

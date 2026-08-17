@@ -183,7 +183,7 @@ The panel mocks these today; each is a backend task. The mock is the swap point:
 | User MFA / last-login / manual unblock | - | `User` model + endpoints (`…/blocked` is read-only) |
 | App-JWT mint for admin | client-side mint from `jwtSecretKey` | Java endpoint that mints an app token for the authed admin (secret stays server-side) |
 | Cluster per-node streams/viewers/GPU | optional `RawClusterNode` fields in `mocks/cluster.ts` | grow the `ClusterNode` heartbeat to report them |
-| Per-node log proxy | "Show logs" TODO stub | proxy to fetch node X's `/log-file` through the panel origin (fills the `LogSource` seam) |
+| Per-node log proxy | - (not surfaced) | proxy to fetch node X's `/log-file` through the panel origin (fills the `LogSource` seam) |
 | Server-wide persistent event log | - | query API over connect/disconnect events (Phase 15; `connection-events` is the per-stream building block) |
 | Cluster origin/edge topology | - | which node is origin per stream + edge viewer counts (Phase 19, next priority) |
 | SSE / WebSocket push | HTTP polling | live-update transport |
