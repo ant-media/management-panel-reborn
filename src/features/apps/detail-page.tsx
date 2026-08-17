@@ -16,11 +16,11 @@ const TABS = {
   streams:   { label: 'Live Streams', phase: '8' },
   vod:       { label: 'VoD',          phase: '10' },
   settings:  { label: 'Settings',     phase: '11' },
-  analytics: { label: 'Analytics',    phase: 'TBD' },
+  // analytics: { label: 'Analytics',    phase: 'TBD' },
 } as const
 
 type Tab = keyof typeof TABS
-const TAB_ORDER: Tab[] = ['streams', 'vod', 'settings', 'analytics']
+const TAB_ORDER: Tab[] = ['streams', 'vod', 'settings']
 
 export function AppDetailPage() {
   const { name = '' } = useParams<{ name: string }>()
