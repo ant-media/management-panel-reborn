@@ -23,8 +23,7 @@ type Props = {
 
 // Applications table row. Click toggles a drilldown of per-app trends (viewers / live
 // streams) fetched lazily on expand. History is an in-memory ring on the server, so it
-// builds up over time and resets on a server restart (see dashboard-widgets.md). Stream
-// health has no backend yet, so its slot shows a TODO placeholder.
+// builds up over time and resets on a server restart (see dashboard-widgets.md).
 export function AppRow({ app, onOpen }: Props) {
   const [open, setOpen] = useState(false)
   const { data, error, isLoading } = useApi<Partial<AppMetricsHistory>>(
@@ -80,12 +79,11 @@ export function AppRow({ app, onOpen }: Props) {
                     ? <span className="text-[var(--fg-3)]">viewers not collected</span>
                     : <span className="text-[var(--fg-2)]">peak {fmtCount(peakViewers)} viewers</span>}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {viewersOff
-                    ? <PlaceholderChart label="Viewers" badge="OFF"><StatsDisabledNotice className="h-[84px]" /></PlaceholderChart>
+                    ? <DisabledChart label="Viewers"><StatsDisabledNotice className="h-[84px]" /></DisabledChart>
                     : <MiniChart label="Viewers" value={fmtCount(Math.round(series.viewers.at(-1) ?? 0))} data={series.viewers} color="var(--accent)" />}
                   <MiniChart label="Live streams" value={String(app.liveStreamCount)} data={series.streams} color="var(--info)" />
-                  <PlaceholderChart label="Stream health" />
                 </div>
               </>
             ) : (
@@ -124,19 +122,16 @@ function MiniChart({ label, value, data, color, yFormat = v => String(Math.round
   )
 }
 
-// A chart slot with nothing to draw: no metric yet (health) or one switched off (viewers, via children).
-function PlaceholderChart({ label, badge = 'TODO', children }: { label: string; badge?: string; children?: ReactNode }) {
+// A metric switched off server-side: MiniChart's card shape so the grid stays even, with the
+// caller's notice where the line would be.
+function DisabledChart({ label, children }: { label: string; children: ReactNode }) {
   return (
     <Card className="p-4 bg-[var(--card)]">
       <div className="flex items-baseline justify-between gap-2 mb-2">
         <span className="text-[11px] uppercase tracking-wider text-[var(--fg-3)]">{label}</span>
-        <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--fg-3)] px-1.5 py-0.5 rounded bg-[var(--bg-3)] border border-[var(--border)]">{badge}</span>
+        <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--fg-3)] px-1.5 py-0.5 rounded bg-[var(--bg-3)] border border-[var(--border)]">OFF</span>
       </div>
-      {children ?? (
-        <div className="h-[84px] flex items-center justify-center rounded border border-dashed border-[var(--border)] text-[11px] text-[var(--fg-3)] text-center px-2">
-          Not collected yet
-        </div>
-      )}
+      {children}
     </Card>
   )
 }

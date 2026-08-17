@@ -52,9 +52,9 @@ shape; hooks just poll. See ARCHITECTURE.md *Placeholder data*.
   only the latest sample). Same shape as `system-resources/history`, but keyed by node id.
   Also note per-node streams/viewers/GPU are mock-projected (see API.md "does NOT exist yet"); node **notes** are real (`PUT /cluster/node/{id}/note`).
 
-## 4. Applications drilldown (expandable rows): ✅ REAL (viewers + streams), ⛔ health = TODO placeholder
+## 4. Applications drilldown (expandable rows): ✅ REAL (viewers + streams)
 
-- **Shows:** click a row → viewers / live-streams mini-charts ("last 12 hours") + a **stream-health placeholder** (TODO slot).
+- **Shows:** click a row → viewers / live-streams mini-charts ("last 12 hours"), two across.
 - **Reads:** row metadata (`liveStreamCount/vodCount/storage`) is **real** (`/applications-info`).
   The drilldown charts read `GET /rest/v2/applications/{name}/metrics-history` →
   `{ viewers, streams }`, **real** (`StatsCollector`); mock (`src/lib/api/mocks/applications.ts`) kept for offline dev.
@@ -65,9 +65,9 @@ shape; hooks just poll. See ARCHITECTURE.md *Placeholder data*.
 - **Why this is cluster-correct for free:** viewer/stream counts live in the **shared** DataStore (edges `inc` the
   broadcast record), and each app owns its own store, so any node computes the **cluster-wide** per-app totals with
   no cross-node calls. In a cluster every node samples the same shared values (redundant but harmless).
-- **`health` is not served**: AMS has no per-app health metric. The row renders a "TODO / Not collected yet"
-  placeholder instead of a third chart. The frontend tolerates a partial response (missing series ⇒ no crash);
-  states: error ⇒ "Trends unavailable", empty ring ⇒ "Collecting metrics…", else charts.
+- **`health` is not served**: AMS has no per-app health metric and the row reserves no slot for one (two
+  columns). The frontend tolerates a partial response (missing series ⇒ no crash); states: error ⇒
+  "Trends unavailable", empty ring ⇒ "Collecting metrics…", else charts.
 
 ### Shortcomings / edge cases (per-app metrics-history)
 - **In-memory only**: history is **lost on server restart** and rebuilds from empty (takes up to 12h to fill);
@@ -79,8 +79,10 @@ shape; hooks just poll. See ARCHITECTURE.md *Placeholder data*.
   shows the shared `StatsDisabledNotice` in place of the viewers chart (streams unaffected), so the zero line is never
   mistaken for "no viewers". Same treatment in the stream-detail drawer's Viewers section (gated counts show a dash, RTMP
   stays live). Settings ride the console scope (session cookie); no app JWT involved. See [UI-KIT.md](../ui-kit.md).
-- **`health` unimplemented**: placeholder slot. If defined later (e.g. % of live streams with status=broadcasting &&
-  speed≈1.0), add a `health` series and swap the placeholder for a chart.
+- **`health` unimplemented**: `PublishStatsEvent` already carries every input `health.ts` checks (speed /
+  packetLostRatio / roundTripTimeMs / jitterMs / inputQueueSize / encodingQueueSize) and `addStreamSample`
+  already receives it, so serving it is aggregation, not collection. Work + open design call:
+  [TODO.md](../dev-progress/TODO.md) V2.
 - **RTMP viewers excluded**: `getTotalViewersCount()` sums WebRTC+HLS+DASH only (the playback protocols the panel surfaces).
 - **Cluster redundancy**: every node samples independently; fine at this cadence, but a future "sample on one node only"
   optimization would cut duplicate DataStore aggregations on large clusters.
@@ -98,4 +100,4 @@ shape; hooks just poll. See ARCHITECTURE.md *Placeholder data*.
 | Network bandwidth | **real** (host-only) | container fallback (veth); see §1 caveat |
 | GPU | **real** | none (optional: add temperature) |
 | Cluster summary | **real** (meters) | per-node time-series to restore sparklines |
-| App drilldown | **real** (viewers/streams, in-memory) | durable store; define `health`; per-app sampler is 12h/30s |
+| App drilldown | **real** (viewers/streams, in-memory) | durable store; define + serve `health`; per-app sampler is 12h/30s |

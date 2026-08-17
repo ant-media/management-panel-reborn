@@ -51,6 +51,6 @@ The prototype's **"warn" status** is realised as a *derived* tier (above), not a
 - **Delete semantics.** Deleting a live node is pointless (re-registers in 5s); if added later, gate it to dead/stale rows.
 
 ## Not in scope → TODO.md
-- **Per-node logs**: no backend proxy to a specific node's `/log-file`. The `LogSource` seam is ready; revisit with a backend proxy (V2). No button ships: the card carries no log action until the proxy exists.
+- **Per-node logs**: no backend proxy to a specific node's `/log-file`. The `LogSource` seam is ready; revisit with a backend proxy (V2). The card carries no log action until then.
 - **Node delete**, **dense table** for large clusters (both V2), and **origin/edge analytics** (Phase 19, V1).
 - **Real per-node streams/viewers/GPU**: swap the mock for backend heartbeat fields, no UI change (V2). (Node **notes** are real; see "Prototype gaps" above.)

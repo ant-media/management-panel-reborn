@@ -259,10 +259,9 @@ a playlist, or a Mongo-backed server. Semantics: [API.md](../API.md); traps: [RI
   allow-list decision first.
 - **Support bundle.** One click downloads a zip of everything support asks for: logs, server +
   app settings, system/version info. Needs a backend endpoint that assembles the zip
-  (client-side can't reach config files). The stub Support page was deleted, so this brings back
-  its own page, route and sidebar row (build it on `StubPage`/`Page` per ui-kit.md); the
-  `support.request` endpoint method is already in the layer. In cluster mode ideally covers all
-  nodes (pairs with the per-node log proxy below).
+  (client-side can't reach config files). There is no Support page, so this brings its own page,
+  route and sidebar row (build on `StubPage`/`Page` per ui-kit.md); `support.request` is already in
+  the layer. In cluster mode ideally covers all nodes (pairs with the per-node log proxy below).
 - **Dashboard snapshot for issue reporting.** Capture current dashboard state (rendered image
   or a JSON dump of the metrics) to attach to a bug report. Pairs with the support bundle.
 - **Subscriber + token management** (per-stream tokens, JWT, TOTP, subscriber CRUD/block)
@@ -286,9 +285,13 @@ a playlist, or a Mongo-backed server. Semantics: [API.md](../API.md); traps: [RI
   `system-resources/history`); the dense-table idiom when node counts get large; a full
   origin/edge topology view beyond Phase 19; open a node's own panel from its card (link to
   `http://<ip>:5080`, cheap but each node has its own login).
-- **Per-app metrics follow-ups:** define + serve a `health` series (the UI placeholder slot
-  exists); include RTMP viewers in the totals; a "sample on one node only" cluster
-  optimization.
+- **Per-app metrics follow-ups:** serve a `health` series and restore the app row's third chart.
+  Inputs already reach `StatsCollector` ([dashboard-widgets.md](../features/dashboard-widgets.md) §4),
+  so this is aggregation, not collection. Open call: derive in `addStreamSample` (no DB reads, but
+  node-local, it is the ingest path) or in `sampleAppMetrics()` (cluster-correct, needs an
+  active-broadcast read per tick plus a `getActiveBroadcastList` on `MongoStore`). Either way the
+  thresholds duplicate into Java; add a RISKS.md rule. Also: RTMP viewers in the totals; "sample on
+  one node only" in cluster.
 - **Per-stream metrics follow-ups:** add `jitterMs` / `rttMs` series to the ring (already on
   the broadcast record).
 - **GPU temperature:** add NVML `nvmlDeviceGetTemperature` to `StatsCollector`; the GPU card
