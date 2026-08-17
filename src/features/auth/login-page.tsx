@@ -22,7 +22,7 @@ export function LoginPage() {
   // so we can land them back there after a successful sign-in.
   const from = (location.state as { from?: string } | null)?.from ?? '/'
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (submitting) return
     setSubmitting(true)

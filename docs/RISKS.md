@@ -291,5 +291,6 @@ Deliberate product decisions. Don't re-litigate them casually; reopen them only 
 ## What we deliberately don't worry about
 
 - **`window.location.origin` read in `media-origin.ts`**: read-only, and the single definition of where media lives. Every media URL (previews, `play.html`, VoD files, RTMP ingest) derives from `mediaOrigin()`; in dev it resolves to `VITE_BACKEND`, because vite proxies `/rest/v2` only and an iframe or `<img>` has to actually load. Don't reach for `window.location` in a url-builder again.
+- **`document.execCommand('copy')` is deprecated, deliberately**: it is the http fallback in `clipboard.ts`, and `navigator.clipboard` needs a secure context. A panel served over plain http on a LAN IP (the common install) has nothing else to fall back to. The IDE flags it; leave it.
 - **HashRouter "ugly" URLs**: admin panel, not public-facing. No SEO/OG concerns.
 - **Mocks `import.meta.env.VITE_USE_MOCKS`**: production bundles strip mocks via tree-shaking. Verified in build output (mocks chunk only loaded when flag is set).

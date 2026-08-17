@@ -34,7 +34,7 @@ export function RegisterPage() {
 
   if (status !== 'first-login') return <Navigate to="/login" replace />
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (submitting) return
     if (password !== confirm) { setError('Passwords do not match.'); return }

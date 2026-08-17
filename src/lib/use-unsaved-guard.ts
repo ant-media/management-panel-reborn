@@ -10,7 +10,8 @@ import { useBlocker, type Blocker } from 'react-router'
 export function useUnsavedGuard(dirty: boolean): Blocker {
   useEffect(() => {
     if (!dirty) return
-    const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = '' }
+    
+    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault()
     window.addEventListener('beforeunload', onBeforeUnload)
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [dirty])
