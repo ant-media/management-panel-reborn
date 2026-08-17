@@ -201,9 +201,10 @@ regression here. Keep the dirty check.
 **Where:** `src/contexts/auth-context.tsx` (`ams.auth.user`) + `src/lib/auth/api.ts` (`toAuthUser`).
 **Cause:** there is no "who am I" endpoint. `authentication-status` is a bare boolean, and `GET /users` is admin-gated (and would not say which row is us). Identity appears in one place only: the `message` field of the `POST /users/authenticate` response. Only the panel that performs the login ever sees it.
 **Symptom:** boot on a session we did not create, no stored user, so `user = null`. Logged in, but rendered as nobody: `isAdmin` false, no scopes, "App user" in the sidebar, "Unknown user" in the account menu, admin actions hidden in the Users tab. Nothing crashes, nothing logs you out, so it is easy to miss.
-**Why it matters:** with the legacy switcher, the old login is the only door, so it is *always* the one that authenticates. This is the normal path, not an edge case.
-**Mitigation:** the old console writes `ams.legacy.auth.handoff = {email, message}` on every login; the panel consumes it on boot when it has no stored user. Contract + reasoning: [features/legacy-switcher.md](features/legacy-switcher.md).
-**Watch:** the handoff shape is a cross-repo contract with the Angular console. Never change it on one side only. A backend `GET /current-user` would retire this entry and the key with it.
+**Why it matters:** with the legacy switcher each panel has its own login page, so normally the panel you use is the one that authenticated you. The gap is a session created on the *other* door: log in on the old console, then open `/reborn-panel/` on that session.
+**Mitigation:** the panel only trusts a session it created. On boot, authenticated with no stored user means the session is someone else's door (the legacy console shares the cookie), so it logs out and shows its own login page. Reasoning: [features/legacy-switcher.md](features/legacy-switcher.md).
+**Known gap:** the rule fires on a *missing* stored user, not a *stale* one, so signing into the panel as one admin and then into the old console as another leaves the panel showing the first admin's name and scopes on the second one's session. Accepted: it needs two admin accounts in one browser with the second using the old door, the server still enforces the real permissions, and a sign-out clears it. Closing it would mean the old console clearing `ams.auth.user`, which is the panel's key to own.
+**Watch:** don't "fix" that boot path by rendering the session anyway, and don't reintroduce identity passing through localStorage; it makes the two panels agree on a wire format forever. A backend `GET /current-user` retires this entry for real.
 
 ## Deployment
 

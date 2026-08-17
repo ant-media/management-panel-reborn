@@ -7,8 +7,15 @@
   --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --radius: 0.625rem;
+  /* Kept out of the palette block below because the boot script rewrites it as an inline style
+     on <html>, and `.door` must not shadow that. */
   --accent: oklch(0.62 0.22 22);
+}
 
+/* `.door` = the login and register pages. They sit on a photo, which wants a light card in either
+   theme, so the door opts out of dark mode by re-declaring the light palette for its subtree; every
+   primitive inside then works untouched. Dark mode only deepens the backdrop wash (public-layout). */
+:root, .door {
   --bg: oklch(0.995 0.002 250);
   --bg-2: oklch(0.965 0.003 250);
   --bg-3: oklch(0.93 0.004 250);

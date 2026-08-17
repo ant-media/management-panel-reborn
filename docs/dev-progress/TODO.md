@@ -16,17 +16,12 @@ Rules:
 
 ## Build
 
-- [ ] **Legacy panel switcher + combined release zip. Current priority.** Both panels ship in one AMS
-  build (old console at `/`, new panel at `/reborn-panel/`, chooser on the old login). The panel side, the
-  legacy switcher build, and the packaging scripts are implemented and build-validated (node 22 and 24);
-  only the items below remain. Design: [features/legacy-switcher.md](../features/legacy-switcher.md); state
-  in [STATUS.md](STATUS.md); live checks under "Verify on a live server".
+- [ ] **Backend: reserve the `reborn-panel` app name.** An app with that name registers a Tomcat context
+  at `/reborn-panel` that shadows the panel folder and 404s it.
+- [ ] **Merge the legacy switcher to master.** It lives on `Ant-Media-Management-Console`
+  `feature/reborn-panel-switcher`, gated by the `rebornSwitcher` flag (off by default). After merge, flip
+  `LEGACY_BRANCH` in `build-legacy.sh` back to `master`.
 
-  - [ ] **Backend: reserve the `reborn-panel` app name.** An app with that name registers a Tomcat context
-    at `/reborn-panel` that shadows the panel folder and 404s it.
-  - [ ] **Merge the legacy switcher to master.** It lives on `Ant-Media-Management-Console`
-    `feature/reborn-panel-switcher`, gated by the `rebornSwitcher` flag (off by default). After merge, flip the `LEGACY_BRANCH` in `build-legacy.sh` back to `master`!!!
-    
 - [ ] **Generic error surface for unhandled API errors.** Every unexpected/unhandled error off the
   API should surface in one place, elegant and non-annoying, never a wall of raw failures. Handle the
   edge cases: coalesce a burst (20 errors in a short window collapses into one, not twenty); while the
@@ -106,14 +101,15 @@ deployed via the combined `panel-release-<ver>.zip` extracted over `webapps/root
 
 - [ ] Assets load from the subfolder (relative base), hash routes work, and a hard refresh on a deep
   route still comes back to the same page.
-- [ ] Admin picks classic: the old panel behaves exactly as before, nothing changed.
-- [ ] Admin picks the new panel: lands already logged in, and renders **as an admin**. Not "Unknown
-  user", not "App user". This is the handoff working.
-- [ ] App-scoped (non-admin) user picks the new panel: only their app is visible, admin actions hidden.
-- [ ] Open `/reborn-panel/` directly with a session created by the legacy login: identity still
-  resolves, because the handoff is written on every login.
-- [ ] Logout from the new panel: lands on `/` with the chooser, and the session is really dead (the
-  old panel does not let you straight back in).
+- [ ] The switch above the login card round-trips: `/` to `/reborn-panel/` and back, on both doors.
+- [ ] Admin stays on classic: the old panel behaves exactly as before, nothing changed.
+- [ ] Admin takes the switch and logs in on the new panel: renders **as an admin**. Not "Unknown
+  user", not "App user".
+- [ ] App-scoped (non-admin) user logs in on the new panel: only their app is visible, admin actions hidden.
+- [ ] Open `/reborn-panel/` with a session the legacy login created: the panel ends that session and
+  shows its own login page. Never "Unknown user", never a half-rendered admin.
+- [ ] Logout from the new panel: lands on the panel's own login page, and the session is really dead
+  (going to `/` does not let you straight back in).
 - [ ] Per-app REST from the subfolder: streams and VoD load, VoD upload round-trips, bulk delete and
   `create-list` reach the app, a JWT-protected app still mints and retries. Same proxy checks as the
   root deploy below, now from the new path.

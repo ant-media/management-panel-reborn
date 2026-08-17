@@ -141,6 +141,15 @@ over `api` / `appApi(name)`. Components never call `fetch`. See ARCHITECTURE.md.
 | `ToastBanner` (`toast.tsx`) | transient status line | driven by `useToast()`; render at the top of the tab body |
 | `Page`, `StubPage` | page shell / placeholder | `title` is **sr-only** (shown in the topbar breadcrumb already, not repeated visually); the header shows `subtitle` + `actions` only. Pass `title` for a11y; put visible context in `subtitle` |
 
+### Login door
+The `/login` and `/register` pages, under `layouts/public-layout.tsx`. Why it looks the way it does:
+[features/legacy-switcher.md](features/legacy-switcher.md) *Both doors are the same room*.
+
+| Export | Use it for |
+| --- | --- |
+| `.door` (`index.css`) | scopes the **light** palette to the door subtree, so those pages stay light in either theme (they sit on a photo, which wants a light card). Anything you add to the `:root, .door` block is shared by both; a token declared only in `:root` and overridden in `.dark` would silently go dark on the door. `--accent` is excluded on purpose: the boot script sets it inline on `<html>` and the door must not shadow the user's choice |
+| `DOOR_CARD` (`features/auth/form.tsx`) | the card treatment for a door page (padding + the elevation that lifts it off the photo). Use it for any new card on `/login` or `/register` so they cannot drift apart |
+
 ### `lib/`: generic hooks & utils
 | Export | Use it for |
 | --- | --- |

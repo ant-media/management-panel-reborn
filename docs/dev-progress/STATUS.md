@@ -55,8 +55,8 @@ branch in both (as of 2026-07-07).
 - **First-run beta notice shipped.** A one-time dialog on the first authenticated load
   (`components/chrome/beta-notice.tsx`). Its "Don't show this again" box is ticked by default, and it is
   what writes `ams.beta.notice.seen`; untick it and the notice returns next login. The flag is
-  per browser, and the legacy login's `localStorage.clear()` wipes it, so the notice returns after a
-  logout until that bug is fixed ([features/legacy-switcher.md](../features/legacy-switcher.md)).
+  per browser, and survives a trip through the legacy login only because that page's `localStorage.clear()`
+  is a targeted `removeItem` list under `rebornSwitcher` ([features/legacy-switcher.md](../features/legacy-switcher.md)).
 - **Panel delivery to AMS CI shipped, verified on real runs (2026-07-22).** AMS bakes the panel
   into `webapps/root` at build time by downloading a prebuilt zip from this repo's releases:
   branch builds pull their branch's `WORK-BRANCHES` snapshot (freshness checked by commit, else
@@ -65,8 +65,11 @@ branch in both (as of 2026-07-07).
   and the build stamp: [CI.md](../CI.md).
 - **Legacy panel switcher implemented, live verification open.** Both panels ship in one AMS build: the
   old console keeps `/`, the new panel loads from `/reborn-panel/` (a folder in the same root webapp, so
-  they share origin + session), and the old login chooses between them (classic default). The new panel
-  reads the identity handoff on boot; the legacy side (chooser + handoff write + targeted logout) lives
+  they share origin + session), and both login pages carry the same switch linking to the other panel's
+  login page. Both doors share one backdrop (the legacy login's photo, darkened rather than greyed) so
+  switching does not flash, and the panel's door renders the light palette in either theme; the legacy
+  door pings its New UI segment once on load. Each panel authenticates its own users and ends any session
+  it cannot identify, so no identity crosses between the two apps; the legacy side (switch + targeted logout) lives
   behind the `rebornSwitcher` build flag on `Ant-Media-Management-Console` `feature/reborn-panel-switcher`
   (off by default, pending merge to master as of 2026-07-21). `release.sh` here builds both and emits the
   content-only `panel-release-<ver>.zip`, validated end-to-end on node 22 and 24. Live checks and the
@@ -110,4 +113,4 @@ Phase numbers are the project's shorthand. Everything is complete unless marked.
 | 17 | retired; folded into Phase C per-app metrics | n/a |
 | 18 | NOC / wallboard mode | V2 |
 | 19 | Cluster origin/edge analytics | NOT STARTED |
-| 20 | Legacy panel switcher (ship next to the old console, chooser on the legacy login) | implemented; live verification + backend name reservation open |
+| 20 | Legacy panel switcher (ship next to the old console, a switch on each login page) | implemented; live verification + backend name reservation open |

@@ -1,5 +1,9 @@
 import { type InputHTMLAttributes } from 'react'
 
+// The door pages sit on a photo backdrop, so their cards need real elevation to read as
+// surfaces rather than patches. Shared so the login and register cards cannot drift apart.
+export const DOOR_CARD = 'p-6 shadow-[0_16px_50px_-12px_rgba(0,0,0,0.65)]'
+
 type AuthFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'className'> & {
   label: string
   value: string

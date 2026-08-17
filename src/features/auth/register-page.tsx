@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { errorMessage } from '@/lib/api'
 import { useAuth } from '@/contexts/auth-context'
-import { AuthField, FormError } from './form'
+import { AuthField, DOOR_CARD, FormError } from './form'
 
 export function RegisterPage() {
   const { status, registerFirstAdmin } = useAuth()
@@ -22,7 +22,7 @@ export function RegisterPage() {
   // status guard doesn't yank them straight to /login.
   if (done) {
     return (
-      <Card className="p-6">
+      <Card className={DOOR_CARD}>
         <h1 className="text-[15px] font-medium text-[var(--fg)] mb-1">Administrator created</h1>
         <p className="text-[12px] text-[var(--fg-3)] mb-5">Sign in with the credentials you just set.</p>
         <Button variant="primary" size="md" onClick={() => void navigate('/login', { replace: true })}>
@@ -54,7 +54,7 @@ export function RegisterPage() {
   const clearError = () => { if (error) setError(null) }
 
   return (
-    <Card className="p-6">
+    <Card className={DOOR_CARD}>
       <h1 className="text-[15px] font-medium text-[var(--fg)] mb-1">Create first administrator</h1>
       <p className="text-[12px] text-[var(--fg-3)] mb-5">No accounts exist on this server yet. Set the administrator credentials.</p>
       <form className="flex flex-col gap-3" onSubmit={onSubmit} noValidate>

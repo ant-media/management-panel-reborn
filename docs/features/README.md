@@ -10,4 +10,4 @@ the backend reality it builds on, the data layer, and the locked decisions.
 - [streams-master-detail.md](streams-master-detail.md): the per-app streams table, the stream-detail split (width-based compact behavior), and the embedded player.
 - [streams-import-export.md](streams-import-export.md): stream definitions as JSON files. Allow-list export, bulk create endpoint, interactive duplicate handling.
 - [dashboard-widgets.md](dashboard-widgets.md): the dashboard widgets and where each number comes from, real data versus placeholder.
-- [legacy-switcher.md](legacy-switcher.md): shipping next to the old console. The subfolder deploy, the chooser on the legacy login, and the session/identity handoff.
+- [legacy-switcher.md](legacy-switcher.md): shipping next to the old console. The subfolder deploy, the switch on each login page, and why a session the panel did not create gets ended.

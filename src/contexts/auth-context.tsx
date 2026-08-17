@@ -6,7 +6,6 @@ import {
   logout as apiLogout,
   probeBoot,
   registerFirstAdmin as apiRegister,
-  toAuthUser,
   type AuthUser,
 } from '@/lib/auth/api'
 
@@ -24,7 +23,6 @@ type AuthContextValue = {
 }
 
 const STORAGE_KEY = 'ams.auth.user'
-const HANDOFF_KEY = 'ams.legacy.auth.handoff'
 
 // The backend has no "GET /me" endpoint; it only reports whether the session cookie
 // is still valid. We persist the parsed user (email + scopes) so a page refresh
@@ -32,17 +30,6 @@ const HANDOFF_KEY = 'ams.legacy.auth.handoff'
 function loadStoredUser(): AuthUser | null {
   const parsed = storage.readJson<Partial<AuthUser> | null>(STORAGE_KEY, null)
   return parsed?.email ? (parsed as AuthUser) : null
-}
-
-// In the combined deployment the legacy console is the only login door. It shares the
-// session cookie but not identity, so it forwards {email, message} in this key on every
-// login. Consume it once to resolve who we are, then drop it. See docs/features/legacy-switcher.md.
-function readLegacyHandoff(): AuthUser | null {
-  const handoff = storage.readJson<{ email?: string; message?: string } | null>(HANDOFF_KEY, null)
-  if (!handoff?.email) return null
-  const user = toAuthUser(handoff.email, handoff.message)
-  storage.remove(HANDOFF_KEY)
-  return user
 }
 
 function persistUser(user: AuthUser | null) {
@@ -68,9 +55,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const probe = await probeBoot()
         if (cancelled) return
-        if (probe.firstLogin)         apply(null, 'first-login')
-        else if (probe.authenticated) apply(readLegacyHandoff() ?? loadStoredUser(), 'authenticated')
-        else                          apply(null, 'unauthenticated')
+        if (probe.firstLogin) { apply(null, 'first-login'); return }
+        if (!probe.authenticated) { apply(null, 'unauthenticated'); return }
+
+        const stored = loadStoredUser()
+        if (stored) { apply(stored, 'authenticated'); return }
+
+        // Identity does not ride the session (docs/RISKS.md): a live session with no stored user
+        // is one we did not create, e.g. the legacy console's on the shared cookie, and nothing
+        // on the wire says whose it is. End it rather than render the panel as nobody.
+        await apiLogout()
+        if (!cancelled) apply(null, 'unauthenticated')
       } catch {
         // Backend unreachable: fall through to /login so the failing transport surfaces there.
         if (!cancelled) apply(null, 'unauthenticated')
@@ -90,13 +85,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return true
   }, [apply])
 
+  // Stays in this panel: its own login page is the door back, and the switch there leads
+  // to the legacy console. Same transition the 401 handler above makes.
   const logout = useCallback(async () => {
     await apiLogout()
-    storage.remove(STORAGE_KEY)
-    storage.remove(HANDOFF_KEY)
-    // Back to the legacy console at "/", the only login door in the combined deploy.
-    window.location.href = '/'
-  }, [])
+    apply(null, 'unauthenticated')
+  }, [apply])
 
   const registerFirstAdmin = useCallback(async (email: string, password: string) => {
     const ok = await apiRegister(email, password)
