@@ -80,18 +80,20 @@ export function Thumb({ appName, broadcast, size = 'sm', hasPreview, onPlay }: P
             playable && 'transition-opacity group-hover:opacity-45',
           )}>LIVE</div>
         )}
-        {/* Resting: a muted play badge, so the thumb reads as playable without a hover. Row hover
-            turns it live-red over a scrim. Hover is the row's (`group`), not the thumb's. */}
+        {/* Resting: a dimmed green badge, so the thumb reads as playable without a hover. Row hover
+            brings it to full --ok over a scrim and pops it past the target before settling. Red is
+            the LIVE tag's alone, so red means live and green means play in both modes. Hover is the
+            row's (`group`), not the thumb's. */}
         {playable && (
           <button
             type="button"
             aria-label="Play stream"
             onClick={e => { e.stopPropagation(); onPlay?.() }}
-            className="absolute inset-0 flex items-center justify-center rounded-[5px] outline-none transition-colors group-hover:bg-black/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ring)]"
+            className="absolute inset-0 flex items-center justify-center rounded-[5px] outline-none transition-colors group-hover:bg-black/70 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ring)]"
           >
             <span className={cn(
-              'flex items-center justify-center rounded-full bg-black/55 text-white opacity-75 scale-90 transition-all duration-150',
-              'group-hover:bg-[var(--live)] group-hover:opacity-100 group-hover:scale-100 group-hover:shadow-lg',
+              'flex items-center justify-center rounded-full bg-[var(--ok-deep)] text-white opacity-75 scale-90 transition-all duration-150',
+              'group-hover:bg-[var(--ok)] group-hover:opacity-100 group-hover:scale-110 group-hover:shadow-lg group-hover:animate-play-pop',
               glyph.badge,
             )}>
               <Icon name="play" size={glyph.play} className="fill-current ml-px" />
@@ -100,5 +102,40 @@ export function Thumb({ appName, broadcast, size = 'sm', hasPreview, onPlay }: P
         )}
       </div>
     </Tooltip>
+  )
+}
+
+// Both states are the same box; only the glyph differs, so the column can never change width.
+const PLAY_CELL_FACE = 'flex-1 flex items-center justify-center border-r border-[var(--border)] bg-[var(--bg-2)]'
+
+// The compact leading cell: the play control *is* the cell, full-bleed and flush to the card edge,
+// painted as the drawer's Play tile (both are on screen whenever this renders). Hover lifts to
+// --bg-3, not --bg-2, or the cell dissolves into the row's own hover.
+//
+// `absolute inset-0` rather than `h-full` because the compact density mode adds td padding that a
+// percentage height would inset, so the cell must be `relative`. The `grid` wrapper is what gives
+// Tooltip's span a full-size box to measure: wrap the absolute child directly and the bubble lands
+// in the cell's corner.
+export function PlayCell({ broadcast, onPlay }: { broadcast: Broadcast; onPlay: () => void }) {
+  const playable = isLive(broadcast.status)
+  return (
+    <div className="absolute inset-0 grid">
+      <Tooltip content={playable ? 'Play stream' : 'Stream offline'} delay={0} focusable={false}>
+        {playable ? (
+          <button
+            type="button"
+            aria-label="Play stream"
+            onClick={e => { e.stopPropagation(); onPlay() }}
+            className={cn(PLAY_CELL_FACE, 'transition-colors outline-none group-hover:bg-[var(--bg-3)] group-hover:border-[var(--border-strong)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ring)]')}
+          >
+            <Icon name="play" size={16} className="text-[var(--ok)]" />
+          </button>
+        ) : (
+          <div className={cn(PLAY_CELL_FACE, 'text-[var(--fg-3)]')}>
+            <Icon name="video" size={15} />
+          </div>
+        )}
+      </Tooltip>
+    </div>
   )
 }

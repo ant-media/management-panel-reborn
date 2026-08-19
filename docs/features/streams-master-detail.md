@@ -9,10 +9,11 @@ embedded player. All of it lives in `src/features/streams/`.
 between 580 and 0; the inner wrapper stays fixed at 580 so content is clipped, never re-laid-out.
 Below 640px (`useIsNarrow`) the drawer is a full-screen overlay instead.
 
-**Compact is a width decision, not a breakpoint.** The table degrades to 5 columns only when the
+**Compact is a width decision, not a breakpoint.** The table degrades to 6 columns only when the
 space beside the dock drops under `FULL_TABLE_MIN_WIDTH` (1040px), so a 1080p-and-up monitor keeps
-the full 9-column table docked beside the drawer. Compact drops the checkbox, thumbnail, Bitrate,
-Duration and the inline row buttons; it keeps Stream, Status, Viewers, Created and the `⋯` menu.
+the full 9-column table docked beside the drawer. Compact drops the checkbox, Bitrate, Duration and
+the inline row buttons, and swaps the thumbnail for a 44px `PlayCell` (*Playback* below); it keeps
+Stream, Status, Viewers, Created and the `⋯` menu. The name cell tightens to 150px to pay for it.
 The sidebar auto-collapses on the same condition (docked *and* too tight), edge-triggered so a
 manual toggle isn't fought.
 
@@ -179,14 +180,46 @@ An `iframe` of the app's own `play.html` inside an `xl` `Modal` (`player-modal.t
 dependency (`@antmedia/web_player` is ~5.5MB); the page negotiates the protocol itself. The modal
 is rendered only while playing, so closing unmounts the iframe and the session dies with it.
 
-Launch points: the **thumbnail play badge** (live rows), the drawer's **Play tile**, and
+Launch points: the **row's leading cell** (live rows), the drawer's **Play tile**, and
 `⋯ > Play > Play Embedded Player`. `Play With WebRTC` / `Play With HLS` and row middle-click stay
-new-tab openers. The row deliberately has **no** play button in its action cell: the thumbnail is
-the bigger, more obvious target, and the cell stays quiet for start/stop.
+new-tab openers. The row deliberately has **no** play button in its *action* cell: play lives on the
+left, and the right cell stays quiet for start/stop.
 
-The badge sits at rest (muted circle, solid triangle) so the thumb reads as playable, and turns
-live-red over a scrim on row hover. The LIVE badge dims to 45% on hover rather than compete with
-it, but never disappears.
+**The leading cell is the play control in both modes**, which is what makes a near-miss
+recoverable: a missed click opens the drawer, the table compacts, and the affordance is still the
+leftmost thing in the row. Full mode renders the `Thumb` and the *whole cell* plays (the thumb is
+34px tall in a ~49px row, so the gutters around it were the misses); the thumb's own button stops
+propagation first, so the two never double-fire.
+
+**Red means live, green means play**, and nothing crosses over. The badge sits at rest as a dimmed
+`--ok-deep` circle at 75% opacity so the thumb reads as playable without a hover; row hover brings
+it to full `--ok`, full opacity, over a `black/70` scrim. The LIVE tag stays `--live` red and dims
+to 45% rather than compete, but never disappears.
+
+Hover also **pops** the badge: `animate-play-pop` (`index.css`) runs 90 -> 119 -> 101 -> 114 -> 106
+-> 110% over 500ms, an overshoot settle rather than a linear grow. Three constraints hold it
+together. The keyframes animate `scale`, **not** `transform`: Tailwind v4's `scale-*` utilities set
+the `scale` property, so a transform multiplies against them instead of replacing them and lands at
+1.31. The 100% keyframe must equal `group-hover:scale-110`, or the badge jumps when the animation
+hands back. Reduced motion **swaps `--animate-play-pop`** to `none`, because a same-name `@keyframes`
+override loses (Tailwind hoists the `@theme` copy to the end of the bundle, and the last definition
+wins) and `animation: none` loses on specificity; an unlayered `:root` outranks `@layer theme`.
+
+Compact renders `PlayCell`: a full-bleed button flush to the card edge, **painted as the drawer's
+Play tile unrolled to fill a cell**, because the drawer is open whenever this cell renders and the
+two have to read as one control in two shapes. Neutral `--bg-2` surface, `--ok` glyph, right border
+strengthening on row hover; hover goes to `--bg-3`, not `--bg-2`, or the cell dissolves into the
+row's own hover. It never shows an image (unreadable at 44px) and carries no LIVE tag, so
+`hasPreview` does not reach it. Offline streams keep the same surface with a muted `video` glyph, so
+the column width is constant and nothing reflows when a stream goes live.
+
+Both states carry a tooltip (`Play stream` / `Stream offline`) anchored on a `grid` wrapper, because
+`Tooltip` measures its own span: wrap the absolutely positioned button directly and that span is
+zero-sized, so the bubble lands in the cell's corner. `focusable={false}`, unlike `Thumb`, since the
+offline reason is already visible text in the Status cell beside it and a tab stop per row buys
+nothing. `PlayCell` is a **sibling** of `Thumb`, not a size of it: a `size="xs"` would need four
+`size === 'xs'` branches (image, placeholder, LIVE tag, tooltip), hiding the divergence instead of
+expressing it.
 
 `usePlayUrl` (`use-play-url.ts`) resolves the URL, and carries the three things legacy taught us:
 

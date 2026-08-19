@@ -50,7 +50,7 @@ type Props = {
 // DETAIL_DOCK_WIDTH must match the docked panel's `w-[580px]` below; the sidebar
 // widths mirror its `w-[256px]` / `w-[60px]`. FULL_TABLE_MIN_WIDTH is the width the
 // full 9-column table needs before it cramps (measured ≈1020). Under that, beside
-// the dock, the table degrades to the compact 4-column layout.
+// the dock, the table degrades to the compact 6-column layout.
 const DETAIL_DOCK_WIDTH = 580
 const SIDEBAR_EXPANDED_WIDTH = 256
 const SIDEBAR_COLLAPSED_WIDTH = 60
@@ -90,7 +90,7 @@ export function AppStreamsTab({ appName, onOpenStream, onGoToSettings }: Props) 
   // and dock explicitly, rather than measuring the table row directly: the row
   // animates when the sidebar collapses, so a measured value would lag and make the
   // column set flicker mid-transition. Beside the dock the full table needs
-  // FULL_TABLE_MIN_WIDTH; under that it degrades to the compact 4-column table.
+  // FULL_TABLE_MIN_WIDTH; under that it degrades to the compact 6-column table.
   const viewportWidth = useViewportWidth()
   const tableWidthFor = (sidebarWidth: number) => viewportWidth - sidebarWidth - DETAIL_DOCK_WIDTH
   // Reclaim the sidebar only while docked and the full table wouldn't otherwise fit,

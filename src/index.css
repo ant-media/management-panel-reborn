@@ -38,6 +38,8 @@
   --accent-border: color-mix(in oklch, var(--accent), white 70%);
   --ok: oklch(0.58 0.14 150);
   --ok-bg: color-mix(in oklch, var(--ok), white 86%);
+  /* Resting fill of the thumb's play badge; row hover lifts it to --ok. */
+  --ok-deep: color-mix(in oklch, var(--ok), black 30%);
   --warn: oklch(0.68 0.16 70);
   --warn-bg: color-mix(in oklch, var(--warn), white 86%);
   --danger: oklch(0.58 0.20 25);
@@ -71,6 +73,7 @@
   --accent-border: color-mix(in oklch, var(--accent), black 50%);
   --ok: oklch(0.70 0.14 150);
   --ok-bg: color-mix(in oklch, var(--ok), black 75%);
+  --ok-deep: color-mix(in oklch, var(--ok), black 30%);
   --warn: oklch(0.78 0.14 70);
   --warn-bg: color-mix(in oklch, var(--warn), black 75%);
   --danger: oklch(0.68 0.20 25);
@@ -109,6 +112,31 @@
   --color-ring: var(--ring);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+}
+
+@theme {
+  --animate-play-pop: play-pop 500ms ease forwards;
+
+  /* Hover grow with an overshoot settle: peak, dip, half-peak, half-dip, rest at the target.
+     Animate `scale`, never `transform`: Tailwind's `scale-*` utilities set the `scale` property,
+     so a transform would multiply against them rather than replace them. The 100% value must
+     equal `group-hover:scale-110`, or the badge jumps when the animation hands back. */
+  @keyframes play-pop {
+    0%   { scale: 90%; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+    40%  { scale: 119%; }
+    58%  { scale: 101%; }
+    73%  { scale: 114%; }
+    87%  { scale: 106%; }
+    100% { scale: 110%; }
+  }
+}
+
+/* Reduced motion: drop the overshoot, keep the grow (the 150ms transition still moves it).
+   Swapping the variable is the only thing that holds: a same-name @keyframes here loses because
+   Tailwind hoists the @theme copy to the end of the bundle, and `animation: none` loses on
+   specificity. Unlayered :root outranks @layer theme. */
+@media (prefers-reduced-motion: reduce) {
+  :root { --animate-play-pop: none; }
 }
 
 @layer base {

@@ -9,7 +9,7 @@ import { ActionMenu, type MenuItem } from '@/components/shared/action-menu'
 import { CopyChip } from '@/components/shared/copy-chip'
 import { Tooltip } from '@/components/shared/tooltip'
 import { SortableTh } from '@/components/shared/sortable-header'
-import { Thumb } from './thumb'
+import { PlayCell, Thumb } from './thumb'
 import { StreamStatus } from './stream-status'
 import { playPageUrl } from './url-builder'
 import { STREAM_ACTIONS, streamAction, type StreamAction } from './stream-actions'
@@ -20,7 +20,7 @@ import type { SortDir, SortKey } from './use-broadcasts'
 // Bounded (not fill-all) so a long id doesn't sprawl on wide screens; leaner when
 // the table is compact. Full value stays reachable (copy button + hover title).
 const NAME_MAX_W = 'max-w-[220px]'
-const NAME_MAX_W_COMPACT = 'max-w-[180px]'
+const NAME_MAX_W_COMPACT = 'max-w-[150px]'
 
 type Props = {
   appName: string
@@ -39,8 +39,8 @@ type Props = {
   onPlay: (b: Broadcast) => void
   // A mutation is in flight: gate the action buttons so rapid clicks don't fan out.
   busy?: boolean
-  // Compact (drawer docked): drop checkbox/thumb/Created + the inline action
-  // button, keep the ⋯ menu. activeId = the open row.
+  // Compact (drawer docked): drop the checkbox and the inline action button, swap the
+  // thumb for a PlayCell, keep the ⋯ menu. activeId = the open row.
   compact?: boolean
   activeId?: string | null
 }
@@ -53,13 +53,14 @@ export function StreamsTable({
   busy = false, compact = false, activeId = null,
 }: Props) {
   const allSelected = broadcasts != null && broadcasts.length > 0 && broadcasts.every(b => selected.has(b.streamId))
-  const cols = compact ? 5 : 9
+  const cols = compact ? 6 : 9
 
   return (
     <div className="flex-1 overflow-auto">
       <table className="w-full text-[12.5px]">
         <thead className="sticky top-0 bg-[var(--card)] z-10">
           <tr className="text-[11px] uppercase tracking-wider text-[var(--fg-3)] border-b border-[var(--border)]">
+            {compact && <th className="w-[44px]" />}
             {!compact && (
               <th className="text-left px-4 py-2 w-8">
                 <Checkbox checked={allSelected} onChange={onToggleAll} />
@@ -152,13 +153,21 @@ function Row({
           : onRowClick && 'hover:bg-[var(--bg-2)]',
       )}
     >
+      {/* PlayCell fills the cell, so no padding and `relative`. */}
+      {compact && (
+        <td className="p-0 relative w-[44px]">
+          <PlayCell broadcast={broadcast} onPlay={onPlay} />
+        </td>
+      )}
       {!compact && (
         <td className="pl-4 pr-1 py-2 select-none" onClick={e => e.stopPropagation()}>
           <Checkbox checked={selected} onChange={(_, e) => onToggle(e.shiftKey)} />
         </td>
       )}
       {!compact && (
-        <td className="px-1 py-2">
+        // Hit slop: the thumb is 34px tall in a ~49px row, so the gutters around it play too.
+        // The thumb's own button stops propagation first, so this never double-fires.
+        <td className="px-1 py-2" onClick={live ? e => { e.stopPropagation(); onPlay() } : undefined}>
           <Thumb appName={appName} broadcast={broadcast} hasPreview={hasPreview} onPlay={onPlay} />
         </td>
       )}
