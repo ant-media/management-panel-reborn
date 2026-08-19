@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Icon } from '@/components/ui/icon'
 import { InfoDot } from '@/components/shared/info-dot'
 import { cn } from '@/lib/utils'
-import { RENDITION_HEIGHTS, asString, parseFieldValue, type FieldStatus, type Rendition, type SettingField } from './settings-schema'
+import { RENDITION_HEIGHTS, asString, bpsToKbps, kbpsToBps, parseFieldValue, type FieldStatus, type Rendition, type SettingField } from './settings-schema'
 
 const FULL_WIDTH = new Set<FieldRow['field']['type']>(['renditions', 'textarea'])
 
@@ -196,7 +196,7 @@ function TextareaControl({ id, field, value, onChange, status }: { id: string; f
 
 function RenditionEditor({ value, onChange }: { value: Rendition[]; onChange: (v: Rendition[]) => void }) {
   const update = (i: number, patch: Partial<Rendition>) => onChange(value.map((r, j) => (j === i ? { ...r, ...patch } : r)))
-  const add = () => onChange([...value, { height: 720, videoBitrate: 1500, audioBitrate: 128 }])
+  const add = () => onChange([...value, { height: 720, videoBitrate: 1_500_000, audioBitrate: 128_000 }])
   const remove = (i: number) => onChange(value.filter((_, j) => j !== i))
   const cell = 'h-8 px-2 text-[12px] bg-[var(--card)] border border-[var(--border)] focus:border-[var(--accent)] rounded-[6px] outline-none text-[var(--fg)]'
   const num = cn(cell, 'font-mono tabular-nums text-right [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none')
@@ -212,8 +212,8 @@ function RenditionEditor({ value, onChange }: { value: Rendition[]; onChange: (v
             {!RENDITION_HEIGHTS.includes(row.height) && <option value={row.height}>{row.height}p</option>}
             {RENDITION_HEIGHTS.map(h => <option key={h} value={h}>{h}p</option>)}
           </select>
-          <input type="number" value={row.videoBitrate} onChange={e => update(i, { videoBitrate: Number(e.target.value) })} className={num} />
-          <input type="number" value={row.audioBitrate} onChange={e => update(i, { audioBitrate: Number(e.target.value) })} className={num} />
+          <input type="number" value={bpsToKbps(row.videoBitrate)} onChange={e => update(i, { videoBitrate: kbpsToBps(Number(e.target.value)) })} className={num} />
+          <input type="number" value={bpsToKbps(row.audioBitrate)} onChange={e => update(i, { audioBitrate: kbpsToBps(Number(e.target.value)) })} className={num} />
           <button
             type="button"
             onClick={() => remove(i)}

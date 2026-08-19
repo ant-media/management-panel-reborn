@@ -13,6 +13,9 @@ import type { AppSettings } from './use-app-settings'
 
 export type Rendition = { height: number; videoBitrate: number; audioBitrate: number; forceEncode?: boolean }
 
+export const bpsToKbps = (bps: number): number => bps / 1000
+export const kbpsToBps = (kbps: number): number => Math.round(kbps * 1000)
+
 export type FieldType = 'bool' | 'num' | 'text' | 'textarea' | 'select' | 'radio' | 'renditions'
 
 export type SettingField = {

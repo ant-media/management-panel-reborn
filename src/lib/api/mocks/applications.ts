@@ -79,8 +79,8 @@ function seedSettings(name: string): AppSettings {
     h264Enabled: true, vp8Enabled: false, h265Enabled: false, av1Enabled: false,
     webRTCFrameRate: 30,
     encoderSettings: [
-      { height: 720, videoBitrate: 1500, audioBitrate: 128, forceEncode: true },
-      { height: 360, videoBitrate: 500, audioBitrate: 96, forceEncode: true },
+      { height: 720, videoBitrate: 1_500_000, audioBitrate: 128_000, forceEncode: true },
+      { height: 360, videoBitrate: 500_000, audioBitrate: 96_000, forceEncode: true },
     ],
     hlsMuxingEnabled: true, hlsListSize: '15', hlsTime: '2', deleteHLSFilesOnEnded: true,
     dashMuxingEnabled: false, lLDashEnabled: true, lLHLSEnabled: false, deleteDASHFilesOnEnded: true,
