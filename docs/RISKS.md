@@ -213,6 +213,10 @@ regression here. Keep the dirty check.
 **Watch:** REST paths must stay **origin-absolute** (`/rest/v2/...`); a relative one would resolve inside the panel folder and 404. And **BrowserRouter is off the table**; a path router needs a real base, which a relative build cannot give it. Wanting one means freezing the folder name and setting `base` to the real deploy path.
 And **static assets go through the bundler**: `import logo from '@/assets/…'` so Vite emits a hashed file and resolves it against the module URL. A hand-written `/logo.png` (or a `public/` file referenced absolutely) resolves at the *origin* root and 404s from the subfolder. `index.html` is the one exception: the favicon lives in `public/` and is referenced as `./favicon.png`, relative to the served page.
 
+### The door must not fetch: it renders exactly when the server is gone
+`login-background.jpg` has no consumer but the login page, so its first fetch is that page's first mount, which happens when a restart kills the session: the request fails, a failed `background-image` never retries, and the door sits on its flat fallback looking like broken CSS.
+`main.tsx` warms it at boot and holds the `Image`, so it paints from memory; any new door asset needs the same or it has the same hole.
+
 ### An app named `reborn-panel` makes the panel unreachable
 **Where:** the deploy path `webapps/root/reborn-panel/`.
 **Cause:** app names match `^[a-zA-Z0-9_-]*$`, so that name is creatable, and a Tomcat context at `/reborn-panel` wins over root serving the same path. The panel 404s until the app is renamed. Not a new class of problem (an app named `images` would shadow root's `images/` folder today), just load-bearing here.

@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router'
 import { useAuth } from '@/contexts/auth-context'
+// Backdrop is warmed at boot (main.tsx); a new asset here needs the same.
 import background from '@/assets/login-background.jpg'
 import logo from '@/assets/ant-media-logo.png'
 
