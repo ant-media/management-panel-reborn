@@ -42,12 +42,13 @@ export function useApi<T>(fetcher: Fetcher<T>, options: Options = {}) {
     if (!enabled) return
 
     let mounted = true
-    let currentCtrl: AbortController | null = null
+    let inFlight = false
+    const ctrl = new AbortController()
 
     const run = async () => {
-      currentCtrl?.abort()
-      const ctrl = new AbortController()
-      currentCtrl = ctrl
+      // Skip the tick instead of aborting: a response slower than pollMs would never land.
+      if (inFlight) return
+      inFlight = true
 
       setState(s => ({ ...s, isLoading: s.data === null, isFetching: true }))
 
@@ -60,6 +61,8 @@ export function useApi<T>(fetcher: Fetcher<T>, options: Options = {}) {
         if (err instanceof DOMException && err.name === 'AbortError') return
         const error = err instanceof Error ? err : new Error(String(err))
         setState(s => ({ data: s.data, error, isLoading: false, isFetching: false }))
+      } finally {
+        inFlight = false
       }
     }
 
@@ -68,7 +71,7 @@ export function useApi<T>(fetcher: Fetcher<T>, options: Options = {}) {
     const id = pollMs ? window.setInterval(() => void run(), pollMs) : null
     return () => {
       mounted = false
-      currentCtrl?.abort()
+      ctrl.abort()
       if (id !== null) window.clearInterval(id)
     }
   }, [enabled, pollMs, version, refetchKey])

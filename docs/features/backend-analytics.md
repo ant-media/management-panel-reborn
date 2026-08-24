@@ -41,8 +41,11 @@ Wire contracts: [API.md](../API.md). Open verification + tests: [TODO.md](../dev
 ## `GET /applications/{name}/metrics-history`
 
 - Per-app sampler: its own Vert.x periodic; `Map<appName, ConcurrentLinkedQueue<AppSample>>`;
-  dead apps pruned via `keySet().retainAll(liveApps)`; per-app try/catch so one bad app cannot
-  kill the tick.
+  per-app try/catch so one bad app cannot kill the tick.
+- Ring lifecycle rides the `IScopeListener` in `setApplicationContext`, not the sampler. Scopes
+  register **after** `start()`, so `notifyScopeCreated` seeds a zero sample (an app charts from
+  the second it is up, not a period later) and `notifyScopeRemoved` drops the app's history.
+  Pruning from the sampler meant one tick that could not read an app wiped a live ring.
 - **INVARIANT: the sampler's reads are blocking DB calls, so they run off the event loop via
   `getVertx().executeBlocking(() -> { ... }, true)` (ordered, so a slow sample never overlaps
   the next); mirrors `sendWebRTCClientStats`. Do NOT revert to a bare
@@ -58,8 +61,8 @@ Wire contracts: [API.md](../API.md). Open verification + tests: [TODO.md](../dev
   works standalone and clustered. Every node samples redundantly (harmless). The one assumption
   still to verify on a real cluster: HLS/DASH counts are `inc`-summed across edges, not
   last-writer-wins (TODO.md).
-- Config: `server.app_metrics_history_sample_period_ms` (30000) +
-  `server.app_metrics_history_size` (1440, about 12h).
+- Config: `server.app_metrics_history_sample_period_ms` (15000) +
+  `server.app_metrics_history_size` (2880, about 12h).
 - `viewers` depends on `writeStatsToDatastore` (default on; off means 0; must stay on in
   cluster mode). Frontend handling: see [dashboard-widgets.md](dashboard-widgets.md) section 4.
 - No `health` series: AMS has no per-app health metric; the UI renders a placeholder slot.
@@ -69,8 +72,8 @@ Wire contracts: [API.md](../API.md). Open verification + tests: [TODO.md](../dev
 - Push-fed, no sampler: `AntMediaApplicationAdapter.setQualityParameters` already fires per
   stream roughly every 10s (`MuxAdaptor.STAT_UPDATE_PERIOD_MS`) with fresh publish stats +
   viewer counts; it tees one sample into a `StatsCollector` ring
-  `Map<app, Map<streamId, StreamHistory>>` (nested under the per-app map so the existing
-  `retainAll(liveApps)` tick reaps dead apps for free).
+  `Map<app, Map<streamId, StreamHistory>>` (keyed by app, so `notifyScopeRemoved` reaps a
+  removed app's streams for free).
 - Series: `bitrate, viewers (WebRTC+HLS+DASH), speed, encoderQueueSize, droppedPackets,
   droppedFrames, packetLostRatio`.
 - **Bitrate is real instantaneous**, computed inside `StreamHistory.append` from the
@@ -79,7 +82,7 @@ Wire contracts: [API.md](../API.md). Open verification + tests: [TODO.md](../dev
   zero/negative gap clamps to 0. The broadcast record's own `bitrate` field is
   average-since-start and is deliberately not used.
 - Cleanup: deterministic `removeStreamHistory(app, streamId)` at the TOP of `closeBroadcast`
-  (runs for zombi and normal closes), plus the `retainAll(liveApps)` safety net.
+  (runs for zombi and normal closes); the whole app map goes on `notifyScopeRemoved`.
 - Config: `server.stream_metrics_history_size` (720, about 2h at the 10s cadence; roughly 24MB
   at 500 concurrent streams). A value of 0 or less disables collection (guard in
   `addStreamSample`). No period knob; it is push-driven.

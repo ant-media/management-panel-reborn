@@ -13,7 +13,7 @@ import { useViewerStatsEnabled } from '@/features/apps/use-app-settings'
 
 type AppMetricsHistory = { viewers: number[]; streams: number[] }
 
-// Server ring samples every 30s; poll on the slow app-list rhythm, not the 5s live-chart one.
+// Matches the server ring's 15s sample period.
 const POLL_MS = 15_000
 
 type Props = {
@@ -34,9 +34,10 @@ export function AppRow({ app, onOpen }: Props) {
   // viewers come from the DataStore (writeStatsToDatastore); off ⇒ flat 0, so swap the chart.
   const viewersOff = !useViewerStatsEnabled(app.name, open)
 
-  // Normalise so a partial backend response can't crash the charts (each series ⇒ []).
-  const series = data ? { viewers: data.viewers ?? [], streams: data.streams ?? [] } : null
-  const hasData = !!series && (series.viewers.length > 0 || series.streams.length > 0)
+  // Charts render as soon as the server serves the series, empty included. Only a response
+  // without them at all (no collector) falls back to the notice.
+  const hasSeries = Array.isArray(data?.viewers) || Array.isArray(data?.streams)
+  const series = hasSeries ? { viewers: data?.viewers ?? [], streams: data?.streams ?? [] } : null
   const peakViewers = series ? Math.round(Math.max(...series.viewers, 0)) : 0
 
   return (
@@ -70,7 +71,7 @@ export function AppRow({ app, onOpen }: Props) {
       {open && (
         <tr className="bg-[var(--bg-2)] border-b border-[var(--border)]">
           <td colSpan={6} className="px-6 py-5">
-            {series && hasData ? (
+            {series ? (
               <>
                 <div className="flex items-center gap-3 mb-4 text-[12px]">
                   <span className="text-[var(--fg-3)]">Last 12 hours</span>
@@ -92,7 +93,7 @@ export function AppRow({ app, onOpen }: Props) {
                   ? 'Trends unavailable'
                   : isLoading
                     ? 'Loading trends…'
-                    : 'Collecting metrics… history builds over time and resets on server restart'}
+                    : 'Metrics history not collected on this server'}
               </div>
             )}
           </td>

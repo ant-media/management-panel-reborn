@@ -86,7 +86,7 @@ Wire contracts: [API.md](../API.md).
 | --- | --- | --- |
 | `GET /system-resources/history` | complete | standalone yes; cluster no |
 | `GET /network-status` (+ `netOut`/`netIn` series) | complete | standalone yes; cluster no; reads zero in containers (V2) |
-| `GET /applications/{name}/metrics-history` | complete | standalone yes; cluster no; no unit tests |
+| `GET /applications/{name}/metrics-history` | complete | standalone yes; cluster no; ring lifecycle unit-tested |
 | `PUT /cluster/node/{id}/note` | complete, backend + frontend | standalone yes (heartbeat + restart survival); Redis + cluster no; no unit tests |
 | `GET /broadcasts/{id}/metrics-history` (per-stream) | complete, in-memory | standalone yes; cluster no; no unit tests |
 

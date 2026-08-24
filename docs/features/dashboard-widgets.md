@@ -59,19 +59,22 @@ shape; hooks just poll. See ARCHITECTURE.md *Placeholder data*.
   The drilldown charts read `GET /rest/v2/applications/{name}/metrics-history` →
   `{ viewers, streams }`, **real** (`StatsCollector`); mock (`src/lib/api/mocks/applications.ts`) kept for offline dev.
 - **Backend reality (StatsCollector in-memory ring):** a per-app sampler ticks every
-  `server.app_metrics_history_sample_period_ms` (30s) into a per-app ring of `server.app_metrics_history_size` (1440)
+  `server.app_metrics_history_sample_period_ms` (15s) into a per-app ring of `server.app_metrics_history_size` (2880)
   samples ≈ **12h**. Per tick it reads each app's **own DataStore**: `viewers` = `getTotalViewersCount()`
   (WebRTC+HLS+DASH summed over the app's broadcasts), `streams` = `getActiveBroadcastCount()`. Arrays oldest→newest.
+  An app's scope start seeds a zero sample, so a ring is never empty while the app runs
+  (see [backend-analytics.md](backend-analytics.md)).
 - **Why this is cluster-correct for free:** viewer/stream counts live in the **shared** DataStore (edges `inc` the
   broadcast record), and each app owns its own store, so any node computes the **cluster-wide** per-app totals with
   no cross-node calls. In a cluster every node samples the same shared values (redundant but harmless).
 - **`health` is not served**: AMS has no per-app health metric and the row reserves no slot for one (two
   columns). The frontend tolerates a partial response (missing series ⇒ no crash); states: error ⇒
-  "Trends unavailable", empty ring ⇒ "Collecting metrics…", else charts.
+  "Trends unavailable", no series at all ⇒ "Metrics history not collected on this server", else charts.
+  An empty or one-sample series still renders the charts: a blank card beats hiding the widget.
 
 ### Shortcomings / edge cases (per-app metrics-history)
-- **In-memory only**: history is **lost on server restart** and rebuilds from empty (takes up to 12h to fill);
-  the row shows "Collecting metrics…" until the ring has samples. Durable/persisted history is parked in [TODO.md](../dev-progress/TODO.md).
+- **In-memory only**: history is **lost on server restart** and rebuilds from empty (takes up to 12h to fill).
+  Durable/persisted history is parked in [TODO.md](../dev-progress/TODO.md).
 - **`writeStatsToDatastore` dependency**: `viewers` reads viewer counts from the DataStore, which are only written
   when `writeStatsToDatastore` is on (the **default**). If an operator disables it, **viewers read 0** (streams are
   unaffected). It **must** stay on in cluster mode (it's how viewers aggregate across nodes); noted at `AppSettings#writeStatsToDatastore`.
@@ -100,4 +103,4 @@ shape; hooks just poll. See ARCHITECTURE.md *Placeholder data*.
 | Network bandwidth | **real** (host-only) | container fallback (veth); see §1 caveat |
 | GPU | **real** | none (optional: add temperature) |
 | Cluster summary | **real** (meters) | per-node time-series to restore sparklines |
-| App drilldown | **real** (viewers/streams, in-memory) | durable store; define + serve `health`; per-app sampler is 12h/30s |
+| App drilldown | **real** (viewers/streams, in-memory) | durable store; define + serve `health`; per-app sampler is 12h/15s |

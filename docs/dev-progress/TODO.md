@@ -78,8 +78,8 @@ board. Backend design + invariants:
 
 ### Recent UI fixes (in code, not yet checked on a live server)
 
-- [ ] Dashboard app row: "Collecting metrics" clears on its own shortly after the first sample,
-  and the graphs advance while the row stays expanded (history polls at 15s while open).
+- [ ] Dashboard app row: charts are there right after a server restart (the scope-create seed),
+  and they advance while the row stays expanded (server samples at 15s, the row polls at 15s).
 - [ ] Embedded player: Escape closes the modal even after clicking inside the iframe; in
   fullscreen the first Escape only exits fullscreen.
 - [ ] Tall modals (player, VoD picker) on a short window: header and footer stay pinned, only the
@@ -128,8 +128,8 @@ deployed via the combined `panel-release-<ver>.zip` extracted over `webapps/root
   edges).
 - [ ] Per-app sampler stays off the event loop under load (`executeBlocking`, ordered: a slow
   sample must not overlap the next).
-- [ ] Restart: rings are in-memory, so after a restart the panel shows "Collecting metrics"
-  states and rebuilds from empty.
+- [ ] Restart: rings are in-memory, so after a restart every app charts from its seeded zero
+  and rebuilds from there.
 
 ### Node note
 
@@ -177,9 +177,10 @@ a playlist, or a Mongo-backed server. Semantics: [API.md](../API.md); traps: [RI
 
 ## Tests to write
 
-- [ ] **Per-app metrics (Phase C):** the `StatsCollector` per-app sampler;
+- [ ] **Per-app metrics (Phase C):** the `StatsCollector` sampler tick;
   `DataStore.getTotalViewersCount()` across `InMemoryDataStore` / `MapBasedDataStore` /
-  `MongoStore`; the REST shim.
+  `MongoStore`; the REST shim. (Ring lifecycle, seed on scope create and drop on scope remove,
+  is covered in `StatsCollectorTest`.)
 - [ ] **Per-stream metrics (Phase 16):** bitrate derivation (first-sample baseline,
   counter-reset clamp, zero-gap guard); ring eviction at the size cap; `removeStreamHistory` +
   the `retainAll(liveApps)` prune; the `BroadcastRestService` shim.
