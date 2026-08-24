@@ -1,7 +1,8 @@
 # Legacy panel switcher
 
-The new panel ships next to the old console, in the same AMS build. The old Angular console keeps
-`/`. The new panel goes into `/reborn-panel/`, a folder inside the same root webapp. Each panel
+The new panel ships next to the old console, in the same AMS build. That is what
+`release.sh --with-legacy` builds and it is the only layout CI publishes. The old Angular console
+keeps `/`. The new panel goes into `/reborn-panel/`, a folder inside the same root webapp. Each panel
 keeps its own login page, and each one carries a switch above the card that links to the other.
 You pick a panel at the door, then log in there.
 
@@ -60,6 +61,13 @@ Two rules fall out of this, and breaking either one breaks the deploy:
 - **REST paths stay origin-absolute.** A relative one would resolve inside the panel folder and 404.
 - **No BrowserRouter.** A path router needs a real base, and a relative build cannot give it one.
 
+So `./release.sh` on its own packs the same `dist/` at the zip root, and the panel serves at `/`
+with no old console anywhere. The one thing that build cannot work out for itself is whether the
+old console is there, which is why the switch pill is a build flag: `--with-legacy` exports
+`PANEL_SWITCH=on`, vite bakes it in as `__LEGACY_SWITCH__`, and `PanelSwitch` renders. Off, the
+component is tree shaken out. `redeploy.sh` defaults it on, because it only ever deploys into the
+subfolder next to the console.
+
 ## The name
 
 `reborn-panel`. App names match `^[a-zA-Z0-9_-]*$`, so someone could create an app with that
@@ -74,7 +82,8 @@ other panel's login page. Nothing is stored and nothing is posted, so the switch
 have a session and it cannot get out of sync with one.
 
 - old console: `<a href="/reborn-panel/">`, in `login.component.html`, behind `*ngIf="rebornSwitcher"`.
-- new panel: `<a href="/">`, the `PanelSwitch` in `features/auth/login-page.tsx`.
+- new panel: `<a href="/">`, the `PanelSwitch` in `features/auth/login-page.tsx`, behind the
+  `legacySwitch` build flag.
 
 Each link is a full page load, not a route, because these are two separate apps. Both hrefs are
 origin-absolute; the panel's relative asset base does not apply to them (see *The build does not

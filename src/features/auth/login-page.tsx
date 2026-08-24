@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { errorMessage } from '@/lib/api'
+import { legacySwitch } from '@/lib/panel-build'
 import { useAuth } from '@/contexts/auth-context'
 import { AuthField, DOOR_CARD, FormError } from './form'
 
@@ -42,7 +43,7 @@ export function LoginPage() {
 
   return (
     <>
-      <PanelSwitch />
+      {legacySwitch && <PanelSwitch />}
       <Card className={DOOR_CARD}>
         <h1 className="text-[15px] font-medium text-[var(--fg)] mb-1">Sign in</h1>
         <p className="text-[12px] text-[var(--fg-3)] mb-5">Use your administrator account.</p>
@@ -74,7 +75,8 @@ export function LoginPage() {
   )
 }
 
-// The classic console owns the origin root; this panel ships in a subfolder beside it.
+// Only rendered in a build that ships both panels: the classic console owns the origin root and
+// this panel sits in a subfolder beside it.
 function PanelSwitch() {
   const opt = 'h-[30px] px-4 flex items-center gap-1.5 rounded-full border text-[12.5px] font-medium transition-colors'
   return (

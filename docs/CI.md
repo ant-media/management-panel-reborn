@@ -3,8 +3,8 @@
 How the panel gets built, packaged, and delivered to Ant Media Server. Everything runs on
 GitHub Actions. You can build locally too, but real releases should come from CI.
 
-The panel does not ship alone. One zip carries both panels: the legacy console at the web root
-and this panel under `reborn-panel/`. AMS unzips it over `webapps/root`.
+The panel does not ship alone. The zip CI builds carries both panels: the legacy console at the web
+root and this panel under `reborn-panel/`. AMS unzips it over `webapps/root`.
 
 ## How to release
 
@@ -63,7 +63,8 @@ on `WORK-BRANCHES` not updated in that long. `panel-master.zip` is never deleted
 
 ## What's in the zip
 
-Content-only, so it unzips straight over the server's `webapps/root`:
+Content-only, so it unzips straight over the server's `webapps/root`. CI always builds the
+two-panel layout:
 
 ```
 panel-release-<version>.zip
@@ -71,6 +72,9 @@ panel-release-<version>.zip
 ├── reborn-panel/             this panel
 └── version.json              build stamp, CI only, do not deploy
 ```
+
+A plain `./release.sh` builds the other layout: this panel at the zip root, no legacy console, and
+the login switch pill off. Nothing in CI uses it, it is there for a panel-only deploy.
 
 Deploy by hand:
 
@@ -93,17 +97,25 @@ its exact version in one request.
 
 ## Building locally
 
-`./release.sh` does what CI does: builds the legacy console (`build-legacy.sh`), builds this
-panel, writes the stamp, zips both.
+`./release.sh --with-legacy` does what CI does: builds the legacy console (`build-legacy.sh`),
+builds this panel, writes the stamp, zips both.
 
 ```bash
-./release.sh                 # full combined zip
-./release.sh --skip-legacy   # this panel only, no legacy console in the zip
-OUT_ZIP=my.zip ./release.sh  # custom output name
+./release.sh --with-legacy                # the combined zip, same as CI
+./release.sh                              # this panel only, at the zip root
+OUT_ZIP=my.zip ./release.sh --with-legacy # custom output name
+```
+
+Pass a path to `--with-legacy` and it builds that console checkout instead of cloning:
+
+```bash
+./release.sh --with-legacy ../Ant-Media-Management-Console
 ```
 
 The stamp fields can be overridden with env vars (`PANEL_CHANNEL`, `PANEL_COMMIT`,
-`PANEL_BRANCH`, `PANEL_BUILT_AT`); CI sets them, local builds fall back to git. Needs
+`PANEL_BRANCH`, `PANEL_BUILT_AT`); CI sets them, local builds fall back to git. The login switch
+pill follows the layout and `PANEL_SWITCH=on|off` forces it, see
+[features/legacy-switcher.md](features/legacy-switcher.md). Needs
 node >= 20.19, pnpm, git and zip; on NixOS the script runs everything through `nix-shell`
 on its own.
 
@@ -116,7 +128,7 @@ AMS CI downloads the zip at build time instead of building the panels itself
 build fails with a message pointing back at the runbook above.
 - **master**: `panel-master.zip` from `WORK-BRANCHES`.
 - **Any other branch**: that branch's snapshot, but only if its `version.json` commit matches
-the panel branch head. Stale or missing -> AMS clones the panel branch and runs `release.sh`
-itself. No panel branch with that name, or the local build fails -> `panel-master.zip`.
+the panel branch head. Stale or missing -> AMS clones the panel branch and runs
+`release.sh --with-legacy` itself. No panel branch with that name, or the local build fails -> `panel-master.zip`.
 
 `version.json` is always excluded on extract, so a running server never serves it.

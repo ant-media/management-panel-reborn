@@ -15,6 +15,10 @@ if [ ! -d "$ROOT" ]; then
     exit 1
 fi
 
+# This script always deploys next to the legacy console, so the login switch pill belongs here.
+# PANEL_SWITCH=off drops it (vite.config.ts bakes it in).
+export PANEL_SWITCH=${PANEL_SWITCH:-on}
+
 on_nix() {
     command -v nix-shell >/dev/null 2>&1 && [ -f shell.nix ]
 }

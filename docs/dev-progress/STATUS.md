@@ -71,8 +71,9 @@ branch in both (as of 2026-07-07).
   door pings its New UI segment once on load. Each panel authenticates its own users and ends any session
   it cannot identify, so no identity crosses between the two apps; the legacy side (switch + targeted logout) lives
   behind the `rebornSwitcher` build flag on `Ant-Media-Management-Console` `feature/reborn-panel-switcher`
-  (off by default, pending merge to master as of 2026-07-21). `release.sh` here builds both and emits the
-  content-only `panel-release-<ver>.zip`, validated end-to-end on node 22 and 24. Live checks and the
+  (off by default, pending merge to master as of 2026-07-21). `release.sh --with-legacy` here builds both and emits
+  the content-only `panel-release-<ver>.zip`, validated end-to-end on node 22 and 24. Plain
+  `./release.sh` is the other layout: this panel alone at the web root, switch pill off. Live checks and the
   backend `reborn-panel` name reservation are open (TODO.md). Design:
   [features/legacy-switcher.md](../features/legacy-switcher.md). After that, Phase 19 (cluster origin/edge
   analytics) and the rest of V1.

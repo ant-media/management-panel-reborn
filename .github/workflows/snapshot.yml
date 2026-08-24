@@ -44,7 +44,7 @@ jobs:
           PANEL_COMMIT: ${{ github.sha }}
           PANEL_BRANCH: ${{ github.ref_name }}
           OUT_ZIP: panel-${{ steps.slug.outputs.slug }}.zip
-        run: ./release.sh
+        run: ./release.sh --with-legacy
 
       - name: Publish to WORK-BRANCHES pre-release
         env:

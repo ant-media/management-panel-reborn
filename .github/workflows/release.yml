@@ -52,7 +52,7 @@ jobs:
           RELEASE_VERSION: ${{ steps.ver.outputs.version }}
           PANEL_COMMIT: ${{ github.sha }}
           OUT_ZIP: panel-release-${{ steps.ver.outputs.version }}.zip
-        run: ./release.sh
+        run: ./release.sh --with-legacy
 
       - name: Create draft release
         env:

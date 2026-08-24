@@ -12,3 +12,9 @@ declare const __PANEL_BUILD__: {
 }
 
 export const panelBuild = __PANEL_BUILD__
+
+// True only in builds that ship the classic console beside this panel (`release.sh --with-legacy`).
+// Gates the login-page switch pill: with no console at /, the pill would point at this panel itself.
+declare const __LEGACY_SWITCH__: boolean
+
+export const legacySwitch = __LEGACY_SWITCH__

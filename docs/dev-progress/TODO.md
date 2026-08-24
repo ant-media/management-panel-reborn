@@ -96,8 +96,8 @@ board. Backend design + invariants:
 ### Legacy panel switcher
 
 Design: [features/legacy-switcher.md](../features/legacy-switcher.md). Everything here needs both panels
-deployed via the combined `panel-release-<ver>.zip` extracted over `webapps/root` (legacy at `/`, new panel at
-`/reborn-panel/`).
+deployed via the combined `panel-release-<ver>.zip` (`release.sh --with-legacy`) extracted over
+`webapps/root` (legacy at `/`, new panel at `/reborn-panel/`).
 
 - [ ] Assets load from the subfolder (relative base), hash routes work, and a hard refresh on a deep
   route still comes back to the same page.
