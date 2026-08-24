@@ -13,7 +13,7 @@
 #   OUT_ZIP          output zip path           (default: panel-release-<version>.zip)
 #   PANEL_SUBDIR     panel folder under --with-legacy   (default: reborn-panel)
 #   PANEL_SWITCH     on|off, forces the login switch pill (default: on with legacy, else off)
-#   plus everything build-legacy.sh reads (LEGACY_BRANCH, LEGACY_DIR, FORCE_INSTALL, ...)
+#   plus what build-legacy.sh reads, --with-legacy only (LEGACY_BRANCH, LEGACY_DIR, ...)
 #
 # Flags:
 #   --with-legacy [DIR]  also build the legacy console and give it the zip root. DIR builds
@@ -46,6 +46,15 @@ while [ $# -gt 0 ]; do
     esac
     shift
 done
+
+# LEGACY_* only mean something in the --with-legacy layout. Before the flag existed, LEGACY_DIR on
+# its own picked the console to build, so honour that muscle memory instead of quietly handing back
+# a panel-only zip under the usual release name.
+if [ -z "$WITH_LEGACY" ] && { [ -n "$LEGACY_DIR" ] || [ -n "${LEGACY_BRANCH:-}" ]; }; then
+    echo "error: LEGACY_DIR/LEGACY_BRANCH is set but --with-legacy is not, so no legacy console"
+    echo "  would be built. Add --with-legacy, or unset them for a panel-only zip."
+    exit 1
+fi
 export LEGACY_DIR
 
 # The switch pill can only lead somewhere when the classic console ships beside the panel, so the
