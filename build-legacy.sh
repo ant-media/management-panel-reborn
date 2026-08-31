@@ -5,7 +5,7 @@
 #
 # Config (all optional, env vars):
 #   LEGACY_REPO    console git URL          (default: public HTTPS remote)
-#   LEGACY_BRANCH  branch to build          (default: feature/reborn-panel-switcher)
+#   LEGACY_BRANCH  branch to build          (default: master)
 #   LEGACY_DIR     build this local checkout instead of cloning (fast local iteration)
 #   OUT_DIR        where to place the dist  (default: .legacy-dist)
 #   FORCE_INSTALL  =1 to reinstall node_modules even if present
@@ -15,7 +15,7 @@ cd "$(dirname "$0")"
 
 # ---- config (defaults chosen so the script just runs) -----------------------
 LEGACY_REPO=${LEGACY_REPO:-https://github.com/ant-media/Ant-Media-Management-Console.git}
-LEGACY_BRANCH=${LEGACY_BRANCH:-feature/reborn-panel-switcher}   # TODO: switch to master after merge
+LEGACY_BRANCH=${LEGACY_BRANCH:-master}
 LEGACY_DIR=${LEGACY_DIR:-}
 OUT_DIR=${OUT_DIR:-.legacy-dist}
 FORCE_INSTALL=${FORCE_INSTALL:-}

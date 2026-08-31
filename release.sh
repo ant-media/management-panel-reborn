@@ -110,7 +110,7 @@ else
     if [ -n "$LEGACY_DIR" ]; then
         echo "  legacy: local checkout $LEGACY_DIR"
     else
-        echo "  legacy: branch ${LEGACY_BRANCH:-feature/reborn-panel-switcher}"
+        echo "  legacy: branch ${LEGACY_BRANCH:-master}"
     fi
 fi
 echo "  switch: $PANEL_SWITCH"

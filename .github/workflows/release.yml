@@ -51,6 +51,7 @@ jobs:
         env:
           RELEASE_VERSION: ${{ steps.ver.outputs.version }}
           PANEL_COMMIT: ${{ github.sha }}
+          LEGACY_BRANCH: master
           OUT_ZIP: panel-release-${{ steps.ver.outputs.version }}.zip
         run: ./release.sh --with-legacy
 
