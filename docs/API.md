@@ -17,7 +17,7 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 **Easy-to-miss wire facts (verified against the live capture; these trip people up):**
 - **Bulk delete is `DELETE /broadcasts/?ids=a,b,c`** (comma-separated query param on the collection path), **not** `/broadcasts/bulk`. Same for `/vods/`.
 - **Count endpoints return `{ number: N }`**, not a bare integer. The api layer unwraps to `number`.
-- **`GET /licence-status` can return an empty body.** The populated `Licence` is in `system-resources.license` and `last-licence-status`. Read license from there.
+- **`GET /licence-status?key=` runs a check and overwrites the cached licence; without `key` it 204s.** Read status from `GET /last-licence-status` (the cache, also carried by `system-resources.license`); call `licence-status?key=` only to re-check now, after saving a key.
 - **Cluster node endpoints HTTP 500 on a standalone server** (not `-1`/`[]`). Gate every `cluster/node*` call on `cluster-mode-status.success === true`.
 - **`GET /log-file` 500s without `?logType=`.** Pass `logType=null` (server log) or `logType=error`. Returns `{ logContent }`, not a bare string.
 - **List query params are snake_case:** `sort_by`, `order_by`, `search`, `type_by` (broadcasts only).
@@ -64,8 +64,11 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 
 ### Licensing  (`RestServiceV2`)
 - `GET /enterprise-edition` → `Result{success}`
-- `GET /licence-status`: **may be empty** (see gotchas) · `GET /last-licence-status` → `Licence`
+- `GET /licence-status?key=<k>` → `Licence`: runs a check and rewrites the cache. `POST /server-settings` does not, so a saved key reads stale until this call or the backend's 5-min check.
+- `GET /last-licence-status` → `Licence`: the cache. Community returns **null**. A blank `status` means no verdict yet (fresh boot, marketplace build, local licence server with no IPs), not a failure.
+- **The backend never trims the key**; a padded key fails every check. Trim before saving.
 - `Licence`: `{ licenceId, startDate, endDate, type, licenceCount, owner, status, hourUsed }`
+- **`status` vocabulary** (no `OK`/`Valid`): `valid`; `expiring` (local licence server, still in force); `serverRequestError` (licence server unreachable, not a bad key); failures `INVALID_KEY` `NO_LICENSE_FOUND` `NO_LICENSE_DEFINED` `LICENSE_BLOCKED` `LICENSE_EXPIRED` `ALL_LICENSES_ARE_USED` `TRIAL_PERIOD_ENDED`, plus a local server's `invalid` / `expired`.
 
 ### Logs  (`RestServiceV2` → `CommonRestService.getLogFile`)
 - `GET /log-file/{offset}/{charSize}?logType={null|error}` → `{ logContent, logContentSize, logFileSize }`

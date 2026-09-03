@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useApi } from '@/lib/api/use-api'
-import { server, system } from '@/lib/api/endpoints'
+import { system } from '@/lib/api/endpoints'
 
 const SYS_POLL_MS = 5_000
 
@@ -52,15 +52,6 @@ export type ServerVersion = {
   versionName?: string
   versionType?: string
   buildNumber?: string
-}
-
-export type LicenceStatus = {
-  licenceId?: string
-  status?: string
-  type?: string
-  endDate?: string
-  startDate?: string
-  owner?: string
 }
 
 // ── Derived display shape ────────────────────────────────────────────────────
@@ -156,7 +147,6 @@ export type DashboardData = {
   history: DashboardHistory
   network: NetworkStatus | null
   version: ServerVersion | null
-  licence: LicenceStatus | null
   error: Error | null
   isLoading: boolean
   refresh: () => void
@@ -167,7 +157,6 @@ export function useDashboardData(): DashboardData {
   const history = useApi<Partial<DashboardHistory>>(signal => system.resourcesHistory(signal),  { pollMs: SYS_POLL_MS })
   const network = useApi<NetworkStatus>(          signal => system.networkStatus(signal),    { pollMs: SYS_POLL_MS })
   const version = useApi<ServerVersion>(          signal => system.version(signal))
-  const licence = useApi<LicenceStatus>(          signal => server.lastLicenceStatus(signal) as Promise<LicenceStatus>)
 
   const metrics = useMemo(() => derive(sys.data), [sys.data])
 
@@ -177,16 +166,15 @@ export function useDashboardData(): DashboardData {
   // crashing on `undefined.length`.
   const historyView = useMemo<DashboardHistory>(() => ({ ...EMPTY_HISTORY, ...history.data }), [history.data])
 
-  const refresh = () => { sys.refresh(); history.refresh(); network.refresh(); version.refresh(); licence.refresh() }
+  const refresh = () => { sys.refresh(); history.refresh(); network.refresh(); version.refresh() }
 
   return {
     metrics,
     history: historyView,
     network: network.data,
     version: version.data,
-    licence: licence.data,
     // History + network are decorative/optional: a missing endpoint must not banner the page.
-    error:   sys.error ?? version.error ?? licence.error,
+    error:   sys.error ?? version.error,
     isLoading: sys.isLoading,
     refresh,
   }

@@ -12,9 +12,9 @@ import { ToastBanner } from '@/components/shared/toast'
 import { useToast } from '@/lib/use-toast'
 import { panelBuild } from '@/lib/panel-build'
 import { LOG_LEVELS, saveServerSettings, useServerSettings, type ServerSettings } from './use-server-settings'
+import { useLicence, type LicenceState } from './use-licence'
 
 type VersionInfo = { versionName?: string; versionType?: string; buildNumber?: string }
-type LicenceInfo = { status?: string; type?: string; owner?: string; endDate?: string }
 
 export function ServerTab() {
   const { data, error, isLoading, refresh } = useServerSettings()
@@ -22,8 +22,7 @@ export function ServerTab() {
   // Edition comes from the endpoint that answers exactly that, not from sniffing `versionType`
   // (a display string). Same source as the app-settings rule context.
   const edition = useApi(signal => server.enterpriseEdition(signal))
-  // /licence-status comes back empty on a live server; the populated Licence is at /last-licence-status.
-  const licence = useApi<LicenceInfo>(signal => server.lastLicenceStatus(signal) as Promise<LicenceInfo>)
+  const { licence, state: licenceState, recheck } = useLicence()
   const { toast, flash, dismiss } = useToast()
 
   const [baseline, setBaseline] = useState<ServerSettings | null>(null)
@@ -50,7 +49,12 @@ export function ServerTab() {
     setSaving(false)
     // Keep the draft on failure so edits survive; no refetch on success (the POST
     // returns only {success} and a refetch would race a fresh edit, Phase 11 lesson).
-    if (res.success) { setBaseline(draft); flash('ok', 'Server settings saved.') }
+    if (res.success) {
+      setBaseline(draft)
+      flash('ok', 'Server settings saved.')
+      // The POST does not re-check the key; without this the badge reads stale for up to 5 minutes.
+      void recheck(draft.licenceKey ?? '')
+    }
     else {
       const why = resultMessage(res)
       flash('err', why ? `Save failed: ${why}` : 'Save failed. Your changes are kept, so you can retry.')
@@ -82,7 +86,7 @@ export function ServerTab() {
             {draft.sslEnabled ? <Pill tone="ok" dot>enabled</Pill> : <Pill tone="neutral" dot>disabled</Pill>}
           </InfoRow>
           {isEnterprise && (
-            <InfoRow label="License"><LicenceBadge licence={licence.data} marketBuild={marketBuild} /></InfoRow>
+            <InfoRow label="License"><LicenceBadge state={licenceState} endDate={licence?.endDate} marketBuild={marketBuild} /></InfoRow>
           )}
         </div>
         {!isEnterprise && (
@@ -102,13 +106,14 @@ export function ServerTab() {
           options={LOG_LEVELS}
         />
         {showLicenceKey && (
+          // The backend never trims, and a padded key fails every check.
           <Field
             label="License key"
             mono
             placeholder="Enter your enterprise license key"
             hint="The key from your Ant Media account."
             value={String(draft.licenceKey ?? '')}
-            onChange={v => set({ licenceKey: v })}
+            onChange={v => set({ licenceKey: v.trim() })}
           />
         )}
         <div className="flex items-center justify-end gap-2 pt-1">
@@ -132,14 +137,17 @@ function InfoRow({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-function LicenceBadge({ licence, marketBuild }: { licence: LicenceInfo | null; marketBuild: boolean }) {
+function LicenceBadge({ state, endDate, marketBuild }: {
+  state: LicenceState | null
+  endDate?: string | null
+  marketBuild: boolean
+}) {
   if (marketBuild) return <Pill tone="ok" dot>marketplace</Pill>
-  if (!licence) return <span className="text-[var(--fg-3)]">-</span>
-  const valid = licence.status === 'OK' || licence.status === 'Valid'
+  if (!state) return <span className="text-[var(--fg-3)]">-</span>
   return (
     <span className="inline-flex items-center gap-2">
-      <Pill tone={valid ? 'ok' : 'err'} dot>{valid ? 'active' : (licence.status ?? 'invalid')}</Pill>
-      {valid && licence.endDate && <span className="text-[var(--fg-3)] text-[11.5px]">until {licence.endDate}</span>}
+      <Pill tone={state.tone} dot>{state.label}</Pill>
+      {endDate && <span className="text-[var(--fg-3)] text-[11.5px]">until {endDate}</span>}
     </span>
   )
 }

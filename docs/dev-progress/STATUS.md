@@ -14,6 +14,9 @@ branch in both (as of 2026-07-07).
   cluster, server settings (Server / TLS / Users), logs, auth. Builds clean.
 - **Backend analytics: complete, verification open.** Five endpoints shipped (table below).
   Cluster verification and unit tests are the open debt; see [TODO.md](TODO.md).
+- **Licence status has one owner.** `LicenceProvider` polls `last-licence-status`, maps the
+  backend's `status` vocabulary, and re-checks after a key save. A bad licence shows a red topbar
+  pill and a dialog that re-raises on page changes, at most once a minute. Contract + traps: [API.md](../API.md) *Licensing*, [RISKS.md](../RISKS.md).
 - **Stream Import/Export shipped** (pulled from V2). Definition-only JSON export + bulk import
   via a new `POST /broadcasts/create-list` endpoint (backend method + unit test in
   `BroadcastRestService`). Design: [features/streams-import-export.md](../features/streams-import-export.md);

@@ -8,6 +8,7 @@ import { threshColor } from '@/components/shared/ring'
 import { NewAppModal } from '@/features/apps/new-app-modal'
 import { useApplications } from '@/features/apps/use-applications'
 import { useCluster } from '@/features/cluster/use-cluster'
+import { useLicence } from '@/features/server-settings/use-licence'
 import { fmtBytes, fmtCount, fmtUptime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { ApplicationsCard } from './applications-card'
@@ -22,7 +23,7 @@ const TIER1_KEYS: OpenKey[] = ['cpu', 'db', 'live']
 type Capacity = { usedBytes: number; totalBytes: number; freeBytes: number }
 
 export function DashboardPage() {
-  const { metrics, history, network, version, licence, error, isLoading, refresh } = useDashboardData()
+  const { metrics, history, network, version, error, isLoading, refresh } = useDashboardData()
   const { apps, isLoading: appsLoading, refresh: refreshApps } = useApplications()
   const { inCluster, nodes } = useCluster()
   const navigate = useNavigate()
@@ -54,7 +55,7 @@ export function DashboardPage() {
   return (
     <Page
       title="Dashboard"
-      subtitle={<HeaderInfo version={version} licence={licence} uptimeMs={metrics.uptimeMs} />}
+      subtitle={<HeaderInfo version={version} uptimeMs={metrics.uptimeMs} />}
     >
       {error && <LoadErrorBanner entity="dashboard data" error={error} onRetry={refreshAll} className="mb-5" />}
 
@@ -132,14 +133,12 @@ export function DashboardPage() {
   )
 }
 
-function HeaderInfo({ version, licence, uptimeMs }: {
+function HeaderInfo({ version, uptimeMs }: {
   version: DashboardData['version']
-  licence: DashboardData['licence']
   uptimeMs: number | null
 }) {
   const versionLabel = version ? `${version.versionType ?? ''} ${version.versionName ?? ''}`.trim() || 'Unknown' : '…'
-  const licenceLabel = licence?.type ?? null
-  const licenceTone = licence?.status?.toLowerCase() === 'ok' ? 'ok' : licence ? 'warn' : 'neutral'
+  const { state: licence } = useLicence()
   return (
     <div className="flex flex-wrap items-center gap-3">
       <span>System overview</span>
@@ -151,7 +150,8 @@ function HeaderInfo({ version, licence, uptimeMs }: {
           <span>up {fmtUptime(uptimeMs)}</span>
         </>
       )}
-      {licenceLabel && <Pill tone={licenceTone}>licence: {licenceLabel}</Pill>}
+      {/* Repeats the topbar pill on purpose: a bad licence should be hard to miss. */}
+      {licence && <Pill tone={licence.tone} dot>license: {licence.label}</Pill>}
     </div>
   )
 }

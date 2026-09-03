@@ -1,4 +1,5 @@
 import { registerMock } from '@/lib/api'
+import type { Licence } from '@/lib/api/endpoints'
 
 const GB = 1024 ** 3
 const startedAt = Date.now() - 4 * 3600_000 + Math.floor(Math.random() * 3600_000)
@@ -151,14 +152,23 @@ registerMock('GET', '/rest/v2/system-resources/history', () => {
   return Object.fromEntries(Object.entries(history).map(([k, buf]) => [k, [...buf]]))
 })
 
-const mockLicence = () => ({
-  licenceId: 'mock-licence-id',
-  status:    'OK',
-  type:      'enterprise',
-  startDate: '2025-01-01',
-  endDate:   '2026-12-31',
-  owner:     'mock-owner',
+// Live wire shapes: `status` is the backend's vocabulary, and a rejected key nulls every field but `type`.
+const validLicence: Licence = {
+  licenceId: 'mock-licence-id', startDate: '2025-01-01', endDate: '2026-12-31',
+  type: 'regular', licenceCount: '10', owner: 'mock-owner', status: 'valid', hourUsed: '0',
+}
+const invalidLicence: Licence = {
+  licenceId: null, startDate: null, endDate: null,
+  type: 'regular', licenceCount: null, owner: null, status: 'INVALID_KEY', hourUsed: null,
+}
+
+// The server caches the last check; only /licence-status?key= runs a new one.
+let lastLicence: Licence = validLicence
+
+// Backend: keys under 8 chars are rejected outright, and nothing trims.
+registerMock('GET', '/rest/v2/licence-status', ({ query }) => {
+  const key = String(query.key ?? '')
+  lastLicence = key.length >= 8 && key === key.trim() ? validLicence : invalidLicence
+  return lastLicence
 })
-// /licence-status is the empty-on-live one; consumers read /last-licence-status. Both mocked.
-registerMock('GET', '/rest/v2/licence-status', mockLicence)
-registerMock('GET', '/rest/v2/last-licence-status', mockLicence)
+registerMock('GET', '/rest/v2/last-licence-status', () => lastLicence)

@@ -8,14 +8,15 @@ import logo from '@/assets/ant-media-logo.png'
 // First-run welcome. The checkbox is what makes the dismissal permanent, and it starts ticked,
 // so any close (X, backdrop, Escape, the button) is the last one unless the user unticks it.
 
-const STORAGE_KEY = 'ams.beta.notice.seen'
+// Exported so the licence warning dialog can stand down while this one owns the screen.
+export const BETA_NOTICE_SEEN_KEY = 'ams.beta.notice.seen'
 
 // One serif line in an all-sans panel. No webfont to load, and the generic keeps it
 // resolvable in every browser.
 const DISPLAY_FONT = "ui-serif, Georgia, 'Times New Roman', serif"
 
 export function BetaNotice() {
-  const [seen, setSeen] = useStoredState(STORAGE_KEY, false)
+  const [seen, setSeen] = useStoredState(BETA_NOTICE_SEEN_KEY, false)
   const [closed, setClosed] = useState(false)
   const [dontShow, setDontShow] = useState(true)
 
