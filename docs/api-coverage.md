@@ -85,8 +85,8 @@ Maps every `src/lib/api/endpoints/*` method to its REST endpoint, whether a mock
 |---|---|---|---|---|
 | `settings` / `saveSettings` | `server-settings` GET/POST | ✓ | wired | `useServerSettings` |
 | `configureSsl` | `ssl-settings` (POST multipart) | ✓ | wired | `configureSsl` |
-| `licenceStatus` | `licence-status` | ✓ | wired | `useDashboardData`, `server-tab` (**mock is populated; real can be empty**) |
-| `lastLicenceStatus` | `last-licence-status` | - | layer | - |
+| `licenceStatus` | `licence-status?key=` | ✓ | wired | `useLicence.recheck` (forces a check; **requires a non-blank, trimmed key**) |
+| `lastLicenceStatus` | `last-licence-status` | ✓ | wired | `useLicence` (the 15s poll; every licence consumer reads it) |
 | `enterpriseEdition` | `enterprise-edition` | ✓ | wired | `settings-tab` (rule context), `server-tab` (licence-key gate) |
 
 ### `users`  (auth *flow*, authenticate/initial/logout, lives in `lib/auth/api.ts`)

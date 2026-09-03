@@ -138,6 +138,12 @@ Architectural risks, security caveats, and edge cases identified during reviews.
 **Mitigation:** `ServerTab` holds the **whole fetched POJO** as draft and re-POSTs it with edits merged; the mock reproduces the blanking so a partial POST visibly corrupts in dev.
 **Watch:** Never build the server-settings body from just the edited fields. Keep the whole-POJO invariant.
 
+### Licence status is a cache, and a bad key overwrites it
+
+**Risk:** `GET /last-licence-status` returns a cached field (`LicenceService.activeLicence`), written only at boot, by the backend's 5-min `LICENSE_CHECK_PERIOD`, or by `GET /licence-status?key=`. **`POST /server-settings` is not on that list**, so saving a key leaves the panel showing the old status until something forces a check; the original bug report was "saved the key, still says invalid, needed a server restart". Two traps in the fix: `licence-status?key=` **writes** the cache, so calling it with a blank or padded key caches `INVALID_KEY`/`NO_LICENSE_FOUND` and makes things worse, and **the backend never trims**, so a padded key also breaks its own boot and periodic checks.
+
+**Mitigation:** `LicenceProvider` (`features/server-settings/use-licence.tsx`) is the single owner: it polls the cache and exposes `recheck(key)`, which trims, refuses a blank key, and is called once after a successful settings save. Validity is decided by the backend's `status` vocabulary, never by a guessed string; see [API.md](API.md) *Licensing*.
+
 ### SSL is write-only and restarts the server
 **Where:** `src/features/server-settings/use-ssl.ts` → `POST /ssl-settings` (multipart).
 **Risk:** No GET: the panel can't confirm what cert is active, so the TLS tab can't show or verify current state (it only *applies*). Applying **restarts Ant Media Server** (drops streams, panel unreachable ~1 min). `type` is `valueOf()`'d server-side, so a wrong string 500s.

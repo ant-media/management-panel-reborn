@@ -17,7 +17,7 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 **Easy-to-miss wire facts (verified against the live capture; these trip people up):**
 - **Bulk delete is `DELETE /broadcasts/?ids=a,b,c`** (comma-separated query param on the collection path), **not** `/broadcasts/bulk`. Same for `/vods/`.
 - **Count endpoints return `{ number: N }`**, not a bare integer. The api layer unwraps to `number`.
-- **`GET /licence-status` can return an empty body.** The populated `Licence` is in `system-resources.license` and `last-licence-status`. Read license from there.
+- **`GET /licence-status` needs `?key=`; without it it 204s with an empty body.** With a key it **forces a fresh check** against the licence server and **overwrites** the server's cached licence. `GET /last-licence-status` only reads that cache, and is what `system-resources.license` also carries. So: read from `last-licence-status`, and call `licence-status?key=` only when you need the cache re-checked now (after saving a key).
 - **Cluster node endpoints HTTP 500 on a standalone server** (not `-1`/`[]`). Gate every `cluster/node*` call on `cluster-mode-status.success === true`.
 - **`GET /log-file` 500s without `?logType=`.** Pass `logType=null` (server log) or `logType=error`. Returns `{ logContent }`, not a bare string.
 - **List query params are snake_case:** `sort_by`, `order_by`, `search`, `type_by` (broadcasts only).
@@ -64,8 +64,11 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 
 ### Licensing  (`RestServiceV2`)
 - `GET /enterprise-edition` → `Result{success}`
-- `GET /licence-status`: **may be empty** (see gotchas) · `GET /last-licence-status` → `Licence`
+- `GET /licence-status?key=<k>` → `Licence`: **runs a check** and rewrites the cache (see gotchas). `POST /server-settings` does **not** trigger one, so a freshly saved key reads stale until this call or the backend's own 5-min `LICENSE_CHECK_PERIOD`.
+- `GET /last-licence-status` → `Licence`: the cache, never a check. Community returns **null**. The cache starts as an **empty `Licence` with a null `status`**, and stays one on a marketplace build (never checks) and on a local-licence-server build with no `localLicenceServerIps` set, so a blank `status` means *no verdict*, not a failure. Treat it as nothing to report.
+- **The backend never trims the key.** A padded key is rejected (`NO_LICENSE_FOUND`) by both this endpoint and the server's own boot/periodic check, so trim before saving.
 - `Licence`: `{ licenceId, startDate, endDate, type, licenceCount, owner, status, hourUsed }`
+- **`status` vocabulary** (Enterprise `LicenceService`; there is no `OK`/`Valid`): live = **`valid`**, plus **`expiring`** from a local licence server (valid, near its end date). Failures: `INVALID_KEY` `NO_LICENSE_FOUND` `NO_LICENSE_DEFINED` `LICENSE_BLOCKED` `LICENSE_EXPIRED` `ALL_LICENSES_ARE_USED` `TRIAL_PERIOD_ENDED` `serverRequestError` (couldn't reach the licence server, not a bad key), and a local server's `invalid` / `expired`. Community returns **null** (no body).
 
 ### Logs  (`RestServiceV2` → `CommonRestService.getLogFile`)
 - `GET /log-file/{offset}/{charSize}?logType={null|error}` → `{ logContent, logContentSize, logFileSize }`

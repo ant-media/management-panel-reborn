@@ -12,9 +12,9 @@ import { ToastBanner } from '@/components/shared/toast'
 import { useToast } from '@/lib/use-toast'
 import { panelBuild } from '@/lib/panel-build'
 import { LOG_LEVELS, saveServerSettings, useServerSettings, type ServerSettings } from './use-server-settings'
+import { useLicence, type LicenceState } from './use-licence'
 
 type VersionInfo = { versionName?: string; versionType?: string; buildNumber?: string }
-type LicenceInfo = { status?: string; type?: string; owner?: string; endDate?: string }
 
 export function ServerTab() {
   const { data, error, isLoading, refresh } = useServerSettings()
@@ -22,8 +22,7 @@ export function ServerTab() {
   // Edition comes from the endpoint that answers exactly that, not from sniffing `versionType`
   // (a display string). Same source as the app-settings rule context.
   const edition = useApi(signal => server.enterpriseEdition(signal))
-  // /licence-status comes back empty on a live server; the populated Licence is at /last-licence-status.
-  const licence = useApi<LicenceInfo>(signal => server.lastLicenceStatus(signal) as Promise<LicenceInfo>)
+  const { licence, state: licenceState, recheck } = useLicence()
   const { toast, flash, dismiss } = useToast()
 
   const [baseline, setBaseline] = useState<ServerSettings | null>(null)
@@ -46,11 +45,20 @@ export function ServerTab() {
   const save = async () => {
     if (!dirty || saving) return
     setSaving(true)
-    const res = await saveServerSettings(draft)
+    // The backend never trims: a padded key fails its own boot and periodic checks too.
+    const payload = { ...draft, licenceKey: String(draft.licenceKey ?? '').trim() }
+    const res = await saveServerSettings(payload)
     setSaving(false)
     // Keep the draft on failure so edits survive; no refetch on success (the POST
     // returns only {success} and a refetch would race a fresh edit, Phase 11 lesson).
-    if (res.success) { setBaseline(draft); flash('ok', 'Server settings saved.') }
+    if (res.success) {
+      setBaseline(payload)
+      setDraft(payload)
+      flash('ok', 'Server settings saved.')
+      // Saving a key does not re-check it: the badge would read stale until the backend's
+      // own 5-minute cycle. `recheck` no-ops on a blank key (it would cache INVALID_KEY).
+      void recheck(payload.licenceKey)
+    }
     else {
       const why = resultMessage(res)
       flash('err', why ? `Save failed: ${why}` : 'Save failed. Your changes are kept, so you can retry.')
@@ -82,7 +90,7 @@ export function ServerTab() {
             {draft.sslEnabled ? <Pill tone="ok" dot>enabled</Pill> : <Pill tone="neutral" dot>disabled</Pill>}
           </InfoRow>
           {isEnterprise && (
-            <InfoRow label="License"><LicenceBadge licence={licence.data} marketBuild={marketBuild} /></InfoRow>
+            <InfoRow label="License"><LicenceBadge state={licenceState} endDate={licence?.endDate} marketBuild={marketBuild} /></InfoRow>
           )}
         </div>
         {!isEnterprise && (
@@ -132,14 +140,17 @@ function InfoRow({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-function LicenceBadge({ licence, marketBuild }: { licence: LicenceInfo | null; marketBuild: boolean }) {
+function LicenceBadge({ state, endDate, marketBuild }: {
+  state: LicenceState | null
+  endDate?: string | null
+  marketBuild: boolean
+}) {
   if (marketBuild) return <Pill tone="ok" dot>marketplace</Pill>
-  if (!licence) return <span className="text-[var(--fg-3)]">-</span>
-  const valid = licence.status === 'OK' || licence.status === 'Valid'
+  if (!state) return <span className="text-[var(--fg-3)]">-</span>
   return (
     <span className="inline-flex items-center gap-2">
-      <Pill tone={valid ? 'ok' : 'err'} dot>{valid ? 'active' : (licence.status ?? 'invalid')}</Pill>
-      {valid && licence.endDate && <span className="text-[var(--fg-3)] text-[11.5px]">until {licence.endDate}</span>}
+      <Pill tone={state.tone} dot>{state.label}</Pill>
+      {state.live && endDate && <span className="text-[var(--fg-3)] text-[11.5px]">until {endDate}</span>}
     </span>
   )
 }

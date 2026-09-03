@@ -142,6 +142,12 @@ Mutations go through the same owner (`create`/`remove` call the API, then `refre
 consumer sees the change at once; deletes keep an optimistic overlay (a pending-names set) so a
 deleted row vanishes immediately instead of reappearing until the next poll.
 
+The second owner is the licence: `LicenceProvider` (`src/features/server-settings/use-licence.tsx`,
+also mounted in `ProtectedLayout`) owns the 15s poll of `last-licence-status`, the backend's
+`status` vocabulary → tone/label mapping, and `recheck(key)`. The topbar warning pill, the
+dashboard header pill and the Server Settings badge all read it, so they can never disagree
+about whether a licence is valid.
+
 The rule when a new widget needs data: check whether a provider/hook already owns it before
 adding a poll. A second `useApi` poll for the same data means duplicate traffic and two copies
 that disagree mid-cycle. Page-local state (one table's list with its own pagination/search)

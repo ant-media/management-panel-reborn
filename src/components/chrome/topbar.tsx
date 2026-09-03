@@ -1,9 +1,10 @@
-import { useMatches, type UIMatch } from 'react-router'
+import { Link, useMatches, type UIMatch } from 'react-router'
 import { Icon } from '@/components/ui/icon'
 import { Pill } from '@/components/shared/pill'
 import { Tooltip } from '@/components/shared/tooltip'
 import { useConnectionStatus } from '@/contexts/connection-context'
 import { useTheme } from '@/contexts/theme-context'
+import { useLicence } from '@/features/server-settings/use-licence'
 import { fmtAgo } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -31,6 +32,7 @@ export function Topbar() {
         ))}
       </nav>
       <div className="flex items-center gap-0.5 shrink-0">
+        <LicencePill />
         <ConnectionPill />
         <button
           type="button"
@@ -42,6 +44,23 @@ export function Topbar() {
         </button>
       </div>
     </div>
+  )
+}
+
+// Only a definitely-bad licence shows here, so a licence-server outage never nags. Enterprise
+// only: Community has no licence, so `state` stays null and this renders nothing.
+function LicencePill() {
+  const { state } = useLicence()
+  if (!state?.broken) return null
+  return (
+    <Tooltip content="This server's licence is not valid. Open Server settings to fix it.">
+      <Link
+        to="/settings"
+        className="mr-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+      >
+        <Pill tone="err" dot interactive>licence: {state.label}</Pill>
+      </Link>
+    </Tooltip>
   )
 }
 
