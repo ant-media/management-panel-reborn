@@ -150,8 +150,8 @@ function HeaderInfo({ version, uptimeMs }: {
           <span>up {fmtUptime(uptimeMs)}</span>
         </>
       )}
-      {/* Absent on Community and marketplace builds, which have no licence verdict. */}
-      {licence && <Pill tone={licence.tone}>licence: {licence.label}</Pill>}
+      {/* Repeats the topbar pill on purpose: a bad licence should be hard to miss. */}
+      {licence && <Pill tone={licence.tone} dot>license: {licence.label}</Pill>}
     </div>
   )
 }

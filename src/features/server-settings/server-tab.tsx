@@ -45,19 +45,15 @@ export function ServerTab() {
   const save = async () => {
     if (!dirty || saving) return
     setSaving(true)
-    // The backend never trims: a padded key fails its own boot and periodic checks too.
-    const payload = { ...draft, licenceKey: String(draft.licenceKey ?? '').trim() }
-    const res = await saveServerSettings(payload)
+    const res = await saveServerSettings(draft)
     setSaving(false)
     // Keep the draft on failure so edits survive; no refetch on success (the POST
     // returns only {success} and a refetch would race a fresh edit, Phase 11 lesson).
     if (res.success) {
-      setBaseline(payload)
-      setDraft(payload)
+      setBaseline(draft)
       flash('ok', 'Server settings saved.')
-      // Saving a key does not re-check it: the badge would read stale until the backend's
-      // own 5-minute cycle. `recheck` no-ops on a blank key (it would cache INVALID_KEY).
-      void recheck(payload.licenceKey)
+      // The POST does not re-check the key; without this the badge reads stale for up to 5 minutes.
+      void recheck(draft.licenceKey ?? '')
     }
     else {
       const why = resultMessage(res)
@@ -110,13 +106,14 @@ export function ServerTab() {
           options={LOG_LEVELS}
         />
         {showLicenceKey && (
+          // The backend never trims, and a padded key fails every check.
           <Field
             label="License key"
             mono
             placeholder="Enter your enterprise license key"
             hint="The key from your Ant Media account."
             value={String(draft.licenceKey ?? '')}
-            onChange={v => set({ licenceKey: v })}
+            onChange={v => set({ licenceKey: v.trim() })}
           />
         )}
         <div className="flex items-center justify-end gap-2 pt-1">
@@ -150,7 +147,7 @@ function LicenceBadge({ state, endDate, marketBuild }: {
   return (
     <span className="inline-flex items-center gap-2">
       <Pill tone={state.tone} dot>{state.label}</Pill>
-      {state.live && endDate && <span className="text-[var(--fg-3)] text-[11.5px]">until {endDate}</span>}
+      {endDate && <span className="text-[var(--fg-3)] text-[11.5px]">until {endDate}</span>}
     </span>
   )
 }

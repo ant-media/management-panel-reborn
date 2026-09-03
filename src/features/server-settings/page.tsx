@@ -1,13 +1,7 @@
 import { useState } from 'react'
-import { BETA_NOTICE_SEEN_KEY } from '@/components/chrome/beta-notice'
-import { Button } from '@/components/ui/button'
-import { Icon, type IconName } from '@/components/ui/icon'
-import { Modal } from '@/components/ui/modal'
-import { DangerCallout } from '@/components/shared/danger-callout'
 import { Page } from '@/components/shared/page'
-import { storage } from '@/lib/localStorage'
+import { Icon, type IconName } from '@/components/ui/icon'
 import { cn } from '@/lib/utils'
-import { useLicence } from './use-licence'
 import { ServerTab } from './server-tab'
 import { TlsTab } from './tls-tab'
 import { UsersTab } from './users-tab'
@@ -41,38 +35,6 @@ export function ServerSettingsPage() {
       </div>
 
       {tab === 'server' ? <ServerTab /> : tab === 'tls' ? <TlsTab /> : <UsersTab />}
-      <LicenceWarningModal onFix={() => setTab('server')} />
     </Page>
-  )
-}
-
-// The one place that can actually fix a bad licence, so it says so on arrival. Dismissed for the
-// session once acknowledged; a save re-arms it, so a key that still doesn't work says so again.
-function LicenceWarningModal({ onFix }: { onFix: () => void }) {
-  const { state, warningDismissed, dismissWarning } = useLicence()
-  // Snapshot at mount rather than subscribe: the welcome dialog is dismissed on the dashboard
-  // you land on, so by the time you open Settings this reads true. Landing here directly on a
-  // first run just defers the dialog to the next visit; the topbar pill is up the whole time.
-  const [betaSeen] = useState(() => storage.readJson(BETA_NOTICE_SEEN_KEY, false))
-  const open = betaSeen && state?.broken === true && !warningDismissed
-  return (
-    <Modal
-      open={open}
-      onClose={dismissWarning}
-      icon="alert"
-      title="Licence not valid"
-      description="Enterprise features stay disabled until this server has a valid licence."
-      width="sm"
-      footer={
-        <Button variant="primary" size="md" onClick={() => { onFix(); dismissWarning() }}>
-          Update licence key
-        </Button>
-      }
-    >
-      <DangerCallout icon="alert">
-        This server reports its licence as <span className="text-[var(--danger)] font-medium">{state?.label}</span>.
-        Enter a valid key under Server, or check it at license.antmedia.io.
-      </DangerCallout>
-    </Modal>
   )
 }

@@ -47,18 +47,17 @@ export function Topbar() {
   )
 }
 
-// Only a definitely-bad licence shows here, so a licence-server outage never nags. Enterprise
-// only: Community has no licence, so `state` stays null and this renders nothing.
+// Only a definitely-bad licence shows here; Community (null state) and a failed check never nag.
 function LicencePill() {
   const { state } = useLicence()
   if (!state?.broken) return null
   return (
-    <Tooltip content="This server's licence is not valid. Open Server settings to fix it.">
+    <Tooltip content="License not valid. Open Settings to fix it.">
       <Link
         to="/settings"
         className="mr-1.5 rounded-[4px] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
       >
-        <Pill tone="err" dot interactive>licence: {state.label}</Pill>
+        <Pill tone="err" dot interactive>license: {state.label}</Pill>
       </Link>
     </Tooltip>
   )

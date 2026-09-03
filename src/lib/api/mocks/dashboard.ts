@@ -152,24 +152,20 @@ registerMock('GET', '/rest/v2/system-resources/history', () => {
   return Object.fromEntries(Object.entries(history).map(([k, buf]) => [k, [...buf]]))
 })
 
-// Both are the live wire shapes: `status` is the backend's own vocabulary ('valid' when live,
-// else a failure code), and a rejected key nulls every field except `type`.
+// Live wire shapes: `status` is the backend's vocabulary, and a rejected key nulls every field but `type`.
 const validLicence: Licence = {
   licenceId: 'mock-licence-id', startDate: '2025-01-01', endDate: '2026-12-31',
   type: 'regular', licenceCount: '10', owner: 'mock-owner', status: 'valid', hourUsed: '0',
 }
-// The real server picks between several failure codes; one stands in for all of them, since the
-// panel treats every one the same way.
 const invalidLicence: Licence = {
   licenceId: null, startDate: null, endDate: null,
   type: 'regular', licenceCount: null, owner: null, status: 'INVALID_KEY', hourUsed: null,
 }
 
-// The server caches the last check; only /licence-status?key= runs a new one and overwrites it.
+// The server caches the last check; only /licence-status?key= runs a new one.
 let lastLicence: Licence = validLicence
 
-// Backend rule: a key under 8 characters is rejected outright (LicenceService.isKeyValid), and
-// nothing trims, so a padded one fails at the licence server. Either way the cache is replaced.
+// Backend: keys under 8 chars are rejected outright, and nothing trims.
 registerMock('GET', '/rest/v2/licence-status', ({ query }) => {
   const key = String(query.key ?? '')
   lastLicence = key.length >= 8 && key === key.trim() ? validLicence : invalidLicence

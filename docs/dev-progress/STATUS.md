@@ -14,14 +14,9 @@ branch in both (as of 2026-07-07).
   cluster, server settings (Server / TLS / Users), logs, auth. Builds clean.
 - **Backend analytics: complete, verification open.** Five endpoints shipped (table below).
   Cluster verification and unit tests are the open debt; see [TODO.md](TODO.md).
-- **Licence status fixed and given one owner.** The badge tested `status === 'OK' || 'Valid'`,
-  strings the backend never emits, so a valid licence rendered red; the dashboard pill had the
-  same bug in a second copy. Validity now follows the backend's real vocabulary (`valid`, plus a
-  local licence server's `expiring`). Saving a key also forces the re-check `POST /server-settings`
-  doesn't do, which is what previously made a new key look invalid until a server restart.
-  `LicenceProvider` owns the poll, the mapping and `recheck`; the topbar shows a red
-  click-to-settings pill and Server Settings raises a dismissible dialog when a licence is
-  definitely bad. Contract + traps: [API.md](../API.md) *Licensing*, [RISKS.md](../RISKS.md).
+- **Licence status has one owner.** `LicenceProvider` polls `last-licence-status`, maps the
+  backend's `status` vocabulary, and re-checks after a key save. A bad licence shows a red topbar
+  pill and a dialog that re-raises on page changes, at most once a minute. Contract + traps: [API.md](../API.md) *Licensing*, [RISKS.md](../RISKS.md).
 - **Stream Import/Export shipped** (pulled from V2). Definition-only JSON export + bulk import
   via a new `POST /broadcasts/create-list` endpoint (backend method + unit test in
   `BroadcastRestService`). Design: [features/streams-import-export.md](../features/streams-import-export.md);

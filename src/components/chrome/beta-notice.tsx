@@ -8,8 +8,7 @@ import logo from '@/assets/ant-media-logo.png'
 // First-run welcome. The checkbox is what makes the dismissal permanent, and it starts ticked,
 // so any close (X, backdrop, Escape, the button) is the last one unless the user unticks it.
 
-// Exported so the Server Settings licence dialog can stand down while this one owns the
-// screen: two stacked first-run dialogs read as a glitch.
+// Exported so the licence warning dialog can stand down while this one owns the screen.
 export const BETA_NOTICE_SEEN_KEY = 'ams.beta.notice.seen'
 
 // One serif line in an all-sans panel. No webfont to load, and the generic keeps it

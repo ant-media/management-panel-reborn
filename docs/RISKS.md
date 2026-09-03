@@ -140,9 +140,9 @@ Architectural risks, security caveats, and edge cases identified during reviews.
 
 ### Licence status is a cache, and a bad key overwrites it
 
-**Risk:** `GET /last-licence-status` returns a cached field (`LicenceService.activeLicence`), written only at boot, by the backend's 5-min `LICENSE_CHECK_PERIOD`, or by `GET /licence-status?key=`. **`POST /server-settings` is not on that list**, so saving a key leaves the panel showing the old status until something forces a check; the original bug report was "saved the key, still says invalid, needed a server restart". Two traps in the fix: `licence-status?key=` **writes** the cache, so calling it with a blank or padded key caches `INVALID_KEY`/`NO_LICENSE_FOUND` and makes things worse, and **the backend never trims**, so a padded key also breaks its own boot and periodic checks.
+**Risk:** `GET /last-licence-status` is a cached field (`LicenceService.activeLicence`), written at boot, by the backend's 5-min check, or by `GET /licence-status?key=`. `POST /server-settings` does not write it, so a saved key reads stale until something forces a check. `licence-status?key=` with a blank or padded key caches `INVALID_KEY`/`NO_LICENSE_FOUND`, and **the backend never trims**, so a padded key also fails its own checks.
 
-**Mitigation:** `LicenceProvider` (`features/server-settings/use-licence.tsx`) is the single owner: it polls the cache and exposes `recheck(key)`, which trims, refuses a blank key, and is called once after a successful settings save. Validity is decided by the backend's `status` vocabulary, never by a guessed string; see [API.md](API.md) *Licensing*.
+**Mitigation:** `LicenceProvider` (`features/server-settings/use-licence.tsx`) owns the poll and `recheck(key)`, called once after a successful save; the key field trims on input and `recheck` skips a blank key. Validity follows the backend's `status` vocabulary; see [API.md](API.md) *Licensing*.
 
 ### SSL is write-only and restarts the server
 **Where:** `src/features/server-settings/use-ssl.ts` → `POST /ssl-settings` (multipart).

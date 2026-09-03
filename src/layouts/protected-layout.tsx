@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { ConnectionProvider } from '@/contexts/connection-context'
 import { SidebarContext } from '@/contexts/sidebar-context'
 import { ApplicationsProvider } from '@/features/apps/use-applications'
+import { LicenceWarningModal } from '@/features/server-settings/licence-warning-modal'
 import { LicenceProvider } from '@/features/server-settings/use-licence'
 
 export function ProtectedLayout() {
@@ -38,6 +39,7 @@ export function ProtectedLayout() {
                     <Outlet />
                   </div>
                 </main>
+                <LicenceWarningModal key={location.pathname} />
                 <BetaNotice />
               </div>
             </SidebarContext.Provider>
