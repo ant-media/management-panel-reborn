@@ -2,7 +2,7 @@ import { Icon, type IconName } from '@/components/ui/icon'
 import { Tooltip } from '@/components/shared/tooltip'
 import { cn } from '@/lib/utils'
 import { STREAM_ACTIONS, streamAction, type StreamAction } from '../stream-actions'
-import { isEditable, isLive, type Broadcast } from '../types'
+import { isEditable, isLive, isOnAir, type Broadcast } from '../types'
 
 // The drawer's primary actions, as tappable tiles above the metric tiles (same radius, border and
 // gap, so the two rows read as one system). An action that doesn't apply to this stream stays in
@@ -18,7 +18,7 @@ type Props = {
 }
 
 export function StreamActionBar({ broadcast, busy, onPlay, onAction, onEdit, onDelete }: Props) {
-  const live = isLive(broadcast.status)
+  const onAir = isOnAir(broadcast.status)
   const editable = isEditable(broadcast)
   const action = streamAction(broadcast)
 
@@ -35,7 +35,8 @@ export function StreamActionBar({ broadcast, busy, onPlay, onAction, onEdit, onD
     <div className="px-5 pt-4 grid grid-cols-4 gap-2">
       <ActionTile
         icon="play" label="Play" tint="text-[var(--ok)]"
-        disabled={!live} reason={live ? undefined : 'Stream is offline'}
+        disabled={!onAir}
+        reason={onAir ? undefined : isLive(broadcast.status) ? 'Stream is starting' : 'Stream is offline'}
         onClick={onPlay}
       />
       <ActionTile

@@ -115,6 +115,10 @@ const LIVE_STATUSES: ReadonlySet<BroadcastStatus> = new Set(['broadcasting', 'pr
 
 export const isLive = (s: BroadcastStatus | undefined) => Boolean(s && LIVE_STATUSES.has(s))
 
+// Actually sending media. A preparing stream is live (stoppable, editable) but has nothing to play yet,
+// so the LIVE tag and play controls gate on this, not on isLive.
+export const isOnAir = (s: BroadcastStatus | undefined) => s === 'broadcasting'
+
 // A count can momentarily read negative under decrement races, so clamp each before summing.
 export const totalViewers = (b: Broadcast): number =>
   Math.max(0, b.webRTCViewerCount ?? 0) + Math.max(0, b.hlsViewerCount ?? 0) + Math.max(0, b.dashViewerCount ?? 0)

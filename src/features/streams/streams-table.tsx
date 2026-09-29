@@ -13,7 +13,7 @@ import { PlayCell, Thumb } from './thumb'
 import { StreamStatus } from './stream-status'
 import { playPageUrl } from './url-builder'
 import { STREAM_ACTIONS, streamAction, type StreamAction } from './stream-actions'
-import { displayName, isLive, totalViewers, type Broadcast } from './types'
+import { displayName, isLive, isOnAir, totalViewers, type Broadcast } from './types'
 import type { SortDir, SortKey } from './use-broadcasts'
 
 // Max width for the name / stream-id cell before it ellipsizes (CSS truncation).
@@ -131,6 +131,7 @@ function Row({
   onPlay: () => void
 }) {
   const live = isLive(broadcast.status)
+  const onAir = isOnAir(broadcast.status)
   const viewers = totalViewers(broadcast)
   const name = displayName(broadcast)
   const action = streamAction(broadcast)
@@ -167,7 +168,7 @@ function Row({
       {!compact && (
         // Hit slop: the thumb is 34px tall in a ~49px row, so the gutters around it play too.
         // The thumb's own button stops propagation first, so this never double-fires.
-        <td className="px-1 py-2" onClick={live ? e => { e.stopPropagation(); onPlay() } : undefined}>
+        <td className="px-1 py-2" onClick={onAir ? e => { e.stopPropagation(); onPlay() } : undefined}>
           <Thumb appName={appName} broadcast={broadcast} hasPreview={hasPreview} onPlay={onPlay} />
         </td>
       )}
@@ -177,6 +178,10 @@ function Row({
             className="font-medium text-[var(--fg)] leading-tight truncate min-w-0"
             title={name}
           >{name}</span>
+          {/* ProtocolBadge's shape. Not on the thumb: the play badge covers it there. */}
+          {onAir && (
+            <span className="shrink-0 inline-flex items-center h-4 px-1 rounded-[3px] bg-[var(--live)] text-white text-[10px] font-mono font-medium tracking-wider">LIVE</span>
+          )}
           <CopyChip value={name} showValue={false} size="sm" className="shrink-0" />
         </div>
         <div className={cn('flex items-center gap-1.5 mt-0.5', compact ? NAME_MAX_W_COMPACT : NAME_MAX_W)}>

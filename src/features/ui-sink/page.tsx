@@ -22,7 +22,7 @@ const ICON_NAMES: IconName[] = [
   'edit', 'file', 'link', 'camera', 'list', 'check',
 ]
 
-const PILL_TONES: PillTone[] = ['ok', 'warn', 'err', 'live', 'info', 'neutral']
+const PILL_TONES: PillTone[] = ['ok', 'warn', 'err', 'live', 'info', 'neutral', 'pending']
 
 const SPARK_DATA = [3, 5, 4, 7, 9, 6, 8, 11, 10, 13, 12, 15, 14, 17, 16, 19]
 const CHART_SERIES = [

@@ -4,7 +4,7 @@ import { Tooltip } from '@/components/shared/tooltip'
 import { cn } from '@/lib/utils'
 import { previewUrl } from './url-builder'
 import type { Broadcast } from './types'
-import { isLive } from './types'
+import { isLive, isOnAir } from './types'
 
 const SIZES = {
   sm: 'w-[60px] h-[34px]',
@@ -32,10 +32,11 @@ type Props = {
 }
 
 export function Thumb({ appName, broadcast, size = 'sm', hasPreview, onPlay }: Props) {
-  const live = isLive(broadcast.status)
+  // Only an on-air stream shows a picture; a preparing one looks offline, just with its own tooltip.
+  const onAir = isOnAir(broadcast.status)
   const [failed, setFailed] = useState(false)
-  const showImage = live && hasPreview && !failed
-  const playable = live && Boolean(onPlay)
+  const showImage = onAir && hasPreview && !failed
+  const playable = onAir && Boolean(onPlay)
   const glyph = GLYPHS[size]
   const roomy = size !== 'sm'
 
@@ -44,7 +45,8 @@ export function Thumb({ appName, broadcast, size = 'sm', hasPreview, onPlay }: P
   // unresponsive control. The play button carries its own focus, so don't add a second tab stop.
   const hint = playable ? 'Play stream'
     : showImage ? undefined                                   // a real preview is on screen; nothing to explain
-    : hasPreview && !live ? 'Stream offline'
+    : broadcast.status === 'preparing' ? 'Stream is starting'
+    : hasPreview && !onAir ? 'Stream offline'
     : hasPreview ? 'Preview unavailable'
     : 'Preview generation is disabled for this app'
 
@@ -59,31 +61,34 @@ export function Thumb({ appName, broadcast, size = 'sm', hasPreview, onPlay }: P
             className="w-full h-full object-cover"
             loading="lazy"
           />
-        ) : hasPreview && !live ? (
-          // Preview is enabled but the stream is offline: nothing to preview yet.
+        ) : hasPreview && !onAir ? (
+          // Preview is enabled but the stream is not on air: nothing to preview yet.
           <div className="w-full h-full flex items-center justify-center text-[var(--fg-3)]">
             <Icon name="video" size={glyph.placeholder} />
           </div>
+        ) : onAir ? (
+          // On air with no image (generation off or the fetch failed): a placeholder picture, so it never reads as offline.
+          <div className="w-full h-full bg-[var(--thumb-ph)]">
+            <svg viewBox="0 0 60 34" preserveAspectRatio="xMidYMid slice" className="w-full h-full" aria-hidden>
+              <polygon points="0,34 0,26 14,15 26,25 36,18 60,32 60,34" fill="var(--thumb-ph-art)" />
+              <circle cx="47" cy="9" r="3.5" fill="var(--thumb-ph-art)" />
+            </svg>
+          </div>
         ) : (
-          // No preview to show: generation disabled (any stream, live or not) or a live image that failed.
+          // Not on air, preview generation disabled.
           <div className="w-full h-full flex flex-col items-center justify-center gap-0.5 text-[var(--fg-3)]">
             <Icon name="eye-off" size={glyph.off} />
             {roomy && <span className="text-[10px] text-[var(--fg-3)]">Preview off</span>}
           </div>
         )}
-        {/* Live badge overlays whatever's behind it (real preview, "preview off" placeholder, or a
-            failed-image fallback) so it never blinks out. On hover it recedes, but stays readable,
-            so it doesn't fight the red play button for attention. */}
-        {live && (
-          <div className={cn(
-            'absolute top-1 left-1 px-1 rounded-[2px] bg-[var(--live)] text-[8px] font-bold tracking-wider text-white leading-[1.5] pointer-events-none shadow-[0_1px_2px_rgba(0,0,0,0.35)]',
-            playable && 'transition-opacity group-hover:opacity-45',
-          )}>LIVE</div>
+        {/* Drawer thumb only: the play badge would cover it, so the table row shows LIVE after the name. */}
+        {onAir && !onPlay && (
+          <div className="absolute top-1 left-1 px-1 rounded-[2px] bg-[var(--live)] text-[8px] font-bold tracking-wider text-white leading-[1.5] pointer-events-none shadow-[0_1px_2px_rgba(0,0,0,0.35)]">LIVE</div>
         )}
         {/* Resting: a dimmed green badge, so the thumb reads as playable without a hover. Row hover
             brings it to full --ok over a scrim and pops it past the target before settling. Red is
-            the LIVE tag's alone, so red means live and green means play in both modes. Hover is the
-            row's (`group`), not the thumb's. */}
+            the LIVE tag's alone, so red means live and green means play. Hover is the row's
+            (`group`), not the thumb's. */}
         {playable && (
           <button
             type="button"
@@ -92,7 +97,7 @@ export function Thumb({ appName, broadcast, size = 'sm', hasPreview, onPlay }: P
             className="absolute inset-0 flex items-center justify-center rounded-[5px] outline-none transition-colors group-hover:bg-black/70 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ring)]"
           >
             <span className={cn(
-              'flex items-center justify-center rounded-full bg-[var(--ok-deep)] text-white opacity-75 scale-90 transition-all duration-150',
+              'flex items-center justify-center rounded-full bg-[var(--ok-deep)] text-white opacity-75 scale-99 transition-all duration-150',
               'group-hover:bg-[var(--ok)] group-hover:opacity-100 group-hover:scale-110 group-hover:shadow-lg group-hover:animate-play-pop',
               glyph.badge,
             )}>
@@ -117,10 +122,14 @@ const PLAY_CELL_FACE = 'flex-1 flex items-center justify-center border-r border-
 // Tooltip's span a full-size box to measure: wrap the absolute child directly and the bubble lands
 // in the cell's corner.
 export function PlayCell({ broadcast, onPlay }: { broadcast: Broadcast; onPlay: () => void }) {
-  const playable = isLive(broadcast.status)
+  const playable = isOnAir(broadcast.status)
   return (
     <div className="absolute inset-0 grid">
-      <Tooltip content={playable ? 'Play stream' : 'Stream offline'} delay={0} focusable={false}>
+      <Tooltip
+        content={playable ? 'Play stream' : isLive(broadcast.status) ? 'Stream is starting' : 'Stream offline'}
+        delay={0}
+        focusable={false}
+      >
         {playable ? (
           <button
             type="button"

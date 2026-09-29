@@ -8,6 +8,7 @@ const TONE = {
   live:    { cls: 'text-[var(--accent)] bg-[var(--accent-bg)]',   dot: 'var(--accent)' },
   info:    { cls: 'text-[var(--info)] bg-[var(--info-bg)]',       dot: 'var(--info)' },
   neutral: { cls: 'text-[var(--fg-3)] bg-[var(--bg-2)]',          dot: 'var(--fg-3)' },
+  pending: { cls: 'text-[var(--fg-2)] bg-[var(--pending-bg)]',    dot: 'var(--pending-dot)' },
 } as const
 
 export type PillTone = keyof typeof TONE
@@ -15,8 +16,8 @@ export type PillTone = keyof typeof TONE
 type Props = {
   tone?: PillTone
   dot?: boolean
-  // Override the dot's colour independently of the tone (e.g. a red "on-air"
-  // dot on a green/amber health badge). Defaults to the tone's own colour.
+  // Override the dot's colour independently of the tone (e.g. a vivid green
+  // dot on a green health badge). Defaults to the tone's own colour.
   dotColor?: string
   // Override the pulse. Defaults to on for live/err tones; pass false/true to
   // force it (e.g. a static dot on a non-live state).
@@ -38,8 +39,9 @@ export function Pill({ tone = 'neutral', dot, dotColor, pulse, interactive, chil
       interactive && 'transition-all duration-150 hover:brightness-[0.94] cursor-default',
     )}>
       {dot && (
-        <span className="relative w-1.5 h-1.5 rounded-full" style={{ background: dotCol }}>
-          {doPulse && <span className="absolute inset-0 rounded-full animate-ping" style={{ background: dotCol, opacity: 0.5 }} />}
+        // A pending dot breathes: a state in progress, not the on-air ping.
+        <span className={cn('relative w-1.5 h-1.5 rounded-full', tone === 'pending' && 'animate-breathe')} style={{ background: dotCol }}>
+          {doPulse && <span className="absolute inset-0 rounded-full animate-dot-ping" style={{ background: dotCol, opacity: 'var(--ping-opacity)' }} />}
         </span>
       )}
       {children}

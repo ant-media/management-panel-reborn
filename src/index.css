@@ -34,12 +34,22 @@
      a faint grey at low opacity nearly vanishes against the dark card. */
   --spark-opacity: 0.18;
   --spark-opacity-open: 0.32;
+  /* Start opacity of a Pill dot's ping ring. Much higher in dark: a faint ring vanishes there. */
+  --ping-opacity: 0.5;
+  /* Placeholder picture on a live thumb with no preview image. */
+  --thumb-ph: oklch(0.90 0.03 245);
+  --thumb-ph-art: oklch(0.84 0.04 245);
   --accent-bg: color-mix(in oklch, var(--accent), white 86%);
   --accent-border: color-mix(in oklch, var(--accent), white 70%);
   --ok: oklch(0.58 0.14 150);
   --ok-bg: color-mix(in oklch, var(--ok), white 86%);
   /* Resting fill of the thumb's play badge; row hover lifts it to --ok. */
   --ok-deep: color-mix(in oklch, var(--ok), black 30%);
+  /* Healthy stream dot: a vivid green that stands off the --ok-bg pill. */
+  --ok-dot: oklch(0.62 0.17 148);
+  /* Preparing stream pill. A direct value: mixing --ok into the cool --bg-2 drifts to teal. */
+  --pending-bg: oklch(0.935 0.045 110 / 0.9);
+  --pending-dot: color-mix(in oklch, var(--ok-dot), black 15%);
   --warn: oklch(0.68 0.16 70);
   --warn-bg: color-mix(in oklch, var(--warn), white 86%);
   --danger: oklch(0.58 0.20 25);
@@ -69,11 +79,17 @@
   /* Brighter than light mode so the trend stays visible on the dark card. */
   --spark-opacity: 0.42;
   --spark-opacity-open: 0.6;
+  --ping-opacity: 0.9;
+  --thumb-ph: oklch(0.30 0.035 250);
+  --thumb-ph-art: oklch(0.36 0.04 250);
   --accent-bg: color-mix(in oklch, var(--accent), black 70%);
   --accent-border: color-mix(in oklch, var(--accent), black 50%);
   --ok: oklch(0.70 0.14 150);
   --ok-bg: color-mix(in oklch, var(--ok), black 75%);
   --ok-deep: color-mix(in oklch, var(--ok), black 30%);
+  --ok-dot: oklch(0.80 0.20 148);
+  --pending-bg: oklch(0.26 0.04 110 / 0.9);
+  --pending-dot: color-mix(in oklch, var(--ok-dot), black 15%);
   --warn: oklch(0.78 0.14 70);
   --warn-bg: color-mix(in oklch, var(--warn), black 75%);
   --danger: oklch(0.68 0.20 25);
@@ -116,13 +132,25 @@
 
 @theme {
   --animate-play-pop: play-pop 500ms ease forwards;
+  --animate-breathe: breathe 1.4s ease-in-out infinite;
+  --animate-dot-ping: dot-ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+
+  /* Tailwind's `ping`, grown from 2x to 2.6x so the ring reads around a 6px dot. */
+  @keyframes dot-ping {
+    75%, 100% { transform: scale(2.6); opacity: 0; }
+  }
+
+  /* Status dot of a state in progress (Preparing). Deeper than `animate-pulse` so it reads at 6px. */
+  @keyframes breathe {
+    50% { opacity: 0.15; }
+  }
 
   /* Hover grow with an overshoot settle: peak, dip, half-peak, half-dip, rest at the target.
      Animate `scale`, never `transform`: Tailwind's `scale-*` utilities set the `scale` property,
-     so a transform would multiply against them rather than replace them. The 100% value must
-     equal `group-hover:scale-110`, or the badge jumps when the animation hands back. */
+     so a transform would multiply against them rather than replace them. The 0% value must equal
+     the rest `scale-99` and the 100% value `group-hover:scale-110`, or the badge jumps. */
   @keyframes play-pop {
-    0%   { scale: 90%; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+    0%   { scale: 99%; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
     40%  { scale: 119%; }
     58%  { scale: 101%; }
     73%  { scale: 114%; }
@@ -136,7 +164,7 @@
    Tailwind hoists the @theme copy to the end of the bundle, and `animation: none` loses on
    specificity. Unlayered :root outranks @layer theme. */
 @media (prefers-reduced-motion: reduce) {
-  :root { --animate-play-pop: none; }
+  :root { --animate-play-pop: none; --animate-breathe: none; --animate-dot-ping: none; }
 }
 
 @layer base {

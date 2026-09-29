@@ -54,7 +54,9 @@ back into the panel while you are using it.
   owns its busy flag and decides what to refresh.
 
 Status is the shared 5-state health model (Healthy / Unhealthy / Preparing / Offline / Error; dot
-= liveness, background = severity, verdict in `health.ts`). Encoding speed rides as a sub-line
+= liveness, ping = on air, breathing = connecting, background = severity, verdict in `health.ts`).
+No red on a live state: Healthy is green with a `--ok-dot` ping, Unhealthy amber with its own dot,
+Preparing a breathing `--pending-dot` on the khaki `pending` tone. Encoding speed rides as a sub-line
 under the badge; resolution lives in the badge's tooltip.
 
 ### Sections and what persists
@@ -180,7 +182,7 @@ An `iframe` of the app's own `play.html` inside an `xl` `Modal` (`player-modal.t
 dependency (`@antmedia/web_player` is ~5.5MB); the page negotiates the protocol itself. The modal
 is rendered only while playing, so closing unmounts the iframe and the session dies with it.
 
-Launch points: the **row's leading cell** (live rows), the drawer's **Play tile**, and
+Launch points: the **row's leading cell** (broadcasting rows), the drawer's **Play tile**, and
 `⋯ > Play > Play Embedded Player`. `Play With WebRTC` / `Play With HLS` and row middle-click stay
 new-tab openers. The row deliberately has **no** play button in its *action* cell: play lives on the
 left, and the right cell stays quiet for start/stop.
@@ -192,31 +194,39 @@ leftmost thing in the row. Full mode renders the `Thumb` and the *whole cell* pl
 propagation first, so the two never double-fire.
 
 **Red means live, green means play**, and nothing crosses over. The badge sits at rest as a dimmed
-`--ok-deep` circle at 75% opacity so the thumb reads as playable without a hover; row hover brings
-it to full `--ok`, full opacity, over a `black/70` scrim. The LIVE tag stays `--live` red and dims
-to 45% rather than compete, but never disappears.
+`--ok-deep` circle at 75% opacity and 99% scale, so the thumb reads as playable without a hover; row
+hover brings it to full `--ok`, full opacity, over a `black/70` scrim. The row's LIVE tag is a solid
+`--live` chip in ProtocolBadge's shape, **right after the name**, in both modes. It left the thumb
+because the play badge covered it there; `Thumb` still overlays one only when it has no play badge
+(the drawer's). The LIVE tag and every play control gate on `isOnAir` (broadcasting only), not
+`isLive`: a preparing stream is stoppable and editable, but has nothing to play yet.
 
-Hover also **pops** the badge: `animate-play-pop` (`index.css`) runs 90 -> 119 -> 101 -> 114 -> 106
+**An on-air thumb never looks offline.** With no image (preview generation off, the server default, or
+a failed fetch) an on-air thumb shows a placeholder picture instead of the grey eye-off box:
+`--thumb-ph` blue with faint hills and a sun in `--thumb-ph-art`, both theme-aware. Offline keeps the
+grey box, so on air vs offline reads at a glance. The tooltip still says why there is no preview. A
+preparing stream renders exactly like an offline one, with a `Stream is starting` tooltip.
+
+Hover also **pops** the badge: `animate-play-pop` (`index.css`) runs 99 -> 119 -> 101 -> 114 -> 106
 -> 110% over 500ms, an overshoot settle rather than a linear grow. Three constraints hold it
 together. The keyframes animate `scale`, **not** `transform`: Tailwind v4's `scale-*` utilities set
 the `scale` property, so a transform multiplies against them instead of replacing them and lands at
-1.31. The 100% keyframe must equal `group-hover:scale-110`, or the badge jumps when the animation
-hands back. Reduced motion **swaps `--animate-play-pop`** to `none`, because a same-name `@keyframes`
-override loses (Tailwind hoists the `@theme` copy to the end of the bundle, and the last definition
+1.31. The 0% keyframe must equal the rest `scale-99` and the 100% keyframe `group-hover:scale-110`,
+or the badge jumps when the animation starts or hands back. Reduced motion **swaps
+`--animate-play-pop`** to `none`, because a same-name `@keyframes` override loses (Tailwind hoists the `@theme` copy to the end of the bundle, and the last definition
 wins) and `animation: none` loses on specificity; an unlayered `:root` outranks `@layer theme`.
 
 Compact renders `PlayCell`: a full-bleed button flush to the card edge, **painted as the drawer's
 Play tile unrolled to fill a cell**, because the drawer is open whenever this cell renders and the
 two have to read as one control in two shapes. Neutral `--bg-2` surface, `--ok` glyph, right border
 strengthening on row hover; hover goes to `--bg-3`, not `--bg-2`, or the cell dissolves into the
-row's own hover. It never shows an image (unreadable at 44px) and carries no LIVE tag, so
-`hasPreview` does not reach it. Offline streams keep the same surface with a muted `video` glyph, so
-the column width is constant and nothing reflows when a stream goes live.
+row's own hover. It never shows an image (unreadable at 44px), so `hasPreview` does not reach it.
+Offline streams keep the same surface with a muted `video` glyph, so the column width is constant and nothing reflows when a stream goes live.
 
-Both states carry a tooltip (`Play stream` / `Stream offline`) anchored on a `grid` wrapper, because
-`Tooltip` measures its own span: wrap the absolutely positioned button directly and that span is
-zero-sized, so the bubble lands in the cell's corner. `focusable={false}`, unlike `Thumb`, since the
-offline reason is already visible text in the Status cell beside it and a tab stop per row buys
+Every state carries a tooltip (`Play stream` / `Stream is starting` / `Stream offline`) anchored on a
+`grid` wrapper, because `Tooltip` measures its own span: wrap the absolutely positioned button
+directly and that span is zero-sized, so the bubble lands in the cell's corner. `focusable={false}`,
+unlike `Thumb`, since the offline reason is already visible text in the Status cell beside it and a tab stop per row buys
 nothing. `PlayCell` is a **sibling** of `Thumb`, not a size of it: a `size="xs"` would need four
 `size === 'xs'` branches (image, placeholder, LIVE tag, tooltip), hiding the divergence instead of
 expressing it.

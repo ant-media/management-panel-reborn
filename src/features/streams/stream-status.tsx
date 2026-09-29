@@ -6,17 +6,18 @@ import { resolveStreamStatus, type StreamStatusKind } from './health'
 import type { Broadcast } from './types'
 
 // The one stream-status badge, shared by the table and the detail drawer.
-// Visual vocabulary: the dot = liveness (red pulse = on-air, grey = warming up,
-// none = not running) and the background = severity. Anything with more to say,
-// an active stream (its resolution + speed) or an errored one (what failed),
-// carries an info dot and a hover popup with the detail.
+// Visual vocabulary: the dot = liveness (ping = on-air, breathing = warming up,
+// none = not running) and the background = severity. No red on a live state:
+// red reads as an error. Anything with more to say, an active stream (its
+// resolution + speed) or an errored one (what failed), carries an info dot and
+// a hover popup with the detail.
 
 type Style = { tone: PillTone; label: string; dot: boolean; dotColor?: string; pulse?: boolean }
 
 const STYLE: Record<StreamStatusKind, Style> = {
-  healthy:   { tone: 'ok',      label: 'Healthy',   dot: true, dotColor: 'var(--live)', pulse: true },
-  unhealthy: { tone: 'warn',    label: 'Unhealthy', dot: true, dotColor: 'var(--live)', pulse: true },
-  preparing: { tone: 'ok',      label: 'Preparing', dot: true, dotColor: 'var(--fg-3)', pulse: false },
+  healthy:   { tone: 'ok',      label: 'Healthy',   dot: true, dotColor: 'var(--ok-dot)', pulse: true },
+  unhealthy: { tone: 'warn',    label: 'Unhealthy', dot: true, pulse: true },
+  preparing: { tone: 'pending', label: 'Preparing', dot: true },
   offline:   { tone: 'neutral', label: 'Offline',   dot: false },
   error:     { tone: 'err',     label: 'Error',     dot: false },
 }

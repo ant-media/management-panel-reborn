@@ -63,7 +63,7 @@ route navigation + browser close, returns the router blocker) + `DiscardChangesM
 Non-route exits (local tab switches) can't be seen by the hook; gate those where the tab
 state lives (see `features/apps/detail-page.tsx`).
 
-**A status / type label** → `Pill` (tones: ok/warn/err/live/info/neutral).
+**A status / type label** → `Pill` (tones: ok/warn/err/live/info/neutral/pending).
 **An ingest protocol tag** → `ProtocolBadge`.
 
 **A list/page toolbar** → `Toolbar` + `ToolbarLeading` (search + filters) + `ToolbarActions`
@@ -134,7 +134,7 @@ over `api` / `appApi(name)`. Components never call `fetch`. See ARCHITECTURE.md.
 | `TargetIds` (`confirm-modal.tsx`) | what a confirm acts on | one id inline, or a collapsed scrollable list for a bulk action |
 | `Collapse` (`collapse.tsx`) | smooth height reveal | `open` toggles a grid-rows `0fr↔1fr` transition (no max-height guess / no measurement); honours `prefers-reduced-motion`. **Keep children mounted while closing** so the exit animates (unmounting → instant close), which is why closed content is `inert`: clipped children stay focusable otherwise, and you'd tab into an invisible form. Used by the dashboard detail panels and the stream drawer's sections |
 | `DiscardChangesModal` | leave-with-unsaved confirm | pairs with `useUnsavedGuard`; "Keep editing" is the focused default |
-| `Pill` | status/type label | tones: ok/warn/err/live/info/neutral; `dot` (+ optional `dotColor`/`pulse` overrides, e.g. a red on-air dot on a green health badge, as `StreamStatus` does) |
+| `Pill` | status/type label | tones: ok/warn/err/live/info/neutral/pending (`pending` = pale khaki, its dot breathes: a state in progress); `dot` (+ optional `dotColor`/`pulse` overrides, e.g. the `--ok-dot` on-air dot on a green health badge, as `StreamStatus` does). Never a red dot on a live state: red reads as an error |
 | `ProtocolBadge` | ingest protocol tag | WebRTC / RTMP / SRT / … |
 | `Ring`, `DualRing` | gauge | dashboard capacities; `threshColor(pct)` for fill. `DualRing` `innerThickness` (thin) + small `gap` ⇒ a hero ring with a glued companion arc (secondary value shown as an arc, not a number) |
 | `MeterBar` | inline 0-100 bar | thin track+fill; the inline counterpart to `Ring` (GPU/cluster meters). Clamps 0-100; pass `tone` (e.g. `threshColor(pct)`) + optional `className` (`flex-1`) |
