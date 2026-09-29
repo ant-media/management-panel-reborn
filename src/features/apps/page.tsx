@@ -113,7 +113,7 @@ function AppRow({ app, onOpen, onDelete }: { app: ApplicationInfo; onOpen: () =>
   return (
     <tr
       onClick={onOpen}
-      className="group border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-2)] cursor-pointer transition-colors"
+      className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-2)] cursor-pointer transition-colors"
     >
       <td className="px-5 py-3">
         <div className="flex items-center gap-2.5">
@@ -130,15 +130,9 @@ function AppRow({ app, onOpen, onDelete }: { app: ApplicationInfo; onOpen: () =>
       <td className="px-5 py-3 text-right font-mono tabular-nums text-[var(--fg-2)]">{app.vodCount}</td>
       <td className="px-5 py-3 text-right font-mono tabular-nums text-[var(--fg-2)]">{fmtBytes(app.storage)}</td>
       <td className="px-5 py-3 text-right">
-        <button
-          type="button"
-          onClick={e => { e.stopPropagation(); onDelete() }}
-          aria-label={`Delete ${app.name}`}
-          title="Delete"
-          className="h-7 w-7 inline-flex items-center justify-center rounded-[5px] text-[var(--fg-3)] opacity-0 group-hover:opacity-100 hover:bg-[var(--danger-bg)] hover:text-[var(--danger)] transition-all outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-        >
+        <Button variant="dangerOutline" size="sm" className="w-7 px-0" onClick={e => { e.stopPropagation(); onDelete() }} aria-label={`Delete ${app.name}`} title="Delete application">
           <Icon name="trash" size={13} />
-        </button>
+        </Button>
       </td>
     </tr>
   )

@@ -19,12 +19,13 @@ const POLL_MS = 15_000
 type Props = {
   app: ApplicationInfo
   onOpen: (name: string) => void
+  onDelete: (name: string) => void
 }
 
 // Applications table row. Click toggles a drilldown of per-app trends (viewers / live
 // streams) fetched lazily on expand. History is an in-memory ring on the server, so it
 // builds up over time and resets on a server restart (see dashboard-widgets.md).
-export function AppRow({ app, onOpen }: Props) {
+export function AppRow({ app, onOpen, onDelete }: Props) {
   const [open, setOpen] = useState(false)
   const { data, error, isLoading } = useApi<Partial<AppMetricsHistory>>(
     signal => apps.metricsHistory(app.name, signal),
@@ -62,10 +63,15 @@ export function AppRow({ app, onOpen }: Props) {
         </td>
         <td className="px-6 py-3 text-right font-mono tabular-nums text-[var(--fg-2)]">{app.vodCount}</td>
         <td className="px-6 py-3 text-right font-mono tabular-nums text-[var(--fg-2)]">{fmtBytes(app.storage)}</td>
-        <td className="px-6 py-3 text-right" onClick={e => e.stopPropagation()}>
-          <Button variant="outline" size="sm" onClick={() => onOpen(app.name)}>
-            Go to app <Icon name="arrow-right" size={12} />
-          </Button>
+        <td className="px-6 py-3" onClick={e => e.stopPropagation()}>
+          <div className="flex items-center justify-end gap-1.5">
+            <Button variant="outline" size="sm" onClick={() => onOpen(app.name)}>
+              Go to app <Icon name="arrow-right" size={12} />
+            </Button>
+            <Button variant="dangerOutline" size="sm" className="w-7 px-0" onClick={() => onDelete(app.name)} aria-label={`Delete ${app.name}`} title="Delete application">
+              <Icon name="trash" size={13} />
+            </Button>
+          </div>
         </td>
       </tr>
       {open && (

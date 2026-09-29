@@ -30,8 +30,6 @@ Rules:
 
 - [ ] **VoD drag-and-drop upload.** Dragging an external file anywhere over the VoD list shows a
   "drop to upload" overlay and opens the upload modal with that file already linked.
-- [ ] **Delete action in the dashboard app row.** Customers expect it there. Reuses the existing
-  app-delete confirm flow.
 - [ ] **Stream drawer: show the description.** The stream description is not visible anywhere in the
   drawer. Design first, then build.
 
@@ -92,6 +90,9 @@ board. Backend design + invariants:
   (three-way label, tolerance band around 1.0).
 - [ ] VoD Play on a play-JWT app: opens the in-panel player and a gated VoD plays; ungated still
   plays; open-in-new-tab in the header works.
+- [ ] App delete from the dashboard row (red trash beside Go to app) and the Applications page
+  (trash now always visible): the type-the-name confirm opens, the row does not expand or navigate on
+  click, and the app leaves both lists right after delete.
 
 ### Legacy panel switcher
 
