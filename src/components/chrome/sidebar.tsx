@@ -2,18 +2,18 @@ import { useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router'
 import { Icon, type IconName } from '@/components/ui/icon'
 import { AccountMenu } from '@/components/chrome/account-menu'
+import { EnterpriseBadge } from '@/components/shared/enterprise'
 import { useAuth } from '@/contexts/auth-context'
+import { useEnterprise } from '@/contexts/edition-context'
 import { NewAppModal } from '@/features/apps/new-app-modal'
 import { useApplications } from '@/features/apps/use-applications'
-import { useApi } from '@/lib/api/use-api'
-import { server } from '@/lib/api/endpoints'
 import { cn } from '@/lib/utils'
 import logo from '@/assets/ant-media-logo.png'
 
-type NavItem = { to: string; icon: IconName; label: string; end?: boolean }
+type NavItem = { to: string; icon: IconName; label: string; end?: boolean; enterprise?: boolean }
 
 const SECONDARY: NavItem[] = [
-  { to: '/cluster',  icon: 'cluster',  label: 'Cluster' },
+  { to: '/cluster',  icon: 'cluster',  label: 'Cluster', enterprise: true },
   { to: '/settings', icon: 'settings', label: 'Server settings' },
   { to: '/logs',     icon: 'logs',     label: 'Logs' },
 ]
@@ -32,9 +32,9 @@ export function Sidebar({ collapsed, onToggle }: Props) {
   const location = useLocation()
   const { user, isAdmin } = useAuth()
   const { apps, isLoading } = useApplications()
-  // Edition line under the title. Blank until the probe resolves so we never flash the wrong one.
-  const edition = useApi(signal => server.enterpriseEdition(signal))
-  const editionLabel = edition.data ? (edition.data.success ? 'Enterprise Edition' : 'Community Edition') : ''
+  // Blank until the probe resolves so we never flash the wrong one.
+  const enterprise = useEnterprise()
+  const editionLabel = enterprise == null ? '' : enterprise ? 'Enterprise Edition' : 'Community Edition'
 
   const appsActive = location.pathname.startsWith('/apps')
   const appList = apps ?? []
@@ -233,6 +233,7 @@ function NavRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
         <>
           <Icon name={item.icon} size={14} className={cn('shrink-0', isActive ? 'text-[var(--accent)]' : 'text-[var(--fg-3)]')} />
           {!collapsed && <span className="flex-1 text-left truncate">{item.label}</span>}
+          {!collapsed && item.enterprise && <EnterpriseBadge link={false} />}
         </>
       )}
     </NavLink>

@@ -4,11 +4,14 @@ import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Icon, type IconName } from '@/components/ui/icon'
 import { Switch } from '@/components/ui/switch'
+import { ActionMenu } from '@/components/shared/action-menu'
+import { EnterpriseBadge, EnterpriseLock, EnterpriseNote } from '@/components/shared/enterprise'
 import { LineChart } from '@/components/shared/line-chart'
 import { Pill, type PillTone } from '@/components/shared/pill'
 import { ProtocolBadge } from '@/components/shared/protocol-badge'
 import { DualRing, Ring } from '@/components/shared/ring'
 import { Sparkline } from '@/components/shared/sparkline'
+import { EditionContext } from '@/contexts/edition-context'
 import { MOCKS_ENABLED, useApi } from '@/lib/api'
 import { system } from '@/lib/api/endpoints'
 
@@ -102,6 +105,31 @@ export function UiSinkPage() {
             Checkbox ({checked ? 'checked' : 'unchecked'})
           </label>
         </div>
+      </Section>
+
+      <Section title="Enterprise (forced Community)">
+        <EditionContext.Provider value={false}>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 text-sm text-[var(--fg-2)]">
+              WebRTC Data Channel <EnterpriseBadge />
+            </div>
+            <EnterpriseLock>
+              <label className="flex items-center gap-2 text-sm text-[var(--fg-2)]">
+                <Switch checked={switchOn} onChange={setSwitchOn} />
+                Same switch as above, locked: can't toggle or focus it
+              </label>
+            </EnterpriseLock>
+            <div className="flex items-center gap-2 text-sm text-[var(--fg-2)]">
+              Menu with a disabled item and its note
+              <ActionMenu items={[
+                { icon: 'play', label: 'Play', note: <EnterpriseNote>WebRTC playback needs Enterprise.</EnterpriseNote>, children: [
+                  { icon: 'video', label: 'Play With WebRTC', disabled: true },
+                  { icon: 'play', label: 'Play With HLS' },
+                ] },
+              ]} />
+            </div>
+          </div>
+        </EditionContext.Provider>
       </Section>
 
       <Section title="Rings">

@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { Icon } from '@/components/ui/icon'
 import { InfoDot } from '@/components/shared/info-dot'
+import { EnterpriseBadge, EnterpriseLock } from '@/components/shared/enterprise'
+import { useEnterprise } from '@/contexts/edition-context'
 import { cn } from '@/lib/utils'
 import { SettingFieldRow } from './settings-field'
 import type { FieldStatus, SettingField, SettingSection } from './settings-schema'
@@ -26,45 +28,54 @@ export function SettingsSectionCard({
   // Collapsing a card hides its rows, so the header carries the flag; otherwise the toolbar's
   // warning count points at nothing. Count lives in the toolbar; here it's presence only.
   const hasWarning = section.fields.some(f => statuses[f.key]?.warning)
+  // An all-enterprise section locks as one block, badge in the header so it shows collapsed.
+  const locked = useEnterprise() === false && section.fields.every(f => f.enterprise)
+  const rows = open && renderRows(visibleFields, draft, dirtyKeys, statuses, onField, onResetField)
 
   return (
     <div className={cn('rounded-[8px] border transition-colors',
       open ? 'border-[var(--border-strong)] bg-[var(--bg-2)]'
         : 'border-[var(--border)] bg-transparent hover:bg-[var(--bg-2)] hover:border-[var(--border-strong)]')}>
-      <button type="button" onClick={onToggle} aria-expanded={open} className="w-full flex items-center gap-3 px-3.5 py-3 text-left">
-        <Icon name={open ? 'chevron-down' : 'chevron-right'} size={13} className="text-[var(--fg-3)] shrink-0" />
-        <span className={cn('w-7 h-7 rounded-[6px] inline-flex items-center justify-center shrink-0',
-          open ? 'bg-[var(--bg)] text-[var(--fg-2)]' : 'bg-[var(--bg-2)] text-[var(--fg-3)]')}>
-          <Icon name={section.icon} size={13} />
-        </span>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[13px] font-medium text-[var(--fg)]">{section.title}</span>
-            {section.info && <InfoDot text={section.info} />}
+      {/* The badge is a link, so it sits beside the toggle button, never inside it. */}
+      <div className="flex items-center">
+        <button type="button" onClick={onToggle} aria-expanded={open} className="flex-1 min-w-0 flex items-center gap-3 px-3.5 py-3 text-left">
+          <Icon name={open ? 'chevron-down' : 'chevron-right'} size={13} className="text-[var(--fg-3)] shrink-0" />
+          <span className={cn('w-7 h-7 rounded-[6px] inline-flex items-center justify-center shrink-0',
+            open ? 'bg-[var(--bg)] text-[var(--fg-2)]' : 'bg-[var(--bg-2)] text-[var(--fg-3)]')}>
+            <Icon name={section.icon} size={13} />
+          </span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[13px] font-medium text-[var(--fg)]">{section.title}</span>
+              {section.info && <InfoDot text={section.info} />}
+            </div>
+            {section.desc && <div className="text-[11.5px] text-[var(--fg-3)] mt-0.5">{section.desc}</div>}
           </div>
-          {section.desc && <div className="text-[11.5px] text-[var(--fg-3)] mt-0.5">{section.desc}</div>}
-        </div>
-        {hasWarning && (
-          <span title="Contains a setting that needs attention" className="shrink-0 text-[var(--warn)] inline-flex">
-            <Icon name="alert" size={13} />
-          </span>
-        )}
-        {sectionDirty > 0 && (
-          <span className="inline-flex items-center gap-1.5 text-[10.5px] font-mono text-[var(--warn)] shrink-0 px-1.5 py-0.5 rounded bg-[var(--warn-bg)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--warn)]" />
-            {sectionDirty}
-          </span>
-        )}
-      </button>
+          {hasWarning && (
+            <span title="Contains a setting that needs attention" className="shrink-0 text-[var(--warn)] inline-flex">
+              <Icon name="alert" size={13} />
+            </span>
+          )}
+          {sectionDirty > 0 && (
+            <span className="inline-flex items-center gap-1.5 text-[10.5px] font-mono text-[var(--warn)] shrink-0 px-1.5 py-0.5 rounded bg-[var(--warn-bg)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--warn)]" />
+              {sectionDirty}
+            </span>
+          )}
+        </button>
+        {locked && <span className="shrink-0 pr-3.5"><EnterpriseBadge /></span>}
+      </div>
 
       {open && (
         <div className="border-t border-[var(--border)] px-3.5 pt-2 pb-3 flex flex-col">
-          {renderRows(visibleFields, draft, dirtyKeys, statuses, onField, onResetField)}
-          <div className="mt-2 pt-2 border-t border-[var(--border)] flex items-center justify-end">
-            <button type="button" onClick={onResetSection} className="text-[11px] text-[var(--fg-3)] hover:text-[var(--fg)] inline-flex items-center gap-1">
-              <Icon name="refresh" size={11} /> Reset section to defaults
-            </button>
-          </div>
+          {locked ? <EnterpriseLock>{rows}</EnterpriseLock> : rows}
+          {!locked && (
+            <div className="mt-2 pt-2 border-t border-[var(--border)] flex items-center justify-end">
+              <button type="button" onClick={onResetSection} className="text-[11px] text-[var(--fg-3)] hover:text-[var(--fg)] inline-flex items-center gap-1">
+                <Icon name="refresh" size={11} /> Reset section to defaults
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

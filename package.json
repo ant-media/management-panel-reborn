@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "vite",
     "dev-live": "vite --mode live",
+    "dev-community": "vite --mode community",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

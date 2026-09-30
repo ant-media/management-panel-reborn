@@ -29,9 +29,10 @@ type Props = {
   // disabled button). Pass false when the child is itself focusable and enabled: focus bubbles up
   // to us anyway, so the extra tab stop would just be a second stop on every row of a table.
   focusable?: boolean
+  block?: boolean              // full-width trigger for wrapping a block, instead of shrink-to-fit
 }
 
-export function Tooltip({ content, children, placement = 'top', delay = 120, className, focusable = true }: Props) {
+export function Tooltip({ content, children, placement = 'top', delay = 120, className, focusable = true, block }: Props) {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
   const triggerRef = useRef<HTMLSpanElement>(null)
@@ -99,7 +100,7 @@ export function Tooltip({ content, children, placement = 'top', delay = 120, cla
   return (
     <span
       ref={triggerRef}
-      className="inline-flex"
+      className={block ? 'block' : 'inline-flex'}
       tabIndex={focusable ? 0 : undefined}
       aria-describedby={open ? tipId : undefined}
       onMouseEnter={show}

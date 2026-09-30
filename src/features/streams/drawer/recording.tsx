@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Icon } from '@/components/ui/icon'
 import { Pill } from '@/components/shared/pill'
+import { EnterpriseLock } from '@/components/shared/enterprise'
 import type { AppSettings } from '@/features/apps/use-app-settings'
 import { recordStream, type RecordType } from '../stream-actions'
 import { useBroadcastActions } from '../use-broadcast-actions'
@@ -32,7 +33,9 @@ export function RecordingSection({ appName, broadcast, mp4On, webmOn, settings, 
   return (
     <div className="space-y-2">
       <RecordRow kind="MP4"  on={mp4On}  live={live} busy={busy} onToggle={() => void toggle(mp4On, 'mp4')} />
-      <RecordRow kind="WebM" on={webmOn} live={live} busy={busy} onToggle={() => void toggle(webmOn, 'webm')} />
+      <EnterpriseLock>
+        <RecordRow kind="WebM" on={webmOn} live={live} busy={busy} onToggle={() => void toggle(webmOn, 'webm')} />
+      </EnterpriseLock>
     </div>
   )
 }
