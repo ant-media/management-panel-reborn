@@ -397,6 +397,7 @@ function JsonDrawer({ className, text, error, onChange, onCopy, onClose }: {
   const bandRef = useRef<HTMLDivElement>(null)
   const [activeLine, setActiveLine] = useState(1)
   const activeRef = useRef(1)   // activeLine mirror for sync(), avoids a render on scroll
+  const [expanded, setExpanded] = useState(false)
 
   const lineCount = useMemo(() => (text ? text.split('\n').length : 1), [text])
   const digits = Math.max(2, String(lineCount).length)
@@ -432,11 +433,14 @@ function JsonDrawer({ className, text, error, onChange, onCopy, onClose }: {
   )
 
   return (
-    <aside className={cn('bg-[var(--bg-2)] flex flex-col min-h-0', className)}>
+    // Expanded overlays the form (keeps its scroll) and stays under the save bar (z-30).
+    <aside className={cn('bg-[var(--bg-2)] flex flex-col min-h-0', className, expanded && 'absolute inset-0 z-20 w-auto max-w-none')}>
       <div className="px-3 h-9 flex items-center justify-between border-b border-[var(--border)]">
         <div className="flex items-center gap-2">
-          <Icon name="code" size={12} className="text-[var(--fg-3)]" />
-          <span className="text-[11.5px] font-medium text-[var(--fg)]">appSettings.json</span>
+          <Button variant="ghost" size="iconSm" title={expanded ? 'Collapse' : 'Expand'} onClick={() => setExpanded(v => !v)}>
+            <Icon name="chevrons-right" size={12} className={cn(!expanded && 'rotate-180')} />
+          </Button>
+          <span className="text-[11.5px] font-medium text-[var(--fg)]">JSON editor</span>
           {error ? <Pill tone="err" dot>invalid</Pill> : <Pill tone="ok" dot>synced</Pill>}
         </div>
         <div className="flex items-center gap-0.5">
