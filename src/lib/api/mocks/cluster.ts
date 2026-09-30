@@ -1,5 +1,6 @@
 import { registerMock } from '@/lib/api'
 import type { RawClusterNode } from '@/features/cluster/types'
+import { MOCK_COMMUNITY } from './server'
 
 // Mock of the cluster endpoints. Mirrors the real wire shapes: cluster-mode-status
 // is a Result{success}; nodes are string-typed ClusterNode rows (cpu "0-100",
@@ -8,8 +9,8 @@ import type { RawClusterNode } from '@/features/cluster/types'
 // One node is dead (stale heartbeat) and one alive node sits in the warn band so the
 // derived health tiers are all visible. Alive nodes jitter each poll to feel live.
 //
-// Flip IN_CLUSTER to false to exercise the standalone empty state.
-const IN_CLUSTER = true
+// Community is never in cluster mode. Flip to false to exercise the standalone empty state.
+const IN_CLUSTER = !MOCK_COMMUNITY
 
 const TOTAL_MB = 16031
 

@@ -340,6 +340,9 @@ Confirmed defects, not new scope. Pick up independently.
   "unsaved" once touched while looking unchanged. App Settings shipped the fix:
   `parseFieldValue`/`canonValue` in `settings-schema.ts` wired through `canonEq` in
   `settings-tab.tsx`. Port the same pattern here; verify the server tab's field shapes first.
+- **Streams tab preview notice on Community.** "Stream previews are off. Enable Generate Preview"
+  points at a setting that is locked on Community, where previews can't work at all
+  (`EncoderAdaptor` only). Hide the notice when `useEnterprise() === false` (`app-streams-tab.tsx`).
 - **Edit/new stream modal: two scrollbars on short windows.** Likely the form's own
   `max-h-[64vh] overflow-y-auto` cap nesting inside the Modal body's `overflow-y-auto`, so both
   scroll. Reconcile to one scroll container (`streams/editor/`).

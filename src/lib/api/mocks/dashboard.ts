@@ -1,5 +1,6 @@
 import { registerMock } from '@/lib/api'
 import type { Licence } from '@/lib/api/endpoints'
+import { MOCK_COMMUNITY } from './server'
 
 const GB = 1024 ** 3
 const startedAt = Date.now() - 4 * 3600_000 + Math.floor(Math.random() * 3600_000)
@@ -7,7 +8,7 @@ const startedAt = Date.now() - 4 * 3600_000 + Math.floor(Math.random() * 3600_00
 const rng = (lo: number, hi: number) => lo + Math.random() * (hi - lo)
 
 registerMock('GET', '/rest/v2/version', () => ({
-  versionType: 'Enterprise',
+  versionType: MOCK_COMMUNITY ? 'Community Edition' : 'Enterprise Edition',
   versionName: '2.17.1',
   buildNumber: 'mock-build',
 }))
@@ -171,4 +172,5 @@ registerMock('GET', '/rest/v2/licence-status', ({ query }) => {
   lastLicence = key.length >= 8 && key === key.trim() ? validLicence : invalidLicence
   return lastLicence
 })
-registerMock('GET', '/rest/v2/last-licence-status', () => lastLicence)
+// Community has no licence service.
+registerMock('GET', '/rest/v2/last-licence-status', () => (MOCK_COMMUNITY ? null : lastLicence))

@@ -13,8 +13,10 @@ import { useViewportWidth } from '@/lib/use-viewport-width'
 import { useRangeSelection } from '@/lib/use-range-selection'
 import { useToast } from '@/lib/use-toast'
 import { useSidebar } from '@/contexts/sidebar-context'
+import { useEnterprise } from '@/contexts/edition-context'
 import { copyToClipboard } from '@/lib/clipboard'
 import { ToastBanner } from '@/components/shared/toast'
+import { EnterpriseNote } from '@/components/shared/enterprise'
 import { LoadErrorBanner } from '@/components/shared/load-error-banner'
 import { Pagination } from '@/components/shared/pagination'
 import { DEFAULT_PAGE_SIZE, type PageSize } from '@/lib/page-size'
@@ -85,6 +87,7 @@ export function AppStreamsTab({ appName, onOpenStream, onGoToSettings }: Props) 
   const splitOpen = Boolean(detailId) && !isNarrow
 
   const { collapsed: sidebarCollapsed, setCollapsed: setSidebarCollapsed } = useSidebar()
+  const community = useEnterprise() === false
 
   // Drive the docked layout off the (stable) viewport width, modelling the sidebar
   // and dock explicitly, rather than measuring the table row directly: the row
@@ -237,14 +240,14 @@ export function AppStreamsTab({ appName, onOpenStream, onGoToSettings }: Props) 
       'sep',
       { icon: 'code', label: 'Copy Embed Code',                onClick: () => cp('embed code',  embedSnippet(appName, b.streamId)) },
       { icon: 'copy', label: 'Copy Publish URL', hint: 'rtmp', onClick: () => cp('publish URL', rtmpIngestUrl(appName, b.streamId)) },
-      { icon: 'play', label: 'Play', children: [
+      { icon: 'play', label: 'Play', note: community && <EnterpriseNote>WebRTC playback needs Enterprise.</EnterpriseNote>, children: [
         { icon: 'maximize', label: 'Play Embedded Player', onClick: () => setPlaying(b) },
-        { icon: 'video',    label: 'Play With WebRTC',     onClick: () => playInTab('webrtc') },
+        { icon: 'video',    label: 'Play With WebRTC',     disabled: community, onClick: () => playInTab('webrtc') },
         { icon: 'play',     label: 'Play With HLS',        onClick: () => playInTab('hls') },
       ] },
-      { icon: 'record', label: 'Recording', children: [
+      { icon: 'record', label: 'Recording', note: community && <EnterpriseNote>WebM recording needs Enterprise.</EnterpriseNote>, children: [
         { label: recItemLabel(mp4On, 'MP4'),   onClick: () => void setRecording(!mp4On, 'mp4') },
-        { label: recItemLabel(webmOn, 'WebM'), onClick: () => void setRecording(!webmOn, 'webm') },
+        { label: recItemLabel(webmOn, 'WebM'), disabled: community, onClick: () => void setRecording(!webmOn, 'webm') },
       ] },
       { icon: 'more-h', label: 'Other', children: [
         { icon: 'rss', label: 'Restream Endpoints', onClick: () => setEndpointsTarget(b) },
@@ -252,7 +255,7 @@ export function AppStreamsTab({ appName, onOpenStream, onGoToSettings }: Props) 
       'sep',
       { icon: 'trash', label: 'Delete Broadcast', danger: true, onClick: () => setPendingDelete([b.streamId]) },
     ]
-  }, [appName, flash, actions, refresh, settings, runAction])
+  }, [appName, flash, actions, refresh, settings, runAction, community])
 
   // Stable, or the drawer's ESC/focus effect re-runs on every 5s poll and steals focus back.
   const closeDetail = useCallback(() => setDetailId(null), [])

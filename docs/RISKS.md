@@ -127,10 +127,10 @@ Architectural risks, security caveats, and edge cases identified during reviews.
 **Second consumer:** the `generatePreview` rule reads `encoderSettings` to warn "needs at least one rendition". It fires only on an `Array.isArray(…) && length === 0`; an **absent** key means we can't tell, so it stays silent rather than warn on every app. If the real GET turns out to send `encoderSettingsString`, that warning silently never fires; fix the container key and it starts working with no other change.
 
 ### `generatePreview` does nothing without a rendition, and nothing on Community
-**Where:** `settings-schema.ts`, two `FieldRule`s on `generatePreview`.
+**Where:** `settings-schema.ts`, the `FieldRule` + `enterprise: true` on `generatePreview`.
 **Backend truth:** `MuxAdaptor` only stores the flag. The sole reader is `EncoderAdaptor.initPreviewMuxing()` (Ant-Media-Enterprise), reached **only** from the `encoderSettingsList != null && !isEmpty()` branch. With no renditions the stream takes the SFU-forward branch and no `PreviewMuxer` is ever constructed, so previews are silently never written. `MuxAdaptor.isEncoderAdaptorShouldBeTried()` also returns true for `webRTCEnabled || forceDecoding`, which is why the transcoder gets *constructed* and the failure looks like nothing at all.
 **Why warning, not blocker:** the effective rendition list can come from the `Broadcast` (`encoderSettingsList`), so an app with none can still produce previews for a stream that overrides them. We cannot prove the config is broken, only that it's probably pointless.
-**Watch:** don't promote either rule to `error`. On Community the flag is inert entirely (`EncoderAdaptor` isn't in that build), which is the first rule.
+**Watch:** don't promote the rendition rule to `error`. On Community the flag is inert entirely (`EncoderAdaptor` isn't in that build), so the field is locked there (`enterprise: true`) instead of warned about.
 
 ### Server settings: a partial POST CORRUPTS, not just ignores
 **Where:** `src/features/server-settings/use-server-settings.ts` → `POST /server-settings`.
