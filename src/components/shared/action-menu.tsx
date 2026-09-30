@@ -24,6 +24,7 @@ type MenuEntry = {
   disabled?: boolean
   onClick?: () => void
   children?: MenuItem[]
+  note?: ReactNode   // footer line under a submenu's items
 }
 
 type Props = {
@@ -36,7 +37,8 @@ type Props = {
 
 const MARGIN = 6 // keep the submenu flyout clear of the viewport edge
 
-const ROW_CLASS = 'w-full px-2.5 py-1.5 text-left text-[12px] flex items-center gap-2 transition-colors'
+// nowrap: a flyout has no room to grow into, so without it every word would wrap.
+const ROW_CLASS = 'w-full px-2.5 py-1.5 text-left text-[12px] flex items-center gap-2 whitespace-nowrap transition-colors'
 const PANEL_CLASS = 'min-w-[180px] bg-[var(--card)] border border-[var(--border)] rounded-[7px] shadow-xl py-1'
 
 export function ActionMenu({ items, align = 'right', trigger }: Props) {
@@ -190,6 +192,11 @@ function SubMenu({ item, close }: { item: MenuEntry; close: () => void }) {
         >
           <div role="menu" className={PANEL_CLASS}>
             <MenuList items={item.children!} close={close} />
+            {item.note && (
+              <div className="mt-1 mx-2.5 pt-1.5 pb-0.5 border-t border-[var(--border)] text-[10.5px] text-[var(--fg-3)] whitespace-nowrap">
+                {item.note}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -1,11 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { resultMessage } from '@/lib/api'
 import { useApi } from '@/lib/api/use-api'
-import { server, system } from '@/lib/api/endpoints'
+import { system } from '@/lib/api/endpoints'
+import { useEnterprise } from '@/contexts/edition-context'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Icon } from '@/components/ui/icon'
 import { Pill } from '@/components/shared/pill'
+import { PlansLink } from '@/components/shared/enterprise'
 import { Field, SelectField } from '@/components/shared/form'
 import { LoadErrorBanner } from '@/components/shared/load-error-banner'
 import { ToastBanner } from '@/components/shared/toast'
@@ -19,9 +21,8 @@ type VersionInfo = { versionName?: string; versionType?: string; buildNumber?: s
 export function ServerTab() {
   const { data, error, isLoading, refresh } = useServerSettings()
   const version = useApi<VersionInfo>(signal => system.version(signal))
-  // Edition comes from the endpoint that answers exactly that, not from sniffing `versionType`
-  // (a display string). Same source as the app-settings rule context.
-  const edition = useApi(signal => server.enterpriseEdition(signal))
+  // Unknown (probe in flight or failed) shows neither the licence nor the Community line.
+  const enterprise = useEnterprise()
   const { licence, state: licenceState, recheck } = useLicence()
   const { toast, flash, dismiss } = useToast()
 
@@ -33,10 +34,8 @@ export function ServerTab() {
   if (error && !draft) return <LoadErrorBanner entity="server settings" error={error} onRetry={refresh} />
   if (!draft || !baseline || isLoading) return <SettingsSkeleton />
 
-  // Unknown (probe in flight or failed) hides the licence key, same as Community.
-  const isEnterprise = edition.data?.success === true
   const marketBuild = draft.buildForMarket === true
-  const showLicenceKey = isEnterprise && !marketBuild
+  const showLicenceKey = enterprise === true && !marketBuild
 
   // logLevel + licenceKey are the only edits the POST actually persists.
   const dirty = draft.logLevel !== baseline.logLevel || draft.licenceKey !== baseline.licenceKey
@@ -85,13 +84,13 @@ export function ServerTab() {
           <InfoRow label="TLS">
             {draft.sslEnabled ? <Pill tone="ok" dot>enabled</Pill> : <Pill tone="neutral" dot>disabled</Pill>}
           </InfoRow>
-          {isEnterprise && (
+          {enterprise === true && (
             <InfoRow label="License"><LicenceBadge state={licenceState} endDate={licence?.endDate} marketBuild={marketBuild} /></InfoRow>
           )}
         </div>
-        {!isEnterprise && (
+        {enterprise === false && (
           <div className="mt-4 pt-4 border-t border-[var(--border)] text-[11.5px] text-[var(--fg-3)]">
-            Community Edition, no license activation required.
+            Community Edition, no license activation required. <PlansLink>See Enterprise plans</PlansLink>
           </div>
         )}
       </Card>

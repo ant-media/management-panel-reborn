@@ -87,7 +87,7 @@ Maps every `src/lib/api/endpoints/*` method to its REST endpoint, whether a mock
 | `configureSsl` | `ssl-settings` (POST multipart) | ✓ | wired | `configureSsl` |
 | `licenceStatus` | `licence-status?key=` | ✓ | wired | `useLicence.recheck` (forces a check; **requires a non-blank, trimmed key**) |
 | `lastLicenceStatus` | `last-licence-status` | ✓ | wired | `useLicence` (the poll; every licence consumer reads it) |
-| `enterpriseEdition` | `enterprise-edition` | ✓ | wired | `settings-tab` (rule context), `server-tab` (licence-key gate) |
+| `enterpriseEdition` | `enterprise-edition` | ✓ | wired | `EditionProvider` (the one probe); everything else reads `useEnterprise()` |
 
 ### `users`  (auth *flow*, authenticate/initial/logout, lives in `lib/auth/api.ts`)
 | Method | Endpoint | Mock | Status | Consumer |

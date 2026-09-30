@@ -61,6 +61,10 @@ branch in both (as of 2026-07-07).
   what writes `ams.beta.notice.seen`; untick it and the notice returns next login. The flag is
   per browser, and survives a trip through the legacy login only because that page's `localStorage.clear()`
   is a targeted `removeItem` list under `rebornSwitcher` ([features/legacy-switcher.md](../features/legacy-switcher.md)).
+- **Community edition gating shipped, verified standalone on Community and Enterprise (2026-09-30).** On Community, enterprise-only
+  features show locked with an Enterprise badge linking to plans, instead of hiding. One edition owner
+  (`useEnterprise()`, ARCHITECTURE.md), the kit's `EnterpriseBadge` / `EnterpriseLock`, and an
+  `enterprise` flag on app-settings fields. `pnpm dev-community` mocks it.
 - **Panel delivery to AMS CI shipped, verified on real runs (2026-07-22).** AMS bakes the panel
   into `webapps/root` at build time by downloading a prebuilt zip from this repo's releases:
   branch builds pull their branch's `WORK-BRANCHES` snapshot (freshness checked by commit, else
