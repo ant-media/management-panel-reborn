@@ -82,17 +82,8 @@ board. Backend design + invariants:
   fullscreen the first Escape only exits fullscreen.
 - [ ] Tall modals (player, VoD picker) on a short window: header and footer stay pinned, only the
   body scrolls, the 16:9 video letterboxes to fit.
-- [ ] Playlist editor: drag a row by its grip; the list reorders and persists on save (new-stream
-  and edit modals share the component).
-- [ ] Stream card + drawer: total viewers is WebRTC + HLS + DASH (RTMP is not counted; a
-  per-protocol `-1` clamps to 0) and matches the graph.
-- [ ] Speed pill hover: a stream encoding faster than realtime reads "above realtime speed"
-  (three-way label, tolerance band around 1.0).
 - [ ] VoD Play on a play-JWT app: opens the in-panel player and a gated VoD plays; ungated still
   plays; open-in-new-tab in the header works.
-- [ ] App delete from the dashboard row (red trash beside Go to app) and the Applications page
-  (trash now always visible): the type-the-name confirm opens, the row does not expand or navigate on
-  click, and the app leaves both lists right after delete.
 
 ### Legacy panel switcher
 

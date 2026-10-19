@@ -51,11 +51,12 @@ branch in both (as of 2026-07-07).
   semantics; the ipCamera and Mongo checks are open (TODO.md). Design:
   [features/streams-master-detail.md](../features/streams-master-detail.md).
 - **Manual-test-round fixes are in code, pending a live pass** (TODO.md "Recent UI fixes"): modal
-  height caps (header/footer pinned on short windows), playlist drag-reorder, viewer totals
-  (RTMP excluded from the sum), a three-way speed label, dashboard app-row metrics polling,
-  tokenized in-panel VoD playback, and app delete from the dashboard row (same confirm as the
-  Applications page, whose trash is now always visible). Verified in the same round: Escape closing only the top layer, confirm dialogs (app / VoD / user
-  delete), node-note standalone behavior, per-stream metrics baseline + cleanup.
+  height caps (header/footer pinned on short windows), dashboard app-row metrics polling, and
+  tokenized in-panel VoD playback. Verified in the same round: Escape closing only the top layer,
+  playlist drag-reorder, viewer totals (RTMP excluded from the sum), the three-way speed label, app
+  delete from the dashboard row and the Applications page (same confirm, trash always visible),
+  confirm dialogs (app / VoD / user delete), node-note standalone behavior, per-stream metrics
+  baseline + cleanup.
 - **First-run beta notice shipped.** A one-time dialog on the first authenticated load
   (`components/chrome/beta-notice.tsx`). Its "Don't show this again" box is ticked by default, and it is
   what writes `ams.beta.notice.seen`; untick it and the notice returns next login. The flag is
