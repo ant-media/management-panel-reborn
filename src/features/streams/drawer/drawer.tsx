@@ -4,6 +4,7 @@ import { Icon } from '@/components/ui/icon'
 import { cn } from '@/lib/utils'
 import { errorMessage } from '@/lib/api'
 import { fmtDuration } from '@/lib/format'
+import { useEscapeKey } from '@/lib/use-escape-key'
 import { ActionMenu, type MenuItem } from '@/components/shared/action-menu'
 import { CopyChip } from '@/components/shared/copy-chip'
 import { EndpointsSection } from '../endpoints-section'
@@ -23,7 +24,6 @@ type Props = {
   hasPreview: boolean
   // inline = docked beside the table; overlay = full-screen (narrow).
   mode: 'inline' | 'overlay'
-  // Must be stable: the ESC/focus effect re-runs on it, and the parent re-renders every poll.
   onClose: () => void
   onFlash: (kind: 'ok' | 'err', message: string) => void
   onMutated: () => void
@@ -50,18 +50,16 @@ export function StreamDetailDrawer({
   const panelRef = useRef<HTMLElement>(null)
   const overlay = mode === 'overlay'
 
-  // ESC + focus-into-panel in both modes; scroll-lock only for the overlay.
+  useEscapeKey(true, onClose)
+
+  // Focus-into-panel in both modes; scroll-lock only for the overlay.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
     panelRef.current?.focus()
-    if (overlay) {
-      const prev = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
-      return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
-    }
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose, overlay])
+    if (!overlay) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [overlay])
 
   const live = isLive(broadcast?.status)
   const mp4On = recordingOn(broadcast?.mp4Enabled, settings?.mp4MuxingEnabled)

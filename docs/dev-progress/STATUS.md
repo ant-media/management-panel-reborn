@@ -50,8 +50,8 @@ branch in both (as of 2026-07-07).
   Verified standalone for publisher edits, the live `streamSource` restart flow, and viewer-limit
   semantics; the ipCamera and Mongo checks are open (TODO.md). Design:
   [features/streams-master-detail.md](../features/streams-master-detail.md).
-- **Manual-test-round fixes are in code, pending a live pass** (TODO.md "Recent UI fixes"): modal
-  height caps (header/footer pinned on short windows), playlist drag-reorder, viewer totals
+- **Manual-test-round fixes are in code, pending a live pass** (TODO.md "Recent UI fixes"): Escape
+  closing only the top layer, modal height caps (header/footer pinned on short windows), playlist drag-reorder, viewer totals
   (RTMP excluded from the sum), a three-way speed label, dashboard app-row metrics polling,
   tokenized in-panel VoD playback, and app delete from the dashboard row (same confirm as the
   Applications page, whose trash is now always visible). Verified in the same round: confirm dialogs (app / VoD / user

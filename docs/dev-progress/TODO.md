@@ -80,6 +80,8 @@ board. Backend design + invariants:
   and they advance while the row stays expanded (server samples at 15s, the row polls at 15s).
 - [ ] Embedded player: Escape closes the modal even after clicking inside the iframe; in
   fullscreen the first Escape only exits fullscreen.
+- [ ] Escape closes only the top layer: with the player, a confirm or a `⋯` menu over the stream
+  drawer, the first press closes that layer and the drawer stays; the second closes the drawer.
 - [ ] Tall modals (player, VoD picker) on a short window: header and footer stay pinned, only the
   body scrolls, the 16:9 video letterboxes to fit.
 - [ ] Playlist editor: drag a row by its grip; the list reorders and persists on save (new-stream

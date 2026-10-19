@@ -29,10 +29,6 @@ empty state), `action-bar.tsx`, `metrics.tsx`, `recording.tsx`, `section.tsx`. O
 (`mode: 'inline' | 'overlay'`). The backdrop and the body scroll-lock are overlay-only; ESC and
 focus-into-panel apply to both.
 
-`onClose` must keep a stable identity (the parent memoises it): the ESC/focus effect keys off it,
-and the tab re-renders on every 5s poll, so an inline arrow re-runs that effect and yanks focus
-back into the panel while you are using it.
-
 - **Header:** identity only. Thumbnail, name, `StreamStatus` badge, type / resolution / duration /
   origin, then the `⋯` menu and close. No action buttons: they live in the bar below.
 - **Action bar:** four tappable tiles, Play / Start-Stop / Edit / Delete, above the metric tiles and
@@ -246,7 +242,7 @@ expressing it.
 - **Every media URL comes from `mediaOrigin()`** (`lib/media-origin.ts`), never `window.location`
   directly. In dev it resolves to `VITE_BACKEND`, because vite proxies `/rest/v2` only and an
   iframe or `<img>` has to actually load.
-- **ESC is not stacked.** One press closes the player *and* the drawer under it. Known and
-  accepted; see RISKS.md.
+- **ESC closes the top layer only** (player, confirm or `⋯` menu before the drawer under it), via
+  `useEscapeKey`; see RISKS.md.
 - **The future cross-app streams table** (TODO.md V2) should reuse this table + drawer, not fork
   them.
