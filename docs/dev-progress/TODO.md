@@ -7,6 +7,8 @@ Rules:
 - **V2 = future scope.** Nothing below the V2 line gets picked up without explicit approval.
 - When something ships: delete its entry here, update STATUS.md, move lessons to
   [RISKS.md](../RISKS.md) and design notes to [features/](../features/README.md).
+- No entries for checking a UI fix; its check steps go in the report or PR. *Verify on a live
+  server* holds only what mock mode can't exercise.
 - This file is temporary. When the V1 list is done, it gets removed and tracking moves to
   GitHub issues.
 
@@ -74,14 +76,12 @@ Standalone state per endpoint is in [STATUS.md](STATUS.md). Cluster is unverifie
 board. Backend design + invariants:
 [features/backend-analytics.md](../features/backend-analytics.md).
 
-### Recent UI fixes (in code, not yet checked on a live server)
+### UI paths mock mode can't exercise
 
 - [ ] Dashboard app row: charts are there right after a server restart (the scope-create seed),
   and they advance while the row stays expanded (server samples at 15s, the row polls at 15s).
 - [ ] Embedded player: Escape closes the modal even after clicking inside the iframe; in
   fullscreen the first Escape only exits fullscreen.
-- [ ] Tall modals (player, VoD picker) on a short window: header and footer stay pinned, only the
-  body scrolls, the 16:9 video letterboxes to fit.
 - [ ] VoD Play on a play-JWT app: opens the in-panel player and a gated VoD plays; ungated still
   plays; open-in-new-tab in the header works.
 
