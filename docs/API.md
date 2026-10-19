@@ -43,7 +43,7 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 - Per-metric subsets: `GET /cpu-status` · `/system-memory-status` · `/jvm-memory-status` · `/file-system-status` · `/system-status` · `/live-clients-size` · `/server-time`
 - `GET /gpu-status` → `GpuInfo[]`: **real** (`StatsCollector`), also embedded as `system-resources.gpuUsageInfo` (what the dashboard reads). Per device: `{ index, deviceName, gpuUtilization, memoryUtilization, encoderUtilization, decoderUtilization, memoryTotal, memoryUsed, memoryFree }`; util 0-100 ints, memory bytes, **no temperature**. `[]` on community / no NVIDIA GPU.
 - `GET /version` → `{ versionName, versionType, buildNumber }`
-- `GET /applications-info` → `{ name, liveStreamCount, vodCount, storage }[]`
+- `GET /applications-info` → `{ name, liveStreamCount, viewerCount, vodCount, storage }[]`. Both counts read the app's DataStore, so in a cluster they are **cluster-wide** (the cluster page's totals). `viewerCount` = WebRTC+HLS+DASH over broadcasting streams, needs `writeStatsToDatastore`; absent on servers older than the field.
 - **Ops** *(catalog, not in layer):* `GET /thread-dump` · `/thread-dump-json` · `/threads` · `/heap-dump` · `/liveness` · `POST /system/gc` · `GET /shutdown-proper-status` · `GET /shutdown-properly`
 
 ### Applications  (`RestServiceV2`)
@@ -238,7 +238,7 @@ list at the top of this file.
 { licenceId: string, startDate: string, endDate: string, type: string, licenceCount: string, owner: string, status: string, hourUsed: string }
 // applications  /  applications-info
 { applications: string[] }
-[{ name: string, liveStreamCount: number, vodCount: number, storage: number }]
+[{ name: string, liveStreamCount: number, viewerCount?: number, vodCount: number, storage: number }]
 // user-list  (array of)
 { email: string, userType: "ADMIN"|"USER"|"READ_ONLY", scope: string, appNameUserType: Record<string,string>, firstName: string|null, lastName: string|null, fullName: string|null, picture: string|null }
 // server-settings  (whole-POJO re-POST invariant holds, see RISKS.md)
