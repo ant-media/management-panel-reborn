@@ -116,6 +116,9 @@ deployed via the combined `panel-release-<ver>.zip` (`release.sh --with-legacy`)
 - [ ] Per-stream history in cluster: quality samples are written by the origin node. Confirm
   reading from the origin works; decide whether non-origin reads need routing (Phase 19) or
   empty-is-fine.
+- [ ] Cluster page summary: Active streams + Total viewers equal the sums over the app views
+  (dashboard app rows, streams tables) with publishers on one node and viewers on another, on
+  any node's panel; a server without `applications-info.viewerCount` shows `-`, not 0.
 - [ ] `writeStatsToDatastore` stays ON in cluster mode (it is how viewers aggregate across
   edges).
 - [ ] Per-app sampler stays off the event loop under load (`executeBlocking`, ordered: a slow

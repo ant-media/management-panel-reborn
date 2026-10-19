@@ -1,6 +1,6 @@
 # Spec: Cluster view (Phase 14)
 
-Status: **shipped**. Reads existing backend endpoints; no new backend.
+Status: **shipped**. Reads the cluster endpoints + `applications-info` (`viewerCount` is the one backend addition).
 Code: `src/features/cluster/` (`types.ts`, `parse.ts`, `use-cluster.ts`, `page.tsx`, `node-card.tsx`) + mock `src/lib/api/mocks/cluster.ts`.
 
 **Locked decisions:**
@@ -33,7 +33,7 @@ GET /rest/v2/cluster/nodes/{offset}/{size}  → ClusterNode[]
 - **`parseNode(raw): NodeView`** normalises the wire (defensive cpu/mem parse → percentages + MB, nulls when unreported) and derives **health**: `dead` if the node is dead, else `warn` when cpu≥85 / mem≥90 / db≥30ms, else `healthy`. The component renders clean derived values (same discipline as `parseLogback`).
 
 ### Presentation
-- **`ClusterPage`**: orchestrator. Health-count pills in the subtitle, a compact icon-chip **capacity summary** (Avg CPU/GPU, Active streams, Total viewers over alive nodes), the node grid, and three empty states (loading / **standalone** / in-cluster-no-nodes). Owns the note draft (`noteEdits` map, batched save bar) + the copy-IP toast.
+- **`ClusterPage`**: orchestrator. Health-count pills in the subtitle, a compact icon-chip **capacity summary** (Avg CPU/GPU over alive nodes; Active streams + Total viewers summed over `applications-info` from `useApplications()`, `-` when unreported), the node grid, and three empty states (loading / **standalone** / in-cluster-no-nodes). Owns the note draft (`noteEdits` map, batched save bar) + the copy-IP toast.
 - **`NodeCard`**: status dot + IP (click-to-copy) + last-seen + health pill on the header row; CPU/Memory/GPU meters; Streams/Viewers/DB-latency footer; the editable note pinned to the card bottom.
 
 ## Prototype gaps (mock-projected)
@@ -48,6 +48,7 @@ The prototype's **"warn" status** is realised as a *derived* tier (above), not a
 - **Standalone is the common case.** Every non-clustered install (every dev box) hits the empty list; the "this server is standalone" state is first-class, not an error.
 - **String/number coercion.** `cpu` differs by store (string vs number); `memory` needs a `"used/total"` split; both can be null pre-first-heartbeat. `parseNode` guards all of it.
 - **Trust server `status`.** It's computed at serialization time; don't recompute alive/dead client-side. Only the *warn* refinement is ours.
+- **Cluster totals are not a sum over nodes.** On an origin, every edge pulling a stream registers as a WebRTC client (`OriginServer` is an `IWebRTCClient`), so node-local WebRTC viewers count origin-to-edge links. The shared DataStore counters are incremented only by real players on whichever node serves them, so they are the cluster-wide truth and match the app views. Per-node heartbeat fields, once real, must leave those links out before anything sums them.
 - **Delete semantics.** Deleting a live node is pointless (re-registers in 5s); if added later, gate it to dead/stale rows.
 
 ## Not in scope → TODO.md
