@@ -1,4 +1,4 @@
-import { registerMock } from '@/lib/api'
+import { ApiError, registerMock } from '@/lib/api'
 import type { ServerSettings } from '@/features/server-settings/use-server-settings'
 import type { User } from '@/features/server-settings/use-users'
 import { mockAuthedEmail } from './auth'
@@ -47,6 +47,8 @@ registerMock('POST', '/rest/v2/ssl-settings', ({ query, body }) => {
   const type = String(query.type ?? '')
   const domain = String(query.domain ?? '')
   const has = (k: string) => body instanceof FormData && body.get(k) != null
+  // Real server: Jersey rejects an empty multipart before the handler runs.
+  if (!(body instanceof FormData) || body.keys().next().done) throw new ApiError(400, 'Bad Request')
   if (type !== 'ANTMEDIA_SUBDOMAIN' && !domain) return { success: false, message: 'Domain is required for this type.' }
   if (type === 'CUSTOM_CERTIFICATE' && !(has('fullChainFile') && has('privateKeyFile') && has('chainFile')))
     return { success: false, message: 'All three certificate files are required.' }

@@ -134,6 +134,7 @@
   --animate-play-pop: play-pop 500ms ease forwards;
   --animate-breathe: breathe 1.4s ease-in-out infinite;
   --animate-dot-ping: dot-ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-notice-in: notice-in 180ms ease-out;
 
   /* Tailwind's `ping`, grown from 2x to 2.6x so the ring reads around a 6px dot. */
   @keyframes dot-ping {
@@ -143,6 +144,11 @@
   /* Status dot of a state in progress (Preparing). Deeper than `animate-pulse` so it reads at 6px. */
   @keyframes breathe {
     50% { opacity: 0.15; }
+  }
+
+  /* Overlay notice drops in from just above its rest spot. */
+  @keyframes notice-in {
+    from { opacity: 0; translate: 0 -4px; }
   }
 
   /* Hover grow with an overshoot settle: peak, dip, half-peak, half-dip, rest at the target.
@@ -164,7 +170,7 @@
    Tailwind hoists the @theme copy to the end of the bundle, and `animation: none` loses on
    specificity. Unlayered :root outranks @layer theme. */
 @media (prefers-reduced-motion: reduce) {
-  :root { --animate-play-pop: none; --animate-breathe: none; --animate-dot-ping: none; }
+  :root { --animate-play-pop: none; --animate-breathe: none; --animate-dot-ping: none; --animate-notice-in: none; }
 }
 
 @layer base {

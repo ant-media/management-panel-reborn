@@ -17,6 +17,10 @@ branch in both (as of 2026-07-07).
 - **Licence status has one owner.** `LicenceProvider` polls `last-licence-status`, maps the
   backend's `status` vocabulary, and re-checks after a key save. A bad licence shows a red topbar
   pill and a dialog that re-raises on page changes, at most once a minute. Contract + traps: [API.md](../API.md) *Licensing*, [RISKS.md](../RISKS.md).
+- **TLS tab at legacy parity.** A status row (active/inactive, `https://serverName:5443`, Change SSL)
+  sits over the apply form, which opens by itself only while SSL is off. Applying survives the
+  restart that kills the request, a domain must be one the server reads whole, and the antmedia.cloud
+  subdomain locks by legacy's licence rule. Traps: [RISKS.md](../RISKS.md) *SSL*.
 - **Stream Import/Export shipped** (pulled from V2). Definition-only JSON export + bulk import
   via a new `POST /broadcasts/create-list` endpoint (backend method + unit test in
   `BroadcastRestService`). Design: [features/streams-import-export.md](../features/streams-import-export.md);
@@ -35,7 +39,9 @@ branch in both (as of 2026-07-07).
 - **Embedded player shipped, verified standalone for live streams** (including play-JWT gated
   apps). Live streams and VoD play in-panel, in a modal iframe of the app's own `play.html` (no
   player dependency); `usePlayUrl` / `useVodPlayUrl` mint a play token when the app gates
-  playback. The VoD path still needs a live check (TODO.md). Design:
+  playback. `ipCamera` streams get the legacy console's own PTZ overlay (the player's PTZ button),
+  verified on a real camera; a failed move shows a short error pill over the video. The VoD path
+  still needs a live check (TODO.md). Design:
   [features/streams-master-detail.md](../features/streams-master-detail.md); token caveats:
   [RISKS.md](../RISKS.md).
 - **Stream start/stop shipped, verified standalone.** One resolver (`streamAction` in
