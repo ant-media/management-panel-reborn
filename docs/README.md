@@ -32,7 +32,8 @@ Short version; the full rules live in [AGENTS.md](../AGENTS.md).
 
 - Docs describe the **current state**. No commit hashes or push status (git owns git state); no
   "was X, then became Y" narratives. Verification state (unverified / standalone / cluster) is
-  real state and belongs in STATUS.md + TODO.md.
+  real state and belongs in STATUS.md + TODO.md, for backend, cluster and live-server-only paths.
+  A UI fix's check steps go in the report or PR, not TODO.md.
 - One home per fact; link instead of repeating.
 - When something ships: update STATUS.md, delete its TODO.md entry, extract lessons into
   RISKS.md and design notes into features/.

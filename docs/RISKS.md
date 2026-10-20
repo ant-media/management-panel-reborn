@@ -263,11 +263,10 @@ And **static assets go through the bundler**: `import logo from '@/assets/…'` 
 **Mitigation:** Convention documented in Modal source comment.
 **Watch:** Lint rule possible; defer unless we add multiple new modals without it.
 
-### Stream drawer + confirm modal share the Escape key
-**Where:** `streams/drawer/drawer.tsx` and the `Modal` primitive both attach a `keydown` Escape listener.
-**Risk:** Deleting from inside the drawer opens the confirm modal *over* the drawer. One Escape press fires both listeners → cancels the delete **and** closes the drawer.
-**Why we accept:** Both closing is a safe outcome (the destructive action is cancelled), and threading a `suppressEscape` prop down for a corner case isn't worth the coupling.
-**Watch:** If we add more stacked overlays, build a small focus/escape stack manager instead of per-component listeners.
+### Escape has one owner: `useEscapeKey`
+**Where:** `src/lib/use-escape-key.ts`, used by `Modal`, the stream drawer, `ActionMenu` and the chrome popovers.
+**Risk:** a raw Escape `keydown` listener fires next to every other open layer: one press closes the drawer under a modal. Worse, a listener whose effect re-subscribes on a new `onClose` is removed mid-dispatch when an earlier listener's state update re-renders, so the layer underneath closes and the top one stays.
+**Rule:** anything that closes on Escape registers with `useEscapeKey(open, onClose)`; only the most recently opened layer gets the key. Layers rank by open order, not z-index. Exceptions: the player mirrors Escape from its iframe (focus lives there, and it is the top layer), a combobox stops the key in its own `onKeyDown`, and `Tooltip` stays a raw listener (a hint, not a layer).
 
 ### Tables don't announce row count to screen readers
 **Where:** `streams-table.tsx`, `apps/page.tsx`.

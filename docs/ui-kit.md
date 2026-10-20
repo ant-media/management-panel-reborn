@@ -31,8 +31,8 @@ Gate the confirm button with `canConfirm` (see the app-delete "type the name" ca
 `Modal` (shell: backdrop, ESC, scroll-lock, focuses `[data-autofocus]`) + `Field`
 (label + input + hint/error) + `FormError` (submit-error note). Never hand-roll the input, the
 error box, or the warning. Edge-docked panels are different: the stream drawer is deliberately
-bespoke, not `Modal` (Modal is centered-only), and owns its own ESC / scroll-lock / focus
-handling. Don't fold it into `Modal`.
+bespoke, not `Modal` (Modal is centered-only), and owns its own scroll-lock / focus handling
+(ESC through `useEscapeKey`, like every layer). Don't fold it into `Modal`.
 
 **A data table** (list with paging/sort/selection)
 `SortableTh<K>` for sortable column headers, `Pagination` for the footer,
@@ -163,6 +163,7 @@ The `/login` and `/register` pages, under `layouts/public-layout.tsx`. Why it lo
 | `useToast()` | transient status: `{ toast, flash(kind, msg), dismiss }` (pair with `ToastBanner`) |
 | `useIsNarrow(max=640)` | responsive branch (drawer inline vs overlay) |
 | `useViewportWidth()` (`use-viewport-width.ts`) | layout viewport width in CSS px; stable during in-page animations (only window resize / zoom changes it), so it's the right basis for a thresholded layout decision that must not flicker while a sidebar/panel animates |
+| `useEscapeKey(active, onEscape)` (`use-escape-key.ts`) | close on Escape: modal, drawer, menu, popover. Only the most recently opened active layer gets the key, so a press never closes what is underneath. Never add a raw `keydown` Escape listener (RISKS.md) |
 | `useUnsavedGuard(dirty)` | block route-nav + browser-close while a batched editor is dirty; returns the router `Blocker` for a prompt |
 | `useApi(fetcher, opts)` | the polling/abort fetch hook every `use*` builds on |
 | `storage`, `useStoredState` (`localStorage.ts`) | safe localStorage (swallows private-mode/quota throws) |

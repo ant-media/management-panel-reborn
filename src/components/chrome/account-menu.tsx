@@ -1,18 +1,13 @@
-import { useEffect } from 'react'
 import { Icon } from '@/components/ui/icon'
 import { useAuth } from '@/contexts/auth-context'
+import { useEscapeKey } from '@/lib/use-escape-key'
 
 type Props = { open: boolean; onClose: () => void }
 
 export function AccountMenu({ open, onClose }: Props) {
   const { user, isAdmin, logout } = useAuth()
 
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  useEscapeKey(open, onClose)
 
   if (!open) return null
 

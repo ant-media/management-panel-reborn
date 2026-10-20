@@ -56,10 +56,6 @@ export function NewStreamModal({ open, appName, onClose, onCreated }: Props) {
 
   const [busy, setBusy] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
-  // Picker up: ignore Escape/backdrop or one Escape closes the whole stack. No
-  // reset needed; the picker's overlay makes every close path clear it first.
-  const [pickerOpen, setPickerOpen] = useState(false)
-
   const descId = useId()
 
   useEffect(() => {
@@ -116,7 +112,7 @@ export function NewStreamModal({ open, appName, onClose, onCreated }: Props) {
     <Modal
       open={open}
       onClose={onClose}
-      dismissible={!busy && !pickerOpen}
+      dismissible={!busy}
       width="lg"
       title="New live stream"
       icon="video"
@@ -201,7 +197,7 @@ export function NewStreamModal({ open, appName, onClose, onCreated }: Props) {
         {kind === 'playlist' && (
           <div>
             <FieldLabel hint="Full video URLs, played in order. Pick from this app's VoDs or paste any HTTP(S) URL.">Playlist items</FieldLabel>
-            <PlaylistItemsEditor appName={appName} items={items} onChange={setItems} disabled={busy} onModalToggle={setPickerOpen} />
+            <PlaylistItemsEditor appName={appName} items={items} onChange={setItems} disabled={busy} />
           </div>
         )}
 
