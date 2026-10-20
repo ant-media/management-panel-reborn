@@ -27,6 +27,8 @@ GET /rest/v2/cluster/nodes/{offset}/{size}  → ClusterNode[]
 - `streams`, `viewers`: per-node load from the heartbeat (integers; absent/null from a node on an older server). `streams` = streams ingested on that node (its mux adaptors; an edge ingests none). `viewers` = players that node serves, WebRTC+HLS+DASH, origin-to-edge links excluded.
 - `id`, `ip`.
 
+Redis cluster store: `streams`/`viewers` live in a `<db>ClusterNodeLoad` side map merged into the node list, because `ClusterNode`'s Kryo layout must stay readable across versions (new fields there break older entries). Add any further heartbeat field the same way.
+
 ## Architecture
 
 ### Data layer
