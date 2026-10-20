@@ -123,11 +123,14 @@ your machine. The legacy console next to it is left alone and the server process
 ```bash
 ./redeploy.sh                                # defaults to ~/softwares/ant-media-server
 AMS_DIR=/usr/local/antmedia ./redeploy.sh    # server somewhere else
+./redeploy.sh --no-build                     # deploy the dist/ already built (e.g. on another machine)
+./redeploy.sh --help
 ```
 
 This is the only setup that runs the panel behind the real backend, so it is how you test anything
 that depends on the server, like the REST proxy or the IP filter. The login switch pill is on here,
-since the old console is sitting right next to it. `PANEL_SWITCH=off ./redeploy.sh` drops it.
+since the old console is sitting right next to it. `PANEL_SWITCH=off ./redeploy.sh` drops it. It is baked
+in at build time, so for `--no-build` build with `PANEL_SWITCH=on pnpm build`.
 
 ### Layout
 

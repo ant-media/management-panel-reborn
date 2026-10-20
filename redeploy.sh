@@ -3,6 +3,33 @@
 # The legacy console living in webapps/root is left untouched. Does not touch the server process.
 set -e
 
+usage() {
+    cat <<USAGE
+Usage: ./redeploy.sh [--no-build] [-h|--help]
+
+Builds the panel and copies dist/ into \$AMS_DIR/webapps/root/reborn-panel.
+
+Options:
+  --no-build   Skip install + build, deploy the dist/ already there (e.g. built on another
+               machine). PANEL_SWITCH is baked in at build time, so it has no effect here;
+               build with PANEL_SWITCH=on pnpm build to get the login switch pill.
+  -h, --help   Show this help.
+
+Environment:
+  AMS_DIR       Server install (default: ~/softwares/ant-media-server)
+  PANEL_SWITCH  on|off, the login switch pill (default: on)
+USAGE
+}
+
+BUILD=1
+for arg in "$@"; do
+    case "$arg" in
+        --no-build) BUILD=0 ;;
+        -h|--help) usage; exit 0 ;;
+        *) echo "Unknown option: $arg"; usage; exit 1 ;;
+    esac
+done
+
 cd "$(dirname "$0")"
 
 AMS_DIR=${AMS_DIR:-$HOME/softwares/ant-media-server}
@@ -48,7 +75,9 @@ check_deps() {
     fi
 }
 
-if on_nix; then
+if [ "$BUILD" = 0 ]; then
+    echo "skipping build, deploying the existing $SRC"
+elif on_nix; then
     echo "nix detected, building in nix-shell"
     nix-shell --run "pnpm install --frozen-lockfile && pnpm build"
 else
