@@ -67,7 +67,7 @@ Docs change in the **same commit as the code**, never as a follow-up. Stale docs
 - **Write for the next reader, who is usually an LLM.** State the current contract and the intended next step. Nothing else: no change history, no "was X, then Y", no commit hashes, no staged/pushed status, no re-arguing a settled decision. Cut any sentence that doesn't change what someone does. Use the shortest wording that still survives being read cold. Dense beats thorough.
 - **One home per fact.** Link instead of repeating. A detail that belongs in a feature doc gets summarised in one clause elsewhere, not restated.
 - **Where it goes**: shipped → STATUS.md, and delete the TODO.md entry · deferred idea → TODO.md V2 · gotcha, standing rule, or locked decision → RISKS.md · feature design → docs/features/ · new shared primitive → a row in docs/ui-kit.md · cross-cutting structure (layers, transports, contexts) → ARCHITECTURE.md.
-- Verification state (unverified / standalone-verified / cluster-verified) is real state: it lives in STATUS.md + TODO.md. A branch name is fine when it's the pointer someone needs; date it.
+- Verification state (unverified / standalone-verified / cluster-verified) is real state, tracked in STATUS.md + TODO.md, but only for backend and cluster behavior and for paths only a live server exercises (mock mode can't). A UI fix gets its check steps in the report or PR, never a TODO entry. A branch name is fine when it's the pointer someone needs; date it.
 
 ## Working with this repo
 Ship in agreed chunks; stop and report after each so the user can test.

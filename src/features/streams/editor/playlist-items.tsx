@@ -22,17 +22,12 @@ type Props = {
   items: PlaylistDraftItem[]
   onChange: Dispatch<SetStateAction<PlaylistDraftItem[]>>
   disabled?: boolean
-  // Host modal must go non-dismissible while the picker is up, or one Escape
-  // closes the whole stack (both modals listen on document).
-  onModalToggle?: (open: boolean) => void
 }
 
-export function PlaylistItemsEditor({ appName, items, onChange, disabled, onModalToggle }: Props) {
+export function PlaylistItemsEditor({ appName, items, onChange, disabled }: Props) {
   const playJwt = usePlayJwtEnabled(appName)
   const [dragKey, setDragKey] = useState<number | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
-
-  const togglePicker = (open: boolean) => { setPickerOpen(open); onModalToggle?.(open) }
 
   const add = () => {
     const fresh = newDraftItem() // outside the updater: updaters must stay pure
@@ -50,17 +45,17 @@ export function PlaylistItemsEditor({ appName, items, onChange, disabled, onModa
     const urls = await Promise.all(vods.map(v => vodPlaylistUrl(appName, v, playJwt)))
     const fresh = vods.flatMap((v, i) => urls[i] ? [newDraftItem({ streamUrl: urls[i], name: vodDisplayName(v) })] : [])
     onChange(arr => [...arr, ...fresh])
-    togglePicker(false)
+    setPickerOpen(false)
   }
 
   const pickerButton = (
-    <Button variant="outline" size="sm" onClick={() => togglePicker(true)} disabled={disabled || !appName}>
+    <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)} disabled={disabled || !appName}>
       <Icon name="video" size={12} className="text-[var(--accent)]" /> Open VoD picker
     </Button>
   )
 
   const picker = pickerOpen && appName && (
-    <VodPickerModal appName={appName} onAdd={addPicked} onClose={() => togglePicker(false)} />
+    <VodPickerModal appName={appName} onAdd={addPicked} onClose={() => setPickerOpen(false)} />
   )
 
   const dragOver = (overKey: number) => {

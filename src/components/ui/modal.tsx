@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Icon, type IconName } from '@/components/ui/icon'
 import { cn } from '@/lib/utils'
+import { useEscapeKey } from '@/lib/use-escape-key'
 
 const WIDTH = {
   sm: 'w-[400px]',
@@ -37,17 +38,14 @@ export function Modal({
 }: Props) {
   const cardRef = useRef<HTMLDivElement>(null)
 
+  useEscapeKey(open, () => { if (dismissible) onClose() })
+
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (dismissible && e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
-    }
-  }, [open, dismissible, onClose])
+    return () => { document.body.style.overflow = prev }
+  }, [open])
 
   useEffect(() => {
     if (!open) return

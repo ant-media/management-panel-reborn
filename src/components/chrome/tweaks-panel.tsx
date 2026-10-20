@@ -1,7 +1,8 @@
-import { useEffect, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Icon } from '@/components/ui/icon'
 import { ACCENTS, useTheme, type AccentKey, type Density, type ThemeMode } from '@/contexts/theme-context'
 import { cn } from '@/lib/utils'
+import { useEscapeKey } from '@/lib/use-escape-key'
 
 // DISABLED, NOT WIRED UP. Nothing imports this file, so it never renders and never ships
 // (the bundler drops it). Kept on purpose: the accent picker was pulled from the product, but
@@ -18,12 +19,7 @@ type Props = { open: boolean; onClose: () => void }
 export function TweaksPanel({ open, onClose }: Props) {
   const t = useTheme()
 
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  useEscapeKey(open, onClose)
 
   if (!open) return null
 

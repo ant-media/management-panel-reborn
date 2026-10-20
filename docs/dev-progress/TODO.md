@@ -7,6 +7,8 @@ Rules:
 - **V2 = future scope.** Nothing below the V2 line gets picked up without explicit approval.
 - When something ships: delete its entry here, update STATUS.md, move lessons to
   [RISKS.md](../RISKS.md) and design notes to [features/](../features/README.md).
+- No entries for checking a UI fix; its check steps go in the report or PR. *Verify on a live
+  server* holds only what mock mode can't exercise.
 - This file is temporary. When the V1 list is done, it gets removed and tracking moves to
   GitHub issues.
 
@@ -74,25 +76,14 @@ Standalone state per endpoint is in [STATUS.md](STATUS.md). Cluster is unverifie
 board. Backend design + invariants:
 [features/backend-analytics.md](../features/backend-analytics.md).
 
-### Recent UI fixes (in code, not yet checked on a live server)
+### UI paths mock mode can't exercise
 
 - [ ] Dashboard app row: charts are there right after a server restart (the scope-create seed),
   and they advance while the row stays expanded (server samples at 15s, the row polls at 15s).
 - [ ] Embedded player: Escape closes the modal even after clicking inside the iframe; in
   fullscreen the first Escape only exits fullscreen.
-- [ ] Tall modals (player, VoD picker) on a short window: header and footer stay pinned, only the
-  body scrolls, the 16:9 video letterboxes to fit.
-- [ ] Playlist editor: drag a row by its grip; the list reorders and persists on save (new-stream
-  and edit modals share the component).
-- [ ] Stream card + drawer: total viewers is WebRTC + HLS + DASH (RTMP is not counted; a
-  per-protocol `-1` clamps to 0) and matches the graph.
-- [ ] Speed pill hover: a stream encoding faster than realtime reads "above realtime speed"
-  (three-way label, tolerance band around 1.0).
 - [ ] VoD Play on a play-JWT app: opens the in-panel player and a gated VoD plays; ungated still
   plays; open-in-new-tab in the header works.
-- [ ] App delete from the dashboard row (red trash beside Go to app) and the Applications page
-  (trash now always visible): the type-the-name confirm opens, the row does not expand or navigate on
-  click, and the app leaves both lists right after delete.
 
 ### Legacy panel switcher
 

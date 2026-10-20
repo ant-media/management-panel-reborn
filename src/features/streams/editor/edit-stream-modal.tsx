@@ -28,8 +28,6 @@ export function EditStreamModal({ appName, broadcast, onClose, onSaved }: Props)
   const [busy, setBusy] = useState(false)
   // Carries both the server's refusal and the one check we can only make on submit.
   const [error, setError] = useState<string | null>(null)
-  // Picker up: ignore Escape/backdrop, or one Escape closes the whole stack.
-  const [pickerOpen, setPickerOpen] = useState(false)
   const descId = useId()
 
   const { type, status, streamId } = broadcast
@@ -85,7 +83,7 @@ export function EditStreamModal({ appName, broadcast, onClose, onSaved }: Props)
     <Modal
       open
       onClose={onClose}
-      dismissible={!busy && !pickerOpen}
+      dismissible={!busy}
       width="lg"
       title="Edit stream"
       icon="edit"
@@ -140,7 +138,7 @@ export function EditStreamModal({ appName, broadcast, onClose, onSaved }: Props)
           <>
             <div>
               <FieldLabel hint="Full video URLs, played in order. Pick from this app's VoDs or paste any HTTP(S) URL.">Playlist items</FieldLabel>
-              <PlaylistItemsEditor appName={appName} items={items} onChange={setItems} disabled={busy} onModalToggle={setPickerOpen} />
+              <PlaylistItemsEditor appName={appName} items={items} onChange={setItems} disabled={busy} />
             </div>
             <TextField
               label="Schedule" type="datetime-local" optional hint="Starts the playlist automatically. Blank plays it on demand."

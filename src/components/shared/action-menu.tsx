@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Icon, type IconName } from '@/components/ui/icon'
 import { useAnchoredPosition } from '@/components/shared/use-anchored-position'
 import { cn } from '@/lib/utils'
+import { useEscapeKey } from '@/lib/use-escape-key'
 
 // Compact popover menu for table-row / panel-header action columns. Items are
 // declared inline at the call site, so menu contents stay per-row without
@@ -53,14 +54,10 @@ export function ActionMenu({ items, align = 'right', trigger }: Props) {
       const target = e.target as Node
       if (!triggerRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpen(false)
     }
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
+    return () => document.removeEventListener('mousedown', onDoc)
   }, [open])
+  useEscapeKey(open, close)
 
   return (
     <span ref={triggerRef} className="inline-flex">

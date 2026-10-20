@@ -254,7 +254,6 @@ export function AppStreamsTab({ appName, onOpenStream, onGoToSettings }: Props) 
     ]
   }, [appName, flash, actions, refresh, settings, runAction])
 
-  // Stable, or the drawer's ESC/focus effect re-runs on every 5s poll and steals focus back.
   const closeDetail = useCallback(() => setDetailId(null), [])
 
   const drawerProps = detailId && {
