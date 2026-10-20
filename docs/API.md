@@ -83,7 +83,7 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 - `GET /cluster/node-count` → `{ number }` · `GET /cluster/nodes/{offset}/{size}` → `ClusterNode[]`; **both 500 on standalone.**
 - `DELETE /cluster/node/{id}` → `Result`. A live node re-registers within 5s; only meaningful for stale rows. *Catalog, not wired.*
 - `PUT /cluster/node/{id}/note?note=…` (note as a query param) → `Result`. Persists an admin note on the node; empty string clears it, **max 500 chars** (trimmed). Field-scoped write, so it **survives the 5s heartbeat and node restart**; node id from the path, nothing else about the node is mutable here; unknown id → `Result{success:false}` (no phantom row). *Verification + unit tests are open; see [TODO.md](dev-progress/TODO.md). Design: [features/backend-analytics.md](features/backend-analytics.md).*
-- `ClusterNode`: `{ id, ip, lastUpdateTime, memory:"usedMB/totalMB", cpu:0-100 (string|number), dbQueryAveargeTimeMs (note spelling), note (admin-set; may be null/absent), status:"alive"|"dead" }`. `cpu` parse defensively; `status` is binary (dead = no heartbeat >20s; period 5s). Client derives a finer warn tier.
+- `ClusterNode`: `{ id, ip, lastUpdateTime, memory:"usedMB/totalMB", cpu:0-100 (string|number), dbQueryAveargeTimeMs (note spelling), streams, viewers (heartbeat load: streams ingested on the node, players it serves WebRTC+HLS+DASH without origin-to-edge links; null/absent from older nodes), note (admin-set; may be null/absent), status:"alive"|"dead" }`. `cpu` parse defensively; `status` is binary (dead = no heartbeat >20s; period 5s). Client derives a finer warn tier.
 
 ### Support  (`SupportRestService`, auth-exempt)
 - `POST /support/request` (body `SupportRequest`) → `Result`
@@ -185,7 +185,7 @@ The panel mocks these today; each is a backend task. The mock is the swap point:
 | `GET /ssl-settings` (cert read-back) | - (write-only) | cert introspection (subject/issuer/expiry/SAN); no ACME API today |
 | User MFA / last-login / manual unblock | - | `User` model + endpoints (`…/blocked` is read-only) |
 | App-JWT mint for admin | client-side mint from `jwtSecretKey` | Java endpoint that mints an app token for the authed admin (secret stays server-side) |
-| Cluster per-node streams/viewers/GPU | optional `RawClusterNode` fields in `mocks/cluster.ts` | grow the `ClusterNode` heartbeat to report them |
+| Cluster per-node GPU | optional `RawClusterNode` fields in `mocks/cluster.ts` | grow the `ClusterNode` heartbeat to report it |
 | Per-node log proxy | - (not surfaced) | proxy to fetch node X's `/log-file` through the panel origin (fills the `LogSource` seam) |
 | Server-wide persistent event log | - | query API over connect/disconnect events (Phase 15; `connection-events` is the per-stream building block) |
 | Cluster origin/edge topology | - | which node is origin per stream + edge viewer counts (Phase 19, next priority) |

@@ -1,6 +1,6 @@
 # Spec: Cluster view (Phase 14)
 
-Status: **shipped**. Reads the cluster endpoints + `applications-info` (`viewerCount` is the one backend addition).
+Status: **shipped**. Reads the cluster endpoints + `applications-info`. Backend additions for it: `ClusterNode.streams`/`viewers` (heartbeat) and `applications-info.viewerCount`.
 Code: `src/features/cluster/` (`types.ts`, `parse.ts`, `use-cluster.ts`, `page.tsx`, `node-card.tsx`) + mock `src/lib/api/mocks/cluster.ts`.
 
 **Locked decisions:**
@@ -24,6 +24,7 @@ GET /rest/v2/cluster/nodes/{offset}/{size}  → ClusterNode[]
 - `dbQueryAveargeTimeMs`: int (the backend's misspelling; match it on the wire).
 - `lastUpdateTime`: epoch ms of last heartbeat.
 - `status`: server-computed **binary** `"alive"`/`"dead"` (dead = no heartbeat for >20s; heartbeat every 5s = `NODE_UPDATE_PERIOD`).
+- `streams`, `viewers`: per-node load from the heartbeat (integers; absent/null from a node on an older server). `streams` = streams ingested on that node (its mux adaptors; an edge ingests none). `viewers` = players that node serves, WebRTC+HLS+DASH, origin-to-edge links excluded.
 - `id`, `ip`.
 
 ## Architecture
@@ -38,7 +39,7 @@ GET /rest/v2/cluster/nodes/{offset}/{size}  → ClusterNode[]
 
 ## Prototype gaps (mock-projected)
 
-The prototype cards are aspirational. **streams / viewers / GPU per node** have **no backend** and are mock-projected as the swap point (parse treats them as optional, so the view degrades cleanly against a real backend): optional `RawClusterNode` fields the heartbeat will eventually grow; delete the mock when it does.
+The prototype cards are aspirational. **GPU per node** has **no backend** and is mock-projected as the swap point (parse treats it as optional, so the view degrades cleanly against a real backend): optional `RawClusterNode` fields the heartbeat will eventually grow; delete the mock when it does. Per-node **streams / viewers are real** (heartbeat fields above); the mock mirrors them for offline dev.
 
 **Node notes are real:** `PUT /cluster/node/{id}/note?note=…` → `Result` persists an admin note server-side; empty string clears it, max 500 chars, and it survives the heartbeat + node restart. The mock is kept for offline dev. Backend design: [backend-analytics.md](backend-analytics.md).
 
@@ -48,10 +49,11 @@ The prototype's **"warn" status** is realised as a *derived* tier (above), not a
 - **Standalone is the common case.** Every non-clustered install (every dev box) hits the empty list; the "this server is standalone" state is first-class, not an error.
 - **String/number coercion.** `cpu` differs by store (string vs number); `memory` needs a `"used/total"` split; both can be null pre-first-heartbeat. `parseNode` guards all of it.
 - **Trust server `status`.** It's computed at serialization time; don't recompute alive/dead client-side. Only the *warn* refinement is ours.
-- **Cluster totals are not a sum over nodes.** On an origin, every edge pulling a stream registers as a WebRTC client (`OriginServer` is an `IWebRTCClient`), so node-local WebRTC viewers count origin-to-edge links. The shared DataStore counters are incremented only by real players on whichever node serves them, so they are the cluster-wide truth and match the app views. Per-node heartbeat fields, once real, must leave those links out before anything sums them.
+- **Edges are not viewers.** An edge pulls each stream from its origin: over WebRTC it registers as an `OriginServer` client, over HLS/DASH it downloads with a `ClusterAuthorization` header. The backend leaves both out of viewer counts (`WebRTCAdaptor.getNumberOfTotalViewers`, `StatisticsFilter`), so a player counts once, on the node serving it. Keep it that way, or the origin's card and every total double count.
+- **Summary totals read the DataStore, not the node sum.** Active streams / Total viewers come from `applications-info`, the same counts as the app views, and stay right with a node on an older server (no heartbeat fields). The node sum should match them within a heartbeat (5s).
 - **Delete semantics.** Deleting a live node is pointless (re-registers in 5s); if added later, gate it to dead/stale rows.
 
 ## Not in scope → TODO.md
 - **Per-node logs**: no backend proxy to a specific node's `/log-file`. The `LogSource` seam is ready; revisit with a backend proxy (V2). The card carries no log action until then.
 - **Node delete**, **dense table** for large clusters (both V2), and **origin/edge analytics** (Phase 19, V1).
-- **Real per-node streams/viewers/GPU**: swap the mock for backend heartbeat fields, no UI change (V2). (Node **notes** are real; see "Prototype gaps" above.)
+- **Real per-node GPU**: swap the mock for a backend heartbeat field, no UI change (V2). (Node **notes**, **streams** and **viewers** are real; see "Prototype gaps" above.)

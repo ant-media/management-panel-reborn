@@ -43,8 +43,8 @@ export function ClusterPage() {
   }, [nodes])
 
   // Stream/viewer totals come from the shared DataStore (applications-info), the numbers the app
-  // views show. Not a sum over nodes: the heartbeat has no stream/viewer fields, and node-local
-  // WebRTC viewers count each origin-to-edge link as a viewer. null = not reported, never a fake 0.
+  // views show. Not the node sum: that lags a heartbeat and drops nodes on older servers.
+  // null = not reported, never a fake 0.
   const totals = useMemo(() => apps ? {
     streams: apps.reduce((a, app) => a + app.liveStreamCount, 0),
     viewers: apps.every(app => app.viewerCount != null) ? apps.reduce((a, app) => a + (app.viewerCount ?? 0), 0) : null,
