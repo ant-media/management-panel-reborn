@@ -264,7 +264,7 @@ a playlist, or a Mongo-backed server. Semantics: [API.md](../API.md); traps: [RI
 - **New-stream modal, deferred options:** the **edit** modal now ships the `autoStartStopEnabled`
   toggle (viewer-presence start/stop for pulled sources) and playlist scheduling
   (`plannedStartDate`); the create modal still has neither, so add them there for symmetry. Also
-  ONVIF PTZ + per-camera profile selection (`ipcamera()` layer methods exist).
+  per-camera profile selection (`ipcamera(app).deviceProfiles` exists).
 - **VoD:** multi-file/queued upload; a real upload progress bar (needs an XHR transport path,
   `fetch` cannot report upload progress); resumable/chunked upload for very large files;
   unlink-directory UI (`DELETE /vods/directory` exists, no UI); an in-panel VoD detail/preview

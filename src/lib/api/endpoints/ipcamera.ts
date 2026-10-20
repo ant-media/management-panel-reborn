@@ -2,7 +2,7 @@ import { appApi } from '../client'
 import type { Query } from '../transport'
 import type { Result } from '../types'
 
-type Move = { valueX?: number; valueY?: number; valueZ?: number; movement?: 'absolute' | 'relative' | 'continuous' }
+export type Move = { valueX?: number; valueY?: number; valueZ?: number; movement?: 'absolute' | 'relative' | 'continuous' }
 
 // IP camera control (ONVIF discovery + PTZ), under `/v2/broadcasts`.
 export function ipcamera(app: string) {

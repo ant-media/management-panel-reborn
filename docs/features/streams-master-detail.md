@@ -178,6 +178,18 @@ An `iframe` of the app's own `play.html` inside an `xl` `Modal` (`player-modal.t
 dependency (`@antmedia/web_player` is ~5.5MB); the page negotiates the protocol itself. The modal
 is rendered only while playing, so closing unmounts the iframe and the session dies with it.
 
+**PTZ** (`ptz.ts`, `ipCamera` only) is the legacy console's own overlay, not a rebuild. Legacy builds
+`@antmedia/web_player` with `isIPCamera` and a `restAPIPromise` that tunnels through the backend proxy.
+`play.html` exposes the same player as `window.webPlayer`, so `PlayerFrame`'s `onPlayerLoad` sets those
+two fields on it, and the player behaves exactly as in legacy: once the video fires `play`, a **PTZ**
+button joins the control bar and toggles an overlay (zoom -/+ above four arrows, bottom-right, kept in
+fullscreen). Each click is one `relative` move of 0.1 (left is +X, up is +Y, zoom in is +Z). There is no
+hold and no stop. One addition over legacy, which only logs failures: a rejected move floats a short
+error pill over the top of the video (`PlayerFrame`'s `notice`, fed by `useToast`). It clears itself
+after 8s, or on the next good move. It sits in the panel, outside the iframe, so fullscreen hides it. The
+move carries the panel's stream id, not the player's subFolder-prefixed one, which misses the route in
+legacy. Same-origin only, so not under `pnpm dev` ([RISKS.md](../RISKS.md)).
+
 Launch points: the **row's leading cell** (broadcasting rows), the drawer's **Play tile**, and
 `⋯ > Play > Play Embedded Player`. `Play With WebRTC` / `Play With HLS` and row middle-click stay
 new-tab openers. The row deliberately has **no** play button in its *action* cell: play lives on the

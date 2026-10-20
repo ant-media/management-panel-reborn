@@ -146,8 +146,8 @@ Architectural risks, security caveats, and edge cases identified during reviews.
 
 ### SSL is write-only and restarts the server
 **Where:** `src/features/server-settings/use-ssl.ts` → `POST /ssl-settings` (multipart).
-**Risk:** No GET: the panel can't confirm what cert is active, so the TLS tab can't show or verify current state (it only *applies*). Applying **restarts Ant Media Server** (drops streams, panel unreachable ~1 min). `type` is `valueOf()`'d server-side, so a wrong string 500s.
-**Mitigation:** A confirm modal spells out the restart; `type` is constrained to the enum names in code; an honest "can't read back the active cert" note is shown.
+**Risk:** No GET: the panel can't tell which cert is active. `sslEnabled` in server settings only says a secure connector exists, so the TLS tab shows on/off, never the cert. Applying **restarts Ant Media Server** (drops streams, panel unreachable ~1 min). `type` is `valueOf()`'d server-side, so a wrong string fails with "Unknown SSL configuration type". An **empty multipart body 400s** in Jersey before the handler runs, and the domain-only types (`CUSTOM_DOMAIN`, `ANTMEDIA_SUBDOMAIN`, the AWS Marketplace path) have no files to send. A **successful apply usually never answers**: `enable_ssl.sh` ends in `service antmedia restart` while the handler waits on it, so the request dies with the JVM. `extractFQDN` takes the first FQDN-looking run (`find()`, TLD capped at 6 letters), so a sloppy domain, or a TLD over 6 letters, silently becomes another one. The antmedia.cloud subdomain is only handed out to a licensed key or a `buildForMarket` server.
+**Mitigation:** A confirm modal spells out the restart; `type` is constrained to the enum names in code; an honest "can't read back the active cert" note is shown. `server.configureSsl` always sends `type` as a form part so the body is never empty; the mock 400s an empty body to keep that honest. `configureSsl` reads a dropped connection or a 502-504 as `restarting`, not a failure. `checkDomain` accepts only a bare FQDN that `extractFQDN` reads whole (at most 11 labels, an ending of 2 to 6 letters), so a longer ending is blocked with its own message instead of being truncated (legacy let it through). The subdomain option locks with legacy's rule: no licence carrying a `licenceId` and not a marketplace build.
 **Watch:** If a `GET /ssl-settings` ever ships, wire it so the tab shows current state instead of flying blind.
 
 ### Playlist item `streamUrl` must be a full, openable URL
@@ -202,6 +202,12 @@ regression here. Keep the dirty check.
 **Risk:** an app can gate playback three ways, and each behaves differently. `playTokenControlEnabled` mints a **one-time** token: the iframe spends it, so the modal's "Open in new tab" (which reuses the resolved URL) plays a spent token and fails. `playJwtControlEnabled` mints a JWT (reusable until it expires, 100s). `enableTimeTokenForPlay` (TOTP) cannot be minted client-side at all.
 **Mitigation:** the token is minted per playback and short-lived (legacy console parity: `now + 100s`, so the window to first frame, not a durable grant). TOTP is refused with an explicit message instead of a black player. A failed mint degrades to a bare URL so the player reports the auth error itself.
 **Watch:** the `⋯ > Play With WebRTC/HLS` items and row middle-click open **untokenized** tabs (they are synchronous, and a mint is not), so on a gated app those tabs won't play; the embedded player is the tokenized path. Fixing that properly needs a server-side mint (same V2 item as the app-JWT one above).
+
+### PTZ rides on `play.html`'s player internals
+**Where:** `enablePtz` (`features/streams/ptz.ts`), called through `PlayerFrame`'s `onPlayerLoad`.
+**Risk:** the overlay exists only while the app's `play.html` exposes `window.webPlayer` (StreamApp since 2024-04) with web_player's `isIPCamera`, `restAPIPromise` and `injectPtzElements`, the API the legacy console drives. A StreamApp that drops them loses PTZ silently. Reaching into the iframe needs the same origin: true when the panel ships inside AMS, false under `pnpm dev` (play.html loads from `VITE_BACKEND`), so PTZ can't be exercised in dev or mock mode.
+**Mitigation:** a player without `injectPtzElements` is left alone, so playback never breaks. Moves go through the proxied `ipcamera(app).move`, which is why the player's own direct REST call (403 by the app IP filter) is never used.
+**Watch:** verify PTZ on a deployed build only.
 
 ### Identity does not ride the session
 **Where:** `src/contexts/auth-context.tsx` (`ams.auth.user`) + `src/lib/auth/api.ts` (`toAuthUser`).

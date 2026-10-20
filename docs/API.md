@@ -60,7 +60,7 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 ### Server settings & SSL  (`RestServiceV2`)
 - `GET /server-settings` · `POST /server-settings`
   - Full `ServerSettings` POJO. The POST **persists only `serverName`, `licenceKey`, `nodeGroup`, `logLevel`** (everything else is ignored) **and blanks `serverName`/`licenceKey` when absent.** So always re-POST the whole fetched object with edits merged; a partial POST corrupts those fields. Returns `Result`.
-- `POST /ssl-settings?domain={fqdn}&type={type}`: **multipart, write-only. There is NO GET.** `type` is `valueOf()`'d → exact enum name: `CUSTOM_DOMAIN` / `ANTMEDIA_SUBDOMAIN` / `CUSTOM_CERTIFICATE`. For `CUSTOM_CERTIFICATE` upload `fullChainFile`, `privateKeyFile`, `chainFile`. **Restarts the server.** Returns `Result`.
+- `POST /ssl-settings?domain={fqdn}&type={type}`: **multipart, write-only. There is NO GET.** `type` is `valueOf()`'d → exact enum name: `CUSTOM_DOMAIN` / `ANTMEDIA_SUBDOMAIN` / `CUSTOM_CERTIFICATE`. For `CUSTOM_CERTIFICATE` upload `fullChainFile`, `privateKeyFile`, `chainFile`; the body needs at least one part for every type (empty multipart = 400, [RISKS.md](RISKS.md)). **Restarts the server.** Returns `Result`.
 
 ### Licensing  (`RestServiceV2`)
 - `GET /enterprise-edition` → `Result{success}`
@@ -133,7 +133,7 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 - `GET /broadcasts/onvif-devices` · `GET /broadcasts/{id}/ip-camera/device-profiles`
 - `POST /broadcasts/{id}/ip-camera/move?valueX&valueY&valueZ&movement` (`movement` = absolute|relative|continuous; values −1.0…1.0) · `POST /broadcasts/{id}/ip-camera/stop-move`
 - `GET /broadcasts/{id}/ip-camera-error`
-- *In layer (`ipcamera(app)`), unwired.* **Note:** the old `ip-camera/move-{left|right|up|down}` form is gone, superseded by `move?valueX…`.
+- Wired: `onvif-devices` (ONVIF Discover), `move` (the embedded player's PTZ overlay, `relative` 0.1 steps). `device-profiles`, `stop-move` and `ip-camera-error` are layer-only. **Note:** the old `ip-camera/move-{left|right|up|down}` form is gone, superseded by `move?valueX…`.
 
 ### Restream: RTMP/SRT forwarding  (`BroadcastRestService`)
 - `POST /broadcasts/{id}/endpoint` (body `Endpoint` = `{ endpointUrl, type:"generic" }`) → `Result.dataId` = `endpointServiceId` · `DELETE /broadcasts/{id}/endpoint?endpointServiceId`

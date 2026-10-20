@@ -26,9 +26,11 @@ export const server = {
   lastLicenceStatus: (signal?: AbortSignal) => api.get<Licence | null>('/last-licence-status', { signal }),
   enterpriseEdition: (signal?: AbortSignal) => api.get<Result>('/enterprise-edition', { signal }),
 
-  // Write-only multipart; restarts the server. `type` must be the exact enum name.
+  // Write-only multipart; restarts the server. `type` must be the exact enum name. Jersey 400s a
+  // multipart with no parts, so `type` rides as a part too (ignored; the server reads the query).
   configureSsl: (type: SslType, domain: string, files?: CertFiles) => {
     const form = new FormData()
+    form.append('type', type)
     if (type === 'CUSTOM_CERTIFICATE' && files) {
       form.append('fullChainFile', files.fullChain)
       form.append('privateKeyFile', files.privateKey)

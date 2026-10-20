@@ -45,7 +45,8 @@ Maps every `src/lib/api/endpoints/*` method to its REST endpoint, whether a mock
 | Method | Endpoint (`/broadcasts/…`) | Mock | Status | Consumer |
 |---|---|---|---|---|
 | `onvifDevices` | `onvif-devices` | ✓ | wired | `new-stream-modal` (ONVIF "Discover") |
-| `deviceProfiles` `move` `stopMove` `error` | `{id}/ip-camera/*` · `{id}/ip-camera-error` | - | layer | - (PTZ / camera detail, deferred) |
+| `move` | `{id}/ip-camera/move` | - | wired | `enablePtz` (`play.html`'s own PTZ overlay, `ipCamera` only); same-origin only, never runs in dev or mock mode, so no mock |
+| `deviceProfiles` `stopMove` `error` | `{id}/ip-camera/device-profiles` · `{id}/ip-camera/stop-move` · `{id}/ip-camera-error` | - | layer | - (profile selection / camera detail, deferred) |
 
 ### `subscribers(app)` · `restream(app)` · `push(app)`
 - `subscribers`: `list`, `add`, `totp`, `block`, `remove`, `removeAll`; **layer** (no UI yet, no mock)
