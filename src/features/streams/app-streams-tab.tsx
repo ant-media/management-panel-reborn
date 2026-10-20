@@ -138,8 +138,9 @@ export function AppStreamsTab({ appName, onOpenStream, onGoToSettings }: Props) 
   const hasPreview = Boolean(settings?.generatePreview)
   // Loaded settings + preview off → nudge once per app; dismissed apps are remembered
   // browser-side (a list of app names), so each app gets its own first-time notice.
+  // Never on Community: previews can't work there and the setting is locked.
   const [previewDismissedApps, setPreviewDismissedApps] = useStoredState<string[]>('streams_preview_notice_dismissed_apps', [])
-  const showPreviewNotice = Boolean(settings) && !hasPreview && !previewDismissedApps.includes(appName)
+  const showPreviewNotice = Boolean(settings) && !community && !hasPreview && !previewDismissedApps.includes(appName)
   const dismissPreviewNotice = () => setPreviewDismissedApps(prev => (prev.includes(appName) ? prev : [...prev, appName]))
 
   const { broadcasts, total, activeLive, error, isLoading, refresh } = useBroadcasts(appName, {

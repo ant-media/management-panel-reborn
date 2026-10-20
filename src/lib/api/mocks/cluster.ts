@@ -9,7 +9,7 @@ import { MOCK_COMMUNITY } from './server'
 // One node is dead (stale heartbeat) and one alive node sits in the warn band so the
 // derived health tiers are all visible. Alive nodes jitter each poll to feel live.
 //
-// Community is never in cluster mode. Flip to false to exercise the standalone empty state.
+// Community is never in cluster mode. Set to `false` to exercise the standalone empty state.
 const IN_CLUSTER = !MOCK_COMMUNITY
 
 const TOTAL_MB = 16031
