@@ -4,9 +4,9 @@
 // (dead = no heartbeat for >20s). parse.ts normalises the raw wire into NodeView.
 //
 // `note` is a real backend field: admin-set, persisted via PUT /cluster/node/{id}/note and
-// returned on every node row (null/absent when unset). streams/viewers are real heartbeat load
-// (absent from a node on an older server); gpu is NOT in the backend yet, mock-projected. parse.ts
-// treats every optional field as absent-safe, so the view degrades cleanly.
+// returned on every node row (null/absent when unset). streams/viewers/gpu/gpuModel are real
+// heartbeat load (absent from a node on an older server). parse.ts treats every optional field as
+// absent-safe, so the view degrades cleanly.
 
 export interface RawClusterNode {
   id: string
@@ -19,9 +19,8 @@ export interface RawClusterNode {
   note?: string | null // admin-set note; null/absent when unset
   streams?: number | null // streams ingested on this node
   viewers?: number | null // players this node serves (WebRTC+HLS+DASH), edge pulls excluded
-  // --- not yet real (mock-projected) ---
-  gpu?: string | number | null // 0-100 util; absent ⇒ no GPU
-  gpuModel?: string | null
+  gpu?: number | null // 0-100 util, averaged over the node's GPUs; null/absent ⇒ no GPU
+  gpuModel?: string | null // "NVIDIA T4", "2x NVIDIA T4" for several of one model
 }
 
 export type NodeStatus = 'alive' | 'dead'
