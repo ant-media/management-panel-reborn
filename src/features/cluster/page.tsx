@@ -10,6 +10,7 @@ import { useToast } from '@/lib/use-toast'
 import { copyToClipboard } from '@/lib/clipboard'
 import { cn } from '@/lib/utils'
 import { fmtCount } from '@/lib/format'
+import { useApplications } from '@/features/apps/use-applications'
 import { useCluster } from './use-cluster'
 import { NodeCard } from './node-card'
 
@@ -18,6 +19,7 @@ const mean = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b
 
 export function ClusterPage() {
   const { inCluster, nodes, error, isLoading, isFetching, refresh, saveNote } = useCluster()
+  const { apps } = useApplications()
   const { toast, flash, dismiss } = useToast()
 
   const [noteEdits, setNoteEdits] = useState<Record<string, string>>({})
@@ -37,10 +39,16 @@ export function ClusterPage() {
       avgGpu: gpu.length ? mean(gpu.map(n => n.gpuPct as number)) : null,
       gpuNodes: gpu.length,
       aliveNodes: alive.length,
-      streams: alive.reduce((a, n) => a + (n.streams ?? 0), 0),
-      viewers: alive.reduce((a, n) => a + (n.viewers ?? 0), 0),
     }
   }, [nodes])
+
+  // Stream/viewer totals come from the shared DataStore (applications-info), the numbers the app
+  // views show. Not the node sum: that lags a heartbeat and drops nodes on older servers.
+  // null = not reported, never a fake 0.
+  const totals = useMemo(() => apps ? {
+    streams: apps.reduce((a, app) => a + app.liveStreamCount, 0),
+    viewers: apps.every(app => app.viewerCount != null) ? apps.reduce((a, app) => a + (app.viewerCount ?? 0), 0) : null,
+  } : null, [apps])
 
   // A note is dirty only when the draft differs from the saved value; typing back to
   // the original silently clears it. dirtyIds drives the per-card unsaved dot.
@@ -112,8 +120,8 @@ export function ClusterPage() {
             {summary.avgGpu != null && (
               <SummaryStat icon="gpu" label="Avg GPU" value={`${summary.avgGpu}%`} tone={valueTone(summary.avgGpu)} sub={`${summary.gpuNodes} of ${summary.aliveNodes} nodes`} />
             )}
-            <SummaryStat icon="rss" label="Active streams" value={String(summary.streams)} />
-            <SummaryStat icon="users" label="Total viewers" value={fmtCount(summary.viewers)} />
+            <SummaryStat icon="rss" label="Active streams" value={totals ? String(totals.streams) : '-'} />
+            <SummaryStat icon="users" label="Total viewers" value={totals?.viewers != null ? fmtCount(totals.viewers) : '-'} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

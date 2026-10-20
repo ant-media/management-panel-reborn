@@ -1,7 +1,7 @@
 import { registerMock } from '@/lib/api'
 import { APP_NAME_RE } from '@/features/apps/use-applications'
 import type { AppSettings } from '@/features/apps/use-app-settings'
-import { liveCountOf } from './broadcasts'
+import { liveCountOf, viewerCountOf } from './broadcasts'
 
 const GB = 1024 ** 3
 const MB = 1024 ** 2
@@ -13,10 +13,10 @@ const apps: MockApp[] = [
   { name: 'WebRTCAppEE', vodCount: 0, storage: 240 * MB },
 ]
 
-// liveStreamCount comes from the broadcast store, so it always agrees with the streams table
-// and moves when a stream is started or stopped.
+// liveStreamCount + viewerCount come from the broadcast store, so they always agree with the
+// streams table and move when a stream is started or stopped.
 registerMock('GET', '/rest/v2/applications-info', () =>
-  apps.map(a => ({ ...a, liveStreamCount: liveCountOf(a.name) })))
+  apps.map(a => ({ ...a, liveStreamCount: liveCountOf(a.name), viewerCount: viewerCountOf(a.name) })))
 
 // /applications/{name}/metrics-history: REAL backend now (StatsCollector in-memory ring,
 // viewers + streams). Mock kept for offline dev (matches the real shape). Health is NOT served

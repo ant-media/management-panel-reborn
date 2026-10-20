@@ -8,6 +8,7 @@ const APPS_POLL_MS = 15_000
 export type ApplicationInfo = {
   name: string
   liveStreamCount: number
+  viewerCount?: number // absent on servers older than the field
   vodCount: number
   storage: number
 }

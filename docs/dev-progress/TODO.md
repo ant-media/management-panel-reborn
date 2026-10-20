@@ -272,8 +272,7 @@ a playlist, or a Mongo-backed server. Semantics: [API.md](../API.md); traps: [RI
   drawer, aka "better VoD exploration UX".
 - **Cluster:** per-node logs (needs a backend per-node log proxy; the frontend `LogSource` seam
   in `features/logs/log-sources.ts` is ready); node delete gated to dead/stale rows
-  (`DELETE /cluster/node/{id}` exists); real per-node streams/viewers/GPU (mock-projected
-  today; the heartbeat must grow the fields, zero UI change); per-node trend sparklines on the
+  (`DELETE /cluster/node/{id}` exists); per-node trend sparklines on the
   dashboard cluster card (needs a per-node history endpoint keyed by node id, same shape as
   `system-resources/history`); the dense-table idiom when node counts get large; a full
   origin/edge topology view beyond Phase 19; open a node's own panel from its card (link to

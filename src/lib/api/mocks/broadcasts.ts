@@ -1,5 +1,5 @@
 import { ApiError, registerMock } from '@/lib/api'
-import type { Broadcast, BroadcastType, PublishType } from '@/features/streams/types'
+import { totalViewers, type Broadcast, type BroadcastType, type PublishType } from '@/features/streams/types'
 
 // Per-app broadcasts store, keyed by app name. Each app starts seeded with a
 // handful of realistic streams so the table demos cover empty/active/idle cases.
@@ -145,6 +145,8 @@ function seed(app: AppName): Broadcast[] {
 // The sidebar/apps/dashboard live badge reads this. Derived, never a hand-kept number, so
 // starting or stopping a stream in mock mode moves the badge like it would on a real server.
 export const liveCountOf = (app: AppName) => storeOf(app).filter(b => b.status === 'broadcasting').length
+export const viewerCountOf = (app: AppName) =>
+  storeOf(app).filter(b => b.status === 'broadcasting').reduce((sum, b) => sum + totalViewers(b), 0)
 
 function storeOf(app: AppName): Broadcast[] {
   let s = stores.get(app)

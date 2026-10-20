@@ -50,7 +50,7 @@ shape; hooks just poll. See ARCHITECTURE.md *Placeholder data*.
   time-series, so current-value **meters** stand in (consistent with Phase-14's NodeCard).
 - **TODO to restore sparklines:** a cluster per-node metric-history store/endpoint (the heartbeat carries
   only the latest sample). Same shape as `system-resources/history`, but keyed by node id.
-  Also note per-node streams/viewers/GPU are mock-projected (see API.md "does NOT exist yet"); node **notes** are real (`PUT /cluster/node/{id}/note`).
+  Per-node GPU, streams and viewers are real heartbeat fields ([cluster.md](cluster.md)); node **notes** are real (`PUT /cluster/node/{id}/note`).
 
 ## 4. Applications drilldown (expandable rows): ✅ REAL (viewers + streams)
 
