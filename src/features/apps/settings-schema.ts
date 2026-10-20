@@ -26,6 +26,7 @@ export type SettingField = {
   hint?: string
   info?: string                       // sparse info-dot tooltip for non-obvious fields
   advanced?: boolean                  // metadata only for now, surfaced in Phase 11-a
+  enterprise?: boolean                // read only by Ant-Media-Enterprise: locked on Community
   options?: [value: string, label: string][]   // select / radio
   reveal?: boolean                    // render indented under the toggle above it
   showWhen?: (v: AppSettings) => boolean
@@ -80,22 +81,15 @@ export const isOff = (v: unknown): boolean => v === false || (typeof v === 'stri
 
 const on = (key: string) => (v: AppSettings) => isOn(v[key])
 
-// Reusable rule: `key` is read only by Ant-Media-Enterprise (trace the reader, don't trust docs).
-const requiresEnterprise = (key: string): FieldRule => ({
-  when: (v, ctx) => isOn(v[key]) && ctx.enterprise === false,
-  severity: 'warning',
-  message: 'Enterprise Edition only: Community ignores this setting.',
-})
-
 const SETTINGS_SCHEMA: SettingSection[] = [
   {
     id: 'webrtc-codec', title: 'WebRTC Codec Support', icon: 'video',
     desc: 'Which codecs the application accepts and emits.',
     fields: [
-      { key: 'h264Enabled', label: 'H.264', type: 'bool', def: true, hint: 'Required for MP4 recording and HLS streaming.' },
-      { key: 'vp8Enabled', label: 'VP8', type: 'bool', def: false, hint: 'WebM recording needs this or AV1.' },
-      { key: 'h265Enabled', label: 'H.265 / HEVC', type: 'bool', def: false, advanced: true },
-      { key: 'av1Enabled', label: 'AV1', type: 'bool', def: false, advanced: true },
+      { key: 'h264Enabled', label: 'H.264', type: 'bool', def: true, enterprise: true, hint: 'Required for MP4 recording and HLS streaming.' },
+      { key: 'vp8Enabled', label: 'VP8', type: 'bool', def: false, enterprise: true, hint: 'WebM recording needs this or AV1.' },
+      { key: 'h265Enabled', label: 'H.265 / HEVC', type: 'bool', def: false, enterprise: true, advanced: true },
+      { key: 'av1Enabled', label: 'AV1', type: 'bool', def: false, enterprise: true, advanced: true },
     ],
   },
   {
@@ -103,9 +97,9 @@ const SETTINGS_SCHEMA: SettingSection[] = [
     desc: 'Generate multiple renditions for adaptive bitrate playback.',
     info: 'Each rendition adds CPU and bandwidth cost on the origin. Keep the list short.',
     fields: [
-      { key: 'webRTCFrameRate', label: 'Frame Rate (fps)', type: 'num', def: 30,
+      { key: 'webRTCFrameRate', label: 'Frame Rate (fps)', type: 'num', def: 30, enterprise: true,
         info: 'Output frame rate after transcoding. Source FPS above this is down-sampled.' },
-      { key: 'encoderSettings', label: 'Renditions', type: 'renditions', def: [],
+      { key: 'encoderSettings', label: 'Renditions', type: 'renditions', def: [], enterprise: true,
         hint: 'Each rendition adds CPU and bandwidth cost on the origin.' },
     ],
   },
@@ -117,8 +111,8 @@ const SETTINGS_SCHEMA: SettingSection[] = [
       { key: 'hlsMuxingEnabled', label: 'Create HLS streaming', type: 'bool', def: true,
         rules: [
           // EncoderAdaptor gates the H.264 HLS muxer + startAdaptiveHLS() on isH264Enabled(); the
-          // community passthrough muxer doesn't, so this warns rather than blocks.
-          { when: v => isOn(v.hlsMuxingEnabled) && isOff(v.h264Enabled), severity: 'warning',
+          // community passthrough muxer doesn't. So a warning, not a block, and silent on Community.
+          { when: (v, ctx) => ctx.enterprise !== false && isOn(v.hlsMuxingEnabled) && isOff(v.h264Enabled), severity: 'warning',
             message: 'Needs H.264: without it no HLS renditions or adaptive playlist are produced. Enable it under WebRTC Codec Support.' },
         ] },
       { key: 'hlsListSize', label: 'Segment list size', type: 'num', def: '15', reveal: true, showWhen: on('hlsMuxingEnabled'),
@@ -132,25 +126,24 @@ const SETTINGS_SCHEMA: SettingSection[] = [
     id: 'dash', title: 'DASH & CMAF Streaming', icon: 'database',
     desc: 'MPEG-DASH and low-latency CMAF segmented output.',
     fields: [
-      { key: 'dashMuxingEnabled', label: 'Create DASH streaming', type: 'bool', def: false },
-      { key: 'lLDashEnabled', label: 'Low-latency DASH (CMAF)', type: 'bool', def: true, reveal: true, showWhen: on('dashMuxingEnabled') },
-      { key: 'lLHLSEnabled', label: 'Low-latency HLS (CMAF)', type: 'bool', def: false, reveal: true, showWhen: on('dashMuxingEnabled') },
-      { key: 'deleteDASHFilesOnEnded', label: 'Delete DASH files after the stream ends', type: 'bool', def: true, reveal: true, showWhen: on('dashMuxingEnabled') },
+      { key: 'dashMuxingEnabled', label: 'Create DASH streaming', type: 'bool', def: false, enterprise: true },
+      { key: 'lLDashEnabled', label: 'Low-latency DASH (CMAF)', type: 'bool', def: true, enterprise: true, reveal: true, showWhen: on('dashMuxingEnabled') },
+      { key: 'lLHLSEnabled', label: 'Low-latency HLS (CMAF)', type: 'bool', def: false, enterprise: true, reveal: true, showWhen: on('dashMuxingEnabled') },
+      { key: 'deleteDASHFilesOnEnded', label: 'Delete DASH files after the stream ends', type: 'bool', def: true, enterprise: true, reveal: true, showWhen: on('dashMuxingEnabled') },
     ],
   },
   {
     id: 'processing', title: 'Stream Processing', icon: 'cog',
     desc: 'Per-stream processing pipelines and integrations.',
     fields: [
-      { key: 'generatePreview', label: 'Generate preview', type: 'bool', def: false, hint: 'Generate a periodic JPEG preview of every active stream.',
+      { key: 'generatePreview', label: 'Generate preview', type: 'bool', def: false, enterprise: true, hint: 'Generate a periodic JPEG preview of every active stream.',
         rules: [
-          requiresEnterprise('generatePreview'),   // sole reader is EncoderAdaptor
           // EncoderAdaptor only builds the PreviewMuxer on its non-empty-renditions branch. An
           // *absent* encoderSettings (vs. empty) means we can't tell: stay quiet (RISKS.md).
           { when: v => isOn(v.generatePreview) && Array.isArray(v.encoderSettings) && v.encoderSettings.length === 0, severity: 'warning',
             message: 'Needs at least one rendition: without transcoding no preview is produced. Add one under Adaptive Streaming › Renditions.' },
         ] },
-      { key: 'objectDetectionEnabled', label: 'Use object detection', type: 'bool', def: false, advanced: true, hint: 'Adds significant CPU load on the origin.' },
+      { key: 'objectDetectionEnabled', label: 'Use object detection', type: 'bool', def: false, enterprise: true, advanced: true, hint: 'Adds significant CPU load on the origin.' },
       { key: 'vodFolder', label: 'VoD streaming folder', type: 'text', def: '' },
       { key: 'listenerHookURL', label: 'Webhook URL', type: 'text', def: '', info: 'Stream lifecycle events are POSTed to this URL.' },
     ],
@@ -159,8 +152,8 @@ const SETTINGS_SCHEMA: SettingSection[] = [
     id: 'data-channel', title: 'WebRTC Data Channel', icon: 'terminal',
     desc: 'Chat-style messaging between publishers and players.',
     fields: [
-      { key: 'dataChannelEnabled', label: 'Enable', type: 'bool', def: true, hint: 'Publishers can send messages to players.' },
-      { key: 'dataChannelPlayerDistribution', label: "Players' messages are distributed to", type: 'radio', def: 'all',
+      { key: 'dataChannelEnabled', label: 'Enable', type: 'bool', def: true, enterprise: true, hint: 'Publishers can send messages to players.' },
+      { key: 'dataChannelPlayerDistribution', label: "Players' messages are distributed to", type: 'radio', def: 'all', enterprise: true,
         options: [['none', 'Nobody'], ['publisher', 'Only publisher'], ['all', 'Publisher & all players']],
         reveal: true, showWhen: on('dataChannelEnabled') },
     ],
@@ -170,9 +163,8 @@ const SETTINGS_SCHEMA: SettingSection[] = [
     desc: 'Persist live streams to disk (and optionally S3) as VoD assets.',
     fields: [
       { key: 'mp4MuxingEnabled', label: 'Record live streams as MP4', type: 'bool', def: false },
-      { key: 'webMMuxingEnabled', label: 'Record live streams as WebM', type: 'bool', def: false,
+      { key: 'webMMuxingEnabled', label: 'Record live streams as WebM', type: 'bool', def: false, enterprise: true,
         rules: [
-          requiresEnterprise('webMMuxingEnabled'),   // every `new WebMMuxer` is in EncoderAdaptor
           // WebM carries VP8/AV1, never H.264; either encoder feeds the muxer, so both must be off.
           { when: v => isOn(v.webMMuxingEnabled) && isOff(v.vp8Enabled) && isOff(v.av1Enabled), severity: 'warning',
             message: 'Needs VP8 or AV1: WebM cannot carry H.264, so the recording gets no video track. Enable one under WebRTC Codec Support.' },
@@ -192,15 +184,15 @@ const SETTINGS_SCHEMA: SettingSection[] = [
     desc: 'Token-based publishing/playback, TOTP, JWT.',
     info: 'Tokens are validated at ingest and at playback. Tokens never appear in stream URLs.',
     fields: [
-      { key: 'publishTokenControlEnabled', label: 'Publish with one-time tokens', type: 'bool', def: false },
-      { key: 'playTokenControlEnabled', label: 'Play with one-time tokens', type: 'bool', def: false },
-      { key: 'enableTimeTokenForPublish', label: 'Publish with TOTP', type: 'bool', def: false, advanced: true },
-      { key: 'timeTokenSecretForPublish', label: 'Secret for TOTP publishing', type: 'textarea', def: '', generate: 16, minLen: 6, required: true, reveal: true, showWhen: on('enableTimeTokenForPublish') },
-      { key: 'enableTimeTokenForPlay', label: 'Play with TOTP', type: 'bool', def: false, advanced: true },
-      { key: 'timeTokenSecretForPlay', label: 'Secret for TOTP playing', type: 'textarea', def: '', generate: 16, minLen: 6, required: true, reveal: true, showWhen: on('enableTimeTokenForPlay') },
-      { key: 'publishJwtControlEnabled', label: 'Publish with JWT tokens', type: 'bool', def: false, advanced: true },
-      { key: 'playJwtControlEnabled', label: 'Play with JWT tokens', type: 'bool', def: false, advanced: true },
-      { key: 'jwtStreamSecretKey', label: 'JWT stream secret key', type: 'textarea', def: '', generate: 32, required: true, strictLen: 32, reveal: true,
+      { key: 'publishTokenControlEnabled', label: 'Publish with one-time tokens', type: 'bool', def: false, enterprise: true },
+      { key: 'playTokenControlEnabled', label: 'Play with one-time tokens', type: 'bool', def: false, enterprise: true },
+      { key: 'enableTimeTokenForPublish', label: 'Publish with TOTP', type: 'bool', def: false, enterprise: true, advanced: true },
+      { key: 'timeTokenSecretForPublish', label: 'Secret for TOTP publishing', type: 'textarea', def: '', enterprise: true, generate: 16, minLen: 6, required: true, reveal: true, showWhen: on('enableTimeTokenForPublish') },
+      { key: 'enableTimeTokenForPlay', label: 'Play with TOTP', type: 'bool', def: false, enterprise: true, advanced: true },
+      { key: 'timeTokenSecretForPlay', label: 'Secret for TOTP playing', type: 'textarea', def: '', enterprise: true, generate: 16, minLen: 6, required: true, reveal: true, showWhen: on('enableTimeTokenForPlay') },
+      { key: 'publishJwtControlEnabled', label: 'Publish with JWT tokens', type: 'bool', def: false, enterprise: true, advanced: true },
+      { key: 'playJwtControlEnabled', label: 'Play with JWT tokens', type: 'bool', def: false, enterprise: true, advanced: true },
+      { key: 'jwtStreamSecretKey', label: 'JWT stream secret key', type: 'textarea', def: '', enterprise: true, generate: 32, required: true, strictLen: 32, reveal: true,
         showWhen: v => isOn(v.publishJwtControlEnabled) || isOn(v.playJwtControlEnabled) },
       { key: 'acceptOnlyStreamsInDataStore', label: 'Accept only registered streams', type: 'bool', def: false,
         hint: 'When off, the server ingests undefined / unregistered stream IDs.' },
@@ -222,11 +214,11 @@ const SETTINGS_SCHEMA: SettingSection[] = [
     id: 'push', title: 'Push Notification', icon: 'bell',
     desc: 'Send push notifications when stream events fire.',
     fields: [
-      { key: 'firebaseAccountKeyJSON', label: 'Firebase (FCM) service-account JSON', type: 'textarea', def: '', hint: 'Paste your Firebase service-account JSON.' },
-      { key: 'apnTeamId', label: 'Apple Push · Team ID', type: 'text', def: '', advanced: true },
-      { key: 'apnKeyId', label: 'Apple Push · Key ID', type: 'text', def: '', advanced: true },
-      { key: 'apnPrivateKey', label: 'Apple Push · Private key', type: 'textarea', def: '', advanced: true },
-      { key: 'apnsServer', label: 'Apple Push · APN server', type: 'text', def: '', advanced: true },
+      { key: 'firebaseAccountKeyJSON', label: 'Firebase (FCM) service-account JSON', type: 'textarea', def: '', enterprise: true, hint: 'Paste your Firebase service-account JSON.' },
+      { key: 'apnTeamId', label: 'Apple Push · Team ID', type: 'text', def: '', enterprise: true, advanced: true },
+      { key: 'apnKeyId', label: 'Apple Push · Key ID', type: 'text', def: '', enterprise: true, advanced: true },
+      { key: 'apnPrivateKey', label: 'Apple Push · Private key', type: 'textarea', def: '', enterprise: true, advanced: true },
+      { key: 'apnsServer', label: 'Apple Push · APN server', type: 'text', def: '', enterprise: true, advanced: true },
     ],
   },
 ]
@@ -300,9 +292,10 @@ export type FieldStatus = { error?: string; warning?: string }
 
 // One status per field, worst-first: type misfit → `required`/`strictLen` errors
 // (a blank or short secret locks the app out) → `rules` → the soft `minLen`
-// warning. Hidden fields have no status.
+// warning. Hidden and locked fields have no status, the user can't act on them.
 export function fieldStatus(field: SettingField, values: AppSettings, ctx: RuleContext): FieldStatus {
   if (field.showWhen && !field.showWhen(values)) return {}
+  if (field.enterprise && ctx.enterprise === false) return {}
 
   const raw = values[field.key]
   if (!parseFieldValue(field, raw).ok) {

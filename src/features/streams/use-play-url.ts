@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { errorMessage } from '@/lib/api'
+import { useEnterprise } from '@/contexts/edition-context'
 import type { AppSettings } from '@/features/apps/use-app-settings'
 import { mintPlayToken, playGating, TOTP_UNSUPPORTED } from './play-token'
 import { playPageUrl } from './url-builder'
@@ -16,6 +17,8 @@ export function usePlayUrl(appName: string, { streamId, type }: Broadcast, setti
 
   const { totp, jwt, gated } = playGating(settings)
   const subFolder = String(settings?.subFolder ?? '').trim()
+  // Playlists only serve HLS. Community answers WebRTC play with "not found" and has no DASH.
+  const hlsOnly = useEnterprise() === false || type === 'playlist'
 
   useEffect(() => {
     if (totp) return
@@ -27,14 +30,14 @@ export function usePlayUrl(appName: string, { streamId, type }: Broadcast, setti
         const token = gated ? await mintPlayToken(appName, streamId, jwt).catch(() => undefined) : undefined
         // subFolder apps namespace their live streams; ids that are already file paths don't.
         const id = subFolder && !streamId.includes('.') ? `${subFolder}/${streamId}` : streamId
-        const playOrder = type === 'playlist' ? 'hls' : PLAY_ORDER  // playlists only serve HLS
+        const playOrder = hlsOnly ? 'hls' : PLAY_ORDER
         if (!cancelled) setState({ url: playPageUrl(appName, id, { playOrder, token }), error: null, loading: false })
       } catch (e) {
         if (!cancelled) setState({ url: null, loading: false, error: errorMessage(e, 'Could not build the player URL for this stream.') })
       }
     })()
     return () => { cancelled = true }
-  }, [appName, streamId, type, subFolder, gated, jwt, totp])
+  }, [appName, streamId, hlsOnly, subFolder, gated, jwt, totp])
 
   return totp ? { url: null, loading: false, error: TOTP_UNSUPPORTED } : state
 }

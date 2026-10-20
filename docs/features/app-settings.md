@@ -59,9 +59,16 @@ is the *Value semantics* comment in
 
 One status per shown field, worst-first: type misfit → `required`/`strictLen` **errors** (a blank
 or short secret would lock the app out; errors block Save with a red banner + jump-to-field) →
-`FieldRule`s (cross-field checks, Enterprise-only warnings) → the soft `minLen` warning. Warnings
-never block; they show on the row and aggregate in the toolbar pill. Rules are code, never
-backend data.
+`FieldRule`s (cross-field checks) → the soft `minLen` warning. Warnings never block; they show on
+the row and aggregate in the toolbar pill. Rules are code, never backend data. Locked fields have
+no status (below).
+
+### Community locks (`enterprise: true`)
+
+Fields whose only backend reader is in Ant-Media-Enterprise carry `enterprise: true` (trace the
+reader: e.g. community wires `MockTokenService`, so its token checks always pass). On Community the
+control is locked with a badge by the label; an all-enterprise section locks as one block. Locked
+rows show the stored value and have no status; save, JSON and import are untouched.
 
 ### Import / export (`settings-io.ts` + `import-settings-modal.tsx`)
 

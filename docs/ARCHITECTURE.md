@@ -147,6 +147,10 @@ also mounted in `ProtectedLayout`) owns the poll of `last-licence-status`, the `
 mapping, and `recheck(key)`. The topbar pill, the dashboard header pill, the Server Settings badge
 and the warning dialog all read it.
 
+The third is the edition: `EditionProvider` (`src/contexts/edition-context.tsx`) asks
+`enterprise-edition` once, and `useEnterprise()` returns `true` / `false` / `null` (not known yet).
+**Only `false` may lock or hide anything**, so a lost probe never locks a paying user out.
+
 The rule when a new widget needs data: check whether a provider/hook already owns it before
 adding a poll. A second `useApi` poll for the same data means duplicate traffic and two copies
 that disagree mid-cycle. Page-local state (one table's list with its own pagination/search)
@@ -237,14 +241,12 @@ every control type, and both jump-and-scroll to the row via its `data-field` anc
 Three kinds of check feed it, worst-first: the declarative shorthands `required` / `strictLen`
 (errors), then `rules` (a `when(draft, ctx)` predicate, so a field can depend on any other field
 or on server context like the edition probe), then the soft `minLen` (warning). Nothing is
-evaluated while `showWhen` hides the field, so a status can never point at an unreachable row.
-`ctx.enterprise` is `null` until `GET /enterprise-edition` answers; rules must read unknown as
-"stay quiet" rather than guess.
+evaluated while `showWhen` hides the field or while it is locked on Community (`enterprise: true`),
+so a status can never point at a row the user can't reach or change. `ctx.enterprise` is `null`
+until `GET /enterprise-edition` answers; rules must read unknown as "stay quiet" rather than guess.
 
 Rules that generalise get a named factory at the top of `settings-schema.ts`, next to `on(key)`.
-`requiresEnterprise(key)` is the first: it warns when `key` is switched on against a Community
-build. Compose them into a field's `rules`; first match wins, so put the most fundamental cause
-first (edition before configuration).
+Compose them into a field's `rules`; first match wins, so put the most fundamental cause first.
 
 ### Request bodies: JSON + multipart
 

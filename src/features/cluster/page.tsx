@@ -1,14 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Card } from '@/components/ui/card'
 import { Icon, type IconName } from '@/components/ui/icon'
 import { Page } from '@/components/shared/page'
 import { Pill } from '@/components/shared/pill'
+import { PlansLink } from '@/components/shared/enterprise'
 import { LoadErrorBanner } from '@/components/shared/load-error-banner'
 import { ToastBanner } from '@/components/shared/toast'
 import { errorMessage, resultMessage } from '@/lib/api'
 import { useToast } from '@/lib/use-toast'
 import { copyToClipboard } from '@/lib/clipboard'
 import { cn } from '@/lib/utils'
+import { useEnterprise } from '@/contexts/edition-context'
 import { fmtCount } from '@/lib/format'
 import { useCluster } from './use-cluster'
 import { NodeCard } from './node-card'
@@ -18,6 +20,7 @@ const mean = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b
 
 export function ClusterPage() {
   const { inCluster, nodes, error, isLoading, isFetching, refresh, saveNote } = useCluster()
+  const community = useEnterprise() === false
   const { toast, flash, dismiss } = useToast()
 
   const [noteEdits, setNoteEdits] = useState<Record<string, string>>({})
@@ -98,6 +101,13 @@ export function ClusterPage() {
 
       {isLoading ? (
         <EmptyCard title="Loading cluster…" />
+      ) : !inCluster && community ? (
+        <EmptyCard
+          title="Clustering is an Enterprise Edition feature"
+          body="Community Edition runs as a single server. Enterprise joins servers into one cluster with origin and edge nodes, and this page shows the health of every node."
+        >
+          <PlansLink>See Enterprise plans</PlansLink>
+        </EmptyCard>
       ) : !inCluster ? (
         <EmptyCard
           title="This server is standalone"
@@ -152,7 +162,7 @@ function SummaryStat({ icon, label, value, tone, sub }: { icon: IconName; label:
   )
 }
 
-function EmptyCard({ title, body }: { title: string; body?: string }) {
+function EmptyCard({ title, body, children }: { title: string; body?: string; children?: ReactNode }) {
   return (
     <Card className="p-12 flex items-center justify-center">
       <div className={cn('text-center', body ? 'max-w-md' : '')}>
@@ -161,6 +171,7 @@ function EmptyCard({ title, body }: { title: string; body?: string }) {
         </div>
         <div className="text-[13px] text-[var(--fg-2)] mb-1">{title}</div>
         {body && <div className="text-[11.5px] text-[var(--fg-3)] leading-relaxed">{body}</div>}
+        {children && <div className="mt-3 text-[11.5px] text-[var(--fg-2)]">{children}</div>}
       </div>
     </Card>
   )

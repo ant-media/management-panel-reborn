@@ -24,8 +24,10 @@ let serverSettings: ServerSettings = {
 
 registerMock('GET', '/rest/v2/server-settings', () => ({ ...serverSettings }))
 
-// Flip to `false` to see the Community-edition warnings in the app-settings editor.
-registerMock('GET', '/rest/v2/enterprise-edition', () => ({ success: true }))
+// `pnpm dev-community` (.env.community) mocks a Community server.
+export const MOCK_COMMUNITY = import.meta.env.VITE_MOCK_EDITION === 'community'
+
+registerMock('GET', '/rest/v2/enterprise-edition', () => ({ success: !MOCK_COMMUNITY }))
 
 // Faithful to the backend: only four fields persist, and serverName/licenceKey are
 // BLANKED when absent (so a buggy partial POST visibly corrupts them here too).

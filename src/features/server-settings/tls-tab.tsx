@@ -8,16 +8,12 @@ import { ToastBanner } from '@/components/shared/toast'
 import { Modal } from '@/components/ui/modal'
 import { resultMessage } from '@/lib/api'
 import { useToast } from '@/lib/use-toast'
+import { useEnterprise } from '@/contexts/edition-context'
 import { configureSsl, type CertFiles, type SslType } from './use-ssl'
-
-const TYPES: [SslType, string][] = [
-  ['CUSTOM_DOMAIN', 'Use your own domain (auto Let’s Encrypt)'],
-  ['ANTMEDIA_SUBDOMAIN', 'Subdomain of antmedia.cloud (Enterprise)'],
-  ['CUSTOM_CERTIFICATE', 'Import your own certificate'],
-]
 
 export function TlsTab() {
   const { toast, flash, dismiss } = useToast()
+  const community = useEnterprise() === false
   const [type, setType] = useState<SslType>('CUSTOM_DOMAIN')
   const [domain, setDomain] = useState('')
   const [files, setFiles] = useState<Partial<CertFiles>>({})
@@ -50,7 +46,11 @@ export function TlsTab() {
           label="Configuration type"
           value={type}
           onChange={v => setType(v as SslType)}
-          options={TYPES}
+          options={[
+            ['CUSTOM_DOMAIN', 'Use your own domain (auto Let’s Encrypt)'],
+            ['ANTMEDIA_SUBDOMAIN', 'Subdomain of antmedia.cloud (Enterprise)', community],
+            ['CUSTOM_CERTIFICATE', 'Import your own certificate'],
+          ]}
         />
 
         {needsDomain && (

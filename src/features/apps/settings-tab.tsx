@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { errorMessage, resultMessage } from '@/lib/api'
-import { useApi } from '@/lib/api/use-api'
-import { server } from '@/lib/api/endpoints'
+import { useEnterprise } from '@/contexts/edition-context'
 import { Button } from '@/components/ui/button'
 import { Icon } from '@/components/ui/icon'
 import { Pill } from '@/components/shared/pill'
@@ -73,10 +72,8 @@ export function SettingsTab({ name, onDirtyChange }: { name: string; onDirtyChan
   }, [draft, baseline, canonEq])
   const dirtyCount = dirtyKeys.size
 
-  // Edition is server-wide and immutable, so a one-shot probe (no poll). Only this tab consumes
-  // it; null while it's in flight or if it failed, which rules read as "stay quiet".
-  const edition = useApi(s => server.enterpriseEdition(s))
-  const ctx = useMemo<RuleContext>(() => ({ enterprise: edition.data ? edition.data.success : null }), [edition.data])
+  const enterprise = useEnterprise()
+  const ctx = useMemo<RuleContext>(() => ({ enterprise }), [enterprise])
 
   // One pass over the schema: the per-field status the rows render, split by severity. Errors
   // block the save (a config that would lock the app/streams out is refused, frontend-side,
