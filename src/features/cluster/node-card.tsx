@@ -66,8 +66,8 @@ export function NodeCard({ node, note, dirty, onNote, onCopyIp }: Props) {
       </div>
 
       <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[var(--border)]">
-        <Stat label="Streams" value={node.streams == null ? '-' : String(node.streams)} />
-        <Stat label="Viewers" value={node.viewers == null ? '-' : fmtCount(node.viewers)} />
+        <Stat label="Streams" value={dead || node.streams == null ? '-' : String(node.streams)} />
+        <Stat label="Viewers" value={dead || node.viewers == null ? '-' : fmtCount(node.viewers)} />
         <Stat label="DB query" value={`${node.dbQueryMs} ms`} />
       </div>
 

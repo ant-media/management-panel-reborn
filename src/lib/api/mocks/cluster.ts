@@ -3,8 +3,8 @@ import type { RawClusterNode } from '@/features/cluster/types'
 
 // Mock of the cluster endpoints. Mirrors the real wire shapes: cluster-mode-status
 // is a Result{success}; nodes are string-typed ClusterNode rows (cpu "0-100",
-// memory "usedMB/totalMB"). The note, streams and viewers fields + PUT note endpoint are real,
-// mirrored here for offline dev; gpu is NOT real yet, projected for a future heartbeat.
+// memory "usedMB/totalMB"). Every field + the PUT note endpoint is real, mirrored here for
+// offline dev.
 // One node is dead (stale heartbeat) and one alive node sits in the warn band so the
 // derived health tiers are all visible. Alive nodes jitter each poll to feel live.
 //

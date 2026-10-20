@@ -122,6 +122,8 @@ deployed via the combined `panel-release-<ver>.zip` (`release.sh --with-legacy`)
 - [ ] Cluster node cards: Streams = streams ingested on that node (origin), Viewers = players it
   serves. Publish on A, play WebRTC + HLS from B: A shows the stream and 0 viewers (B's pull is
   not a viewer), B shows 0 streams and its players; the node sums match the summary tiles.
+  A GPU node shows its util + model ("2x ..." for several of one model), others "No GPU". Repeat on
+  the Redis cluster store with a node on the previous release in the cluster: both read the list.
 - [ ] `writeStatsToDatastore` stays ON in cluster mode (it is how viewers aggregate across
   edges).
 - [ ] Per-app sampler stays off the event loop under load (`executeBlocking`, ordered: a slow
@@ -278,8 +280,7 @@ a playlist, or a Mongo-backed server. Semantics: [API.md](../API.md); traps: [RI
   drawer, aka "better VoD exploration UX".
 - **Cluster:** per-node logs (needs a backend per-node log proxy; the frontend `LogSource` seam
   in `features/logs/log-sources.ts` is ready); node delete gated to dead/stale rows
-  (`DELETE /cluster/node/{id}` exists); real per-node GPU (mock-projected
-  today; the heartbeat must grow the field, zero UI change); per-node trend sparklines on the
+  (`DELETE /cluster/node/{id}` exists); per-node trend sparklines on the
   dashboard cluster card (needs a per-node history endpoint keyed by node id, same shape as
   `system-resources/history`); the dense-table idiom when node counts get large; a full
   origin/edge topology view beyond Phase 19; open a node's own panel from its card (link to
