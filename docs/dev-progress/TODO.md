@@ -116,14 +116,6 @@ deployed via the combined `panel-release-<ver>.zip` (`release.sh --with-legacy`)
 - [ ] Per-stream history in cluster: quality samples are written by the origin node. Confirm
   reading from the origin works; decide whether non-origin reads need routing (Phase 19) or
   empty-is-fine.
-- [ ] Cluster page summary: Active streams + Total viewers equal the sums over the app views
-  (dashboard app rows, streams tables) with publishers on one node and viewers on another, on
-  any node's panel; a server without `applications-info.viewerCount` shows `-`, not 0.
-- [ ] Cluster node cards: Streams = streams ingested on that node (origin), Viewers = players it
-  serves. Publish on A, play WebRTC + HLS from B: A shows the stream and 0 viewers (B's pull is
-  not a viewer), B shows 0 streams and its players; the node sums match the summary tiles.
-  A GPU node shows its util + model ("2x ..." for several of one model), others "No GPU". Repeat on
-  the Redis cluster store with a node on the previous release in the cluster: both read the list.
 - [ ] `writeStatsToDatastore` stays ON in cluster mode (it is how viewers aggregate across
   edges).
 - [ ] Per-app sampler stays off the event loop under load (`executeBlocking`, ordered: a slow

@@ -91,7 +91,7 @@ Wire contracts: [API.md](../API.md).
 | `GET /applications/{name}/metrics-history` | complete | standalone yes; cluster no; ring lifecycle unit-tested |
 | `PUT /cluster/node/{id}/note` | complete, backend + frontend | standalone yes (heartbeat + restart survival); Redis + cluster no; no unit tests |
 | `GET /broadcasts/{id}/metrics-history` (per-stream) | complete, in-memory | standalone yes; cluster no; no unit tests |
-| Cluster heartbeat load (`ClusterNode` streams/viewers/gpu/gpuModel) | complete, backend + frontend | cluster no; Kryo/JSON compat checked offline; unit tests |
+| Cluster heartbeat load (`ClusterNode` streams/viewers/gpu/gpuModel) | complete, backend + frontend | cluster yes (manual); Kryo/JSON compat checked offline; unit tests |
 
 ## Phase map
 
