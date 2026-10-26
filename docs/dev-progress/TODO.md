@@ -103,7 +103,7 @@ deployed via the combined `panel-release-<ver>.zip` (`release.sh --with-legacy`)
 - [ ] Logout from the new panel: lands on the panel's own login page, and the session is really dead
   (going to `/` does not let you straight back in).
 - [ ] Per-app REST from the subfolder: streams and VoD load, VoD upload round-trips, bulk delete and
-  `create-list` reach the app, a JWT-protected app still mints and retries. Same proxy checks as the
+  `create-list` reach the app, a JWT-protected app loads (proxy signs the app JWT). Same proxy checks as the
   root deploy below, now from the new path.
 
 ### Cluster (all analytics endpoints)
@@ -301,8 +301,7 @@ a playlist, or a Mongo-backed server. Semantics: [API.md](../API.md); traps: [RI
   `users/{email}/blocked` is read-only. All need backend first.
 - **Backend gaps** (API-level list with mock swap points: [API.md](../API.md) "Does NOT exist
   yet"): settings-descriptor API (replaces the frontend `settings-schema.ts` const via the
-  `getSettingsSchema()` seam); `GET /ssl-settings` read-back; a server-side app-JWT mint for
-  admins (removes the client-side secret exposure, see RISKS.md); the per-node log proxy;
+  `getSettingsSchema()` seam); `GET /ssl-settings` read-back; the per-node log proxy;
   an SSE/WebSocket live-update transport.
 - **Plugins GUI** and a **dashboard news/updates feed** (inherited from the old console's
   wishlist).
