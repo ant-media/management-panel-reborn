@@ -9,20 +9,18 @@ Architectural risks, security caveats, and edge cases identified during reviews.
 **Risk:** Any XSS in the panel can exfiltrate the token. Token grants full per-app API access.
 **Why we accept:** Mirrors the legacy AMS admin panel contract; users already trust this pattern. Cookies aren't an option (different origin path semantics under `/{appName}/`).
 **Mitigations in place:** Token only sent on per-app calls (not management `/rest/v2/`); JWT is per-app-scoped (not global admin).
-**Future:** Consider a short-TTL JWT issued from a server endpoint instead of letting users paste long-lived tokens.
+**Now:** pasted tokens are only needed for JWKS apps; HMAC apps get a server-signed token from the proxy (below).
 
-### App JWT minted client-side from the app secret
-**Where:** `src/lib/api/app-jwt.ts`. On a 403, `appApi` reads the app's `jwtSecretKey` via management settings and signs a short-lived HS256 token (Web Crypto) in the browser.
-**Risk:** the raw `jwtSecretKey` is fetched into the browser; XSS could read it and mint arbitrary app tokens. The minted token is in-memory only (5-min TTL), but the *secret* is the real exposure.
-**Why we accept:** the requirement is "the panel must reach a JWT-protected app with or without a pasted token," and only an admin (who can already read every app's secret) can trigger this. No backend change was available.
-**Mitigations in place:** lazy: the secret is read only when an app actually 403s (open apps never fetch it); token is short-TTL and never persisted; app 403 is isolated from the global session (`suppressAuthEmit`).
-**Over plain HTTP the panel cannot mint at all:** `crypto.subtle` exists only in a secure context (localhost excepted), so `mint()` returns `null` and the 403 stands. A JWT-protected app then needs a pasted `{app}jwtToken`, or TLS. Not a regression (minting never worked there), but it *looks* like the IP-filter symptom above, so check the origin before debugging the proxy.
-**Future:** a backend endpoint that mints an app token for the authenticated admin, so the secret never leaves the server. Then delete `app-jwt.ts`'s mint path. Tracked in [TODO.md](dev-progress/TODO.md) V2.
+### App JWT signed by the backend proxy (exception to the frontend-only rule)
+**Where:** AMS `ProxyServlet.copyRequestHeaders` (`/rest/v2/request`).
+**Risk:** any caller past `AuthenticationFilter` on the proxy reaches the app REST without knowing the app secret.
+**Why we accept:** those callers can already read the app settings, secret included. It replaced the client-side mint, which exposed the secret to the browser, failed on browser clock skew, and could not work over plain HTTP. Owner-approved one-off exception to the AGENTS.md invariant; the rule stands for everything else.
+**Watch:** JWKS apps are not signed by the proxy; they still need a pasted `{app}jwtToken`.
 
-### App with JWT control enabled but NO secret key → every per-app call 403s (and the client-side mint can't rescue it)
+### App with JWT control enabled but NO secret key → every per-app call 403s (and the proxy can't rescue it)
 **Symptom:** `GET /{app}/rest/v2/...` returns 403 ("Invalid App JWT Token") for *all* calls; the streams list shows "Could not load streams: Forbidden". Not the session cookie, not the IP filter: the app's REST `JWTFilter`.
 **Cause:** the app has `jwtControlEnabled: true` but an empty `jwtSecretKey` (and no `jwksURL`). The filter calls `Algorithm.HMAC256(jwtSecretKey)`; with no usable key, no token can validate, so it rejects everything. `LiveApp` hit exactly this. (The stream-level `publishJwtControlEnabled`/`playJwtControlEnabled` have the same trap with `jwtStreamSecretKey`, which the enterprise `TokenService` requires to be **≥32 chars**.)
-**Why the client-side mint doesn't save it:** `app-jwt.ts`'s `mint()` bails when the secret is blank (`if (!secret) return null`): minting against an empty key would be a degenerate/insecure token, so it correctly refuses and the 403 surfaces honestly.
+**Why the proxy doesn't save it:** `ProxyServlet` skips signing when the secret is blank (no usable key), so the 403 surfaces honestly.
 **Fix (frontend-only; backend deliberately NOT touched, to keep 100% app compatibility):** the App › Settings editor refuses to save a security control that would lock access out. `fieldStatus()` in `settings-schema.ts` flags every secret/key field; `settings-tab.tsx` blocks Save (+ a red banner listing each offender, click-to-jump) while any **error** stands. Covers the whole family, each evaluated only while its control toggle is on:
 - **error (blocks Save):** a `required` secret left blank → "blocks all access"; or `jwtStreamSecretKey` shorter than its `strictLen: 32` (enterprise `TokenService` rejects shorter → lockout).
 - **warning (informational):** non-empty but below the soft `minLen` (e.g. REST `jwtSecretKey` < 32 still *works*, so it's not blocked; preserves compatibility).

@@ -35,7 +35,7 @@ transport.request()  ── "transport" layer ──
 | --- | --- | --- |
 | **hook** (`use*`) | `src/features/*/use-*.ts` | Owns polling, abort-on-unmount, rolling buffers, derived view state. The only thing components call. **Never synthesizes data**; see *Placeholder data* below. |
 | **endpoints** | `src/lib/api/endpoints/*` | Named method per REST endpoint + its **stateless** wire→model transform (unwrap `{number}`, `{applications}`…). Per-app = factory `broadcasts(app)`; management = object `apps`. The catalog hooks call (see [api-coverage.md](api-coverage.md)). Adding one: mirror an existing file. |
-| **api** (`api` / `appApi`) | `src/lib/api/client.ts` | Builds the URL (`/{app}/rest/v2/...`) and resolves app auth: a pasted `{app}jwtToken` or one **minted client-side** from the app secret (`app-jwt.ts`) on a 403. App 403 ⇒ mint+retry (not logout); management 401/403 ⇒ logout. Marks app calls `pushToBackendProxy`. Wraps `transport` in a debug logger (`ApiError` carries `.status` + `.body`; aborts + `quiet` calls excluded: `quiet` marks mock-only endpoints whose 404 against a real backend is expected). |
+| **api** (`api` / `appApi`) | `src/lib/api/client.ts` | Builds the URL (`/{app}/rest/v2/...`) and sends a pasted `{app}jwtToken` if present (otherwise the proxy signs the app JWT). App 403 ⇒ surfaced to the caller (not logout); management 401/403 ⇒ logout. Marks app calls `pushToBackendProxy`. Wraps `transport` in a debug logger (`ApiError` carries `.status` + `.body`; aborts + `quiet` calls excluded: `quiet` marks mock-only endpoints whose 404 against a real backend is expected). |
 | **transport** | `transport.ts` / `mock.ts` | The thing that actually moves bytes. Two interchangeable implementations behind the `Transport` interface; `VITE_USE_MOCKS` picks one at startup. `FetchTransport` is the only layer that knows about the backend proxy. |
 | **mocks** | `src/lib/api/mocks/*.ts` | Canned-data handlers `MockTransport` matches URLs against. The "emulation." Lazy-loaded, tree-shaken out of production. |
 
@@ -87,32 +87,26 @@ collapses that URI to `/rest/v2/request`, which demands a session, so login coul
 The same filter reads `_path` to scope-check the app call, so proxying *restores* the per-app
 role enforcement that direct calls silently bypassed.
 
-The app's `Authorization` header rides through untouched (AMS reserves `ProxyAuthorization` for
-the console so the two realms never collide), so the app JWT below still applies. Inherited
+For HMAC JWT apps the proxy sets the app's `Authorization` itself (below); otherwise it rides
+through untouched (AMS reserves `ProxyAuthorization` for the console so the two realms never collide). Inherited
 limits (the legacy console shares this servlet) are in [RISKS.md](RISKS.md).
 
-### App JWT: minted client-side (`app-jwt.ts`)
+### App JWT: signed by the backend proxy
 
-A JWT-protected app 403s the console session (separate auth realm, verified). So the
-panel authorizes app calls itself: a user-pasted `{app}jwtToken` wins; otherwise, **on the
-403**, `appApi` reads the app's `jwtSecretKey` (admin-readable via management settings) and
-mints a short-lived **HS256** token with the Web Crypto API, then retries once and caches it
-(5-min TTL, in memory). AMS's `JWTFilter` validates signature + `exp` only; no required
-claims (verified against a live server). It is not IP-based, so the backend proxy above
-neither bypasses nor disturbs it.
+A JWT-protected app rejects the console session (separate auth realm). The proxy bridges it:
+`ProxyServlet` (AMS root webapp) replaces `Authorization` with an HS256 token it signs from the
+app's `jwtSecretKey` (60 s expiry) on every proxied call to an app with `jwtControlEnabled`, a
+non-blank secret and no `jwksURL`. `AuthenticationFilter` has already checked the session and the
+app scope by then. Signer and verifier share the server clock, so browser clock skew can't break
+it; the secret never reaches the browser; plain HTTP works.
 
-**Lazy by design:** open apps never pay (no 403, no mint, no settings read). `ensureAppToken`
-returns the token already held instead of re-minting and collapses concurrent mints onto one
-secret read; `withJwt` skips the retry when the token it would resend is the one that just
-failed. So a 403 no token can fix (a rejected pasted token, a dead session, a blank secret)
-costs at most one settings read, not one per call per poll. `mint()` never throws: it yields
-`null` and the honest 403 reaches the caller.
+**JWKS apps are untouched:** the server holds no private key, so the panel sends a user-pasted
+`{app}jwtToken` as before. An app with JWT on and a blank secret still 403s (RISKS.md).
 
-**Web Crypto is secure-context-only.** `crypto.subtle` is `undefined` on a plain-HTTP origin
-(localhost excepted), so a panel served over HTTP cannot mint at all; a JWT-protected app then
-needs a pasted `{app}jwtToken`, or TLS. The secret entering the browser is a known tradeoff
-either way; the clean replacement is a backend mint endpoint, tracked in
-[TODO.md](dev-progress/TODO.md) V2.
+The panel used to mint this token client-side (Web Crypto, on a 403). That failed on a skewed
+browser clock and over plain HTTP, and pulled the secret into the browser; deleted once the proxy
+signed it. This backend change is an owner-approved one-off exception to the AGENTS.md
+frontend-only rule; the rule stands.
 
 ### Deployed next to the legacy console
 

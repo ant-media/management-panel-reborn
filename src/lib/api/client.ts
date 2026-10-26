@@ -1,4 +1,4 @@
-import { appAuthorization, ensureAppToken } from './app-jwt'
+import { storage } from '@/lib/localStorage'
 import { emitReachability } from './connection-bridge'
 import { MockTransport } from './mock'
 import { ApiError, FetchTransport, type Query, type RequestOptions, type Transport } from './transport'
@@ -49,37 +49,21 @@ function build(prefix: string) {
 
 export const api = build(MGMT_PREFIX)
 
-// Per-app REST at `/{appName}/rest/v2/...`, tunneled through the backend proxy (transport.ts).
-// Auth: a pasted `{app}jwtToken`, else one minted from the app secret (app-jwt.ts), sent when
-// present, ignored by apps without JWT control. A 403 is kept out of the global logout, then a
-// token is obtained and the call retried once.
+// Per-app REST at `/{appName}/rest/v2/...`, tunneled through the backend proxy (transport.ts), which
+// signs the app JWT server-side. A pasted `{app}jwtToken` is still sent: JWKS apps need it, the proxy
+// can't sign for them. A 403 is kept out of the global logout.
 export function appApi(appName: string) {
-  const encoded = encodeURIComponent(appName)
-  const base = build(`/${encoded}/rest/v2`)
-  const readSecret = () =>
-    api.get<{ jwtSecretKey?: string }>(`/applications/settings/${encoded}`).then(s => s.jwtSecretKey ?? '')
-
-  const hdr = (auth: string | null) => (auth ? { Authorization: auth } : undefined)
-
-  function withJwt<T>(run: (auth: string | null) => Promise<T>): Promise<T> {
-    const auth = appAuthorization(appName)
-    return run(auth).catch(async err => {
-      if (err instanceof ApiError && err.status === 403) {
-        const token = await ensureAppToken(appName, readSecret)
-        // Unchanged token ⇒ the 403 is real (or the session died); a retry just repeats it.
-        if (token && token !== auth) return run(token)
-      }
-      throw err
-    })
-  }
+  const base = build(`/${encodeURIComponent(appName)}/rest/v2`)
 
   type Opts = { query?: Query; signal?: AbortSignal }
-  const opts = (o: Opts, auth: string | null): CallOpts =>
-    ({ ...o, headers: hdr(auth), suppressAuthEmit: true, pushToBackendProxy: true })
+  const opts = (o: Opts): CallOpts => {
+    const auth = storage.get(`${appName}jwtToken`)
+    return { ...o, headers: auth ? { Authorization: auth } : undefined, suppressAuthEmit: true, pushToBackendProxy: true }
+  }
   return {
-    get:    <T>(path: string, o: Opts = {})                  => withJwt(a => base.get<T>(path,        opts(o, a))),
-    post:   <T>(path: string, body?: unknown, o: Opts = {})  => withJwt(a => base.post<T>(path, body, opts(o, a))),
-    put:    <T>(path: string, body?: unknown, o: Opts = {})  => withJwt(a => base.put<T>(path, body,  opts(o, a))),
-    delete: <T>(path: string, o: Opts & { body?: unknown } = {}) => withJwt(a => base.delete<T>(path, opts(o, a))),
+    get:    <T>(path: string, o: Opts = {})                  => base.get<T>(path,        opts(o)),
+    post:   <T>(path: string, body?: unknown, o: Opts = {})  => base.post<T>(path, body, opts(o)),
+    put:    <T>(path: string, body?: unknown, o: Opts = {})  => base.put<T>(path, body,  opts(o)),
+    delete: <T>(path: string, o: Opts & { body?: unknown } = {}) => base.delete<T>(path, opts(o)),
   }
 }

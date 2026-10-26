@@ -10,7 +10,7 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 
 **Per-app calls go through the backend proxy; management calls do not.** Every app IP-filters its own REST surface (`ipFilterEnabled` defaults **true**, `remoteAllowedCIDR` defaults **`127.0.0.1`**), so a browser calling `/{app}/rest/v2/...` directly gets `403 "Not allowed IP"`. The panel sends app calls to root's proxy servlet, `/rest/v2/request?_path={app}/rest/v2/...`, which re-issues them from the server itself. Management `/rest/v2/...` stays direct and **must**: `AuthenticationFilter` exempts `/users/authenticate`, `/authentication-status`, `/first-login-status` and `/users/initial` by exact outer URI, so a proxied login 403s. Same servlet the legacy console used. Frontend seam: [ARCHITECTURE.md](ARCHITECTURE.md) "Backend proxy".
 
-**Auth.** Server-side session via HttpOnly cookie set by `/users/authenticate`; client sends `credentials:'include'`. There is no `GET /me`: the panel persists the parsed user client-side after login. Password is **MD5-hashed client-side** before posting (legacy contract; don't "fix"). Per-app JWT (`{app}jwtToken` in localStorage) is a *separate* realm, injected as `Authorization` on `appApi` calls and forwarded untouched through the proxy (AMS reserves `ProxyAuthorization` for the console so the two never collide), and the **management session grants zero access to a JWT-protected app** (it 403s; verified live). See [ARCHITECTURE.md](ARCHITECTURE.md) "App JWT" for how the panel mints the app token.
+**Auth.** Server-side session via HttpOnly cookie set by `/users/authenticate`; client sends `credentials:'include'`. There is no `GET /me`: the panel persists the parsed user client-side after login. Password is **MD5-hashed client-side** before posting (legacy contract; don't "fix"). Per-app JWT (`{app}jwtToken` in localStorage) is a *separate* realm, injected as `Authorization` on `appApi` calls (AMS reserves `ProxyAuthorization` for the console so the two never collide). For HMAC JWT apps the proxy replaces it with a server-signed token, so the management session reaches them; JWKS apps still need the pasted token. See [ARCHITECTURE.md](ARCHITECTURE.md) "App JWT".
 
 **No SSE / WebSocket**: every live view is HTTP polling.
 
@@ -54,7 +54,7 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 - `POST /applications/{appName}/reset`
 - `GET /applications/live-streams/{appName}`
 - `GET /applications/settings/{appName}` · `POST /applications/settings/{appName}`
-  - Flat `AppSettings` POJO (~160 fields, no grouping). **Save POSTs the whole object back**: the editor merges edits onto the fetched POJO so untouched fields aren't wiped. `jwtSecretKey` lives here (the client-side app-JWT mint reads it).
+  - Flat `AppSettings` POJO (~160 fields, no grouping). **Save POSTs the whole object back**: the editor merges edits onto the fetched POJO so untouched fields aren't wiped. `jwtSecretKey` lives here.
 - App name must match `^[A-Za-z0-9_-]{1,32}$` (Java `APP_NAME_REGEX`).
 
 ### Server settings & SSL  (`RestServiceV2`)
@@ -184,7 +184,6 @@ The panel mocks these today; each is a backend task. The mock is the swap point:
 | Settings descriptor (categories/labels/advanced) | `settings-schema.ts` const | settings-descriptor on the settings response (`getSettingsSchema()` swap seam) |
 | `GET /ssl-settings` (cert read-back) | - (write-only) | cert introspection (subject/issuer/expiry/SAN); no ACME API today |
 | User MFA / last-login / manual unblock | - | `User` model + endpoints (`…/blocked` is read-only) |
-| App-JWT mint for admin | client-side mint from `jwtSecretKey` | Java endpoint that mints an app token for the authed admin (secret stays server-side) |
 | Cluster per-node streams/viewers/GPU | optional `RawClusterNode` fields in `mocks/cluster.ts` | grow the `ClusterNode` heartbeat to report them |
 | Per-node log proxy | - (not surfaced) | proxy to fetch node X's `/log-file` through the panel origin (fills the `LogSource` seam) |
 | Server-wide persistent event log | - | query API over connect/disconnect events (Phase 15; `connection-events` is the per-stream building block) |
@@ -291,5 +290,5 @@ list at the top of this file.
 }
 // All fields always present (nulls emitted). Files serve at /{app}/{filePath}; rows can outlive
 // deleted files (an old recording 404s while its row persists), so players must tolerate 404.
-// app-settings: applications/settings/{app} -> flat AppSettings POJO (~160 keys, no grouping); jwtSecretKey lives here (the app-JWT mint reads it).
+// app-settings: applications/settings/{app} -> flat AppSettings POJO (~160 keys, no grouping); jwtSecretKey lives here.
 ```
