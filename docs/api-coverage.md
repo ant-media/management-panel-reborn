@@ -21,7 +21,8 @@ Maps every `src/lib/api/endpoints/*` method to its REST endpoint, whether a mock
 |---|---|---|---|---|
 | `list` | `list/{o}/{s}` | ✓ | wired | `useBroadcasts` |
 | `get` | `{id}` | ✓ | wired | `useStreamDetail` |
-| `create` | `create` (POST, `?autoStart`) | ✓ | wired | `useBroadcastActions` (all 4 types) |
+| `create` | `create` (POST, `?autoStart`) | ✓ | wired | `useBroadcastActions` (all 5 types) |
+| `ndiSources` | `ndi-streams` | ✓ | wired | `NdiSourceField` (new-stream modal, NDI source picker) |
 | `createMany` | `create-list` (POST, `?onDuplicate`) | ✓ | wired | `import-streams-modal` (bulk import) |
 | `update` | `{id}` (PUT) | ✓ | wired | `edit-stream-modal` (dirty-only patch; see API.md for the merge + restart semantics) |
 | `remove` | `{id}` (DELETE) | ✓ | wired | `useBroadcastActions` |

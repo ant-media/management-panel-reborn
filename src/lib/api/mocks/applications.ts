@@ -84,7 +84,7 @@ function seedSettings(name: string): AppSettings {
     ],
     hlsMuxingEnabled: true, hlsListSize: '15', hlsTime: '2', deleteHLSFilesOnEnded: true,
     dashMuxingEnabled: false, lLDashEnabled: true, lLHLSEnabled: false, deleteDASHFilesOnEnded: true,
-    generatePreview: false, objectDetectionEnabled: false, vodFolder: '', listenerHookURL: '',
+    generatePreview: false, objectDetectionEnabled: false, startStreamFetcherAutomatically: false, vodFolder: '', listenerHookURL: '',
     dataChannelEnabled: true, dataChannelPlayerDistribution: 'all',
     mp4MuxingEnabled: false, webMMuxingEnabled: false, addDateTimeToMp4FileName: false,
     s3RecordingEnabled: false, s3AccessKey: '', s3SecretKey: '', s3BucketName: '', s3RegionName: '', s3Endpoint: '', s3Permission: 'public-read',
