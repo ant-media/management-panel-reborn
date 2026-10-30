@@ -82,7 +82,7 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 - `GET /cluster-mode-status` → `Result{success}` (`success` = in cluster mode). Safe on standalone (`success:false`).
 - `GET /cluster/node-count` → `{ number }` · `GET /cluster/nodes/{offset}/{size}` → `ClusterNode[]`; **both 500 on standalone.**
 - `DELETE /cluster/node/{id}` → `Result`. A live node re-registers within 5s; only meaningful for stale rows. *Catalog, not wired.*
-- `PUT /cluster/node/{id}/note?note=…` (note as a query param) → `Result`. Persists an admin note on the node; empty string clears it, **max 500 chars** (trimmed). Field-scoped write, so it **survives the 5s heartbeat and node restart**; node id from the path, nothing else about the node is mutable here; unknown id → `Result{success:false}` (no phantom row). *Verification + unit tests are open; see [TODO.md](dev-progress/TODO.md). Design: [features/backend-analytics.md](features/backend-analytics.md).*
+- `PUT /cluster/node/{id}/note?note=…` (note as a query param) → `Result`. Persists an admin note on the node; empty string clears it, **max 500 chars** (trimmed). Field-scoped write, so it **survives the 5s heartbeat and node restart**; node id from the path, nothing else about the node is mutable here; unknown id → `Result{success:false}` (no phantom row). *Unit tests are open; see [TODO.md](TODO.md). Design: [features/backend-analytics.md](features/backend-analytics.md).*
 - `ClusterNode`: `{ id, ip, lastUpdateTime, memory:"usedMB/totalMB", cpu:0-100 (string|number), dbQueryAveargeTimeMs (note spelling), note (admin-set; may be null/absent), status:"alive"|"dead" }`. `cpu` parse defensively; `status` is binary (dead = no heartbeat >20s; period 5s). Client derives a finer warn tier.
 
 ### Support  (`SupportRestService`, auth-exempt)
@@ -113,7 +113,7 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 - `GET /broadcasts/{id}/broadcast-statistics` → `{ totalRTMPWatchersCount, totalHLSWatchersCount, totalWebRTCWatchersCount, totalDASHWatchersCount }` (`-1` = N/A)
 - `GET /broadcasts/total-broadcast-statistics` → same shape, server-wide
 - `GET /broadcasts/{id}/webrtc-client-stats/{offset}/{size}` → `WebRTCClientStat[]` (one row per player)
-- `GET /broadcasts/{id}/metrics-history` → `{ bitrate, viewers, speed, encoderQueueSize, droppedPackets, droppedFrames, packetLostRatio }`: all `number[]`, oldest→newest; **real** (`StatsCollector` per-stream in-memory ring, push-fed from the ~10s quality-update; capped at `server.stream_metrics_history_size`=720 ≈ 2h). `bitrate` is instantaneous bits/sec (byte-delta over the real interval); `viewers` = WebRTC+HLS+DASH (needs `writeStatsToDatastore`=default-on, else 0). Empty arrays when the stream isn't live / collecting / unsupported. Lost on restart; the durable store is parked in [TODO.md](dev-progress/TODO.md).
+- `GET /broadcasts/{id}/metrics-history` → `{ bitrate, viewers, speed, encoderQueueSize, droppedPackets, droppedFrames, packetLostRatio }`: all `number[]`, oldest→newest; **real** (`StatsCollector` per-stream in-memory ring, push-fed from the ~10s quality-update; capped at `server.stream_metrics_history_size`=720 ≈ 2h). `bitrate` is instantaneous bits/sec (byte-delta over the real interval); `viewers` = WebRTC+HLS+DASH (needs `writeStatsToDatastore`=default-on, else 0). Empty arrays when the stream isn't live / collecting / unsupported. Lost on restart; the durable store is parked in [TODO.md](TODO.md).
 - `GET /broadcasts/{id}/stream-info` → track/codec info
 - `GET /broadcasts/{id}/connection-events/{offset}/{size}` → per-stream connect/disconnect log. **Building block for Phase 15's event log.**
 - `GET /broadcasts/webrtc-send-low-level-stats` · `/webrtc-receive-low-level-stats`: *catalog, not in layer.*
@@ -176,7 +176,7 @@ Documented for completeness; mostly enterprise-gated. Add to `endpoints/` only w
 ---
 
 ## Does NOT exist yet
-The panel mocks these today; each is a backend task. The mock is the swap point: implement the endpoint, delete the mock, no UI change. The deferred features that build on these live in [TODO.md](dev-progress/TODO.md) V2.
+The panel mocks these today; each is a backend task. The mock is the swap point: implement the endpoint, delete the mock, no UI change. The deferred features that build on these live in [BACKLOG.md](BACKLOG.md).
 
 | Gap | Mock today | Real backend must provide |
 |---|---|---|

@@ -135,4 +135,4 @@ Documented in API.md; add a method (and mock) when a feature needs them.
 ---
 
 ## Mock-only (TODO: BACKEND)
-**None: every analytics endpoint is implemented** (`system-resources/history`, `network-status`, `applications/{name}/metrics-history`, `cluster/node/{id}/note`, per-stream `broadcasts/{id}/metrics-history`); their mocks are **kept for offline dev**. Verification + unit tests are open; see [TODO.md](dev-progress/TODO.md). Remaining backend gaps: [API.md "Does NOT exist yet"](API.md).
+**None: every analytics endpoint is implemented** (`system-resources/history`, `network-status`, `applications/{name}/metrics-history`, `cluster/node/{id}/note`, per-stream `broadcasts/{id}/metrics-history`); their mocks are **kept for offline dev**. Unit tests are open; see [TODO.md](TODO.md). Remaining backend gaps: [API.md "Does NOT exist yet"](API.md).

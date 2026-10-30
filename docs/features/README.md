@@ -11,3 +11,7 @@ the backend reality it builds on, the data layer, and the locked decisions.
 - [streams-import-export.md](streams-import-export.md): stream definitions as JSON files. Allow-list export, bulk create endpoint, interactive duplicate handling.
 - [dashboard-widgets.md](dashboard-widgets.md): the dashboard widgets and where each number comes from, real data versus placeholder.
 - [legacy-switcher.md](legacy-switcher.md): shipping next to the old console. The subfolder deploy, the switch on each login page, and why a session the panel did not create gets ended.
+
+Smaller features with no doc of their own:
+
+- **First-run beta notice** (`components/chrome/beta-notice.tsx`): a one-time dialog on the first authenticated load. Its "Don't show this again" box is ticked by default and is what writes `ams.beta.notice.seen`; untick it and the notice returns next login. The flag is per browser; [legacy-switcher.md](legacy-switcher.md) covers why it survives the legacy login.

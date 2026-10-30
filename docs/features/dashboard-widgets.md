@@ -24,7 +24,7 @@ shape; hooks just poll. See ARCHITECTURE.md *Placeholder data*.
   `netOut`/`netIn` series on `GET /rest/v2/system-resources/history`. **Both real** (mocks kept for offline dev in `src/lib/api/mocks/dashboard.ts`).
 - **Backend reality:** `StatsCollector` derives throughput from cumulative NIC byte counters: sums `/sys/class/net/<if>/statistics/{rx,tx}_bytes` over *physical* interfaces (iface has a `/device` entry → skips `lo`/bridges/`veth`/`docker0`/bonds/vlans/tun-tap), takes the delta over `nanoTime()` elapsed, converts to Mbps (`Δbytes·8/1e6/sec`). Negative deltas clamp to 0; first sample seeds the baseline. **Unprivileged: no sudo, no new dep.**
 - **`uplinkMbps`** = sum of each physical NIC's `/sys/class/net/<if>/speed` (best-effort; unreadable/`-1` on a down link → omitted). It's the *link* speed, not a provisioned cap; if operators want a provisioned ceiling instead, add a server setting later.
-- **⚠️ Container caveat:** inside Docker, `eth0` is a `veth` with no `/device` entry → physical set is empty → reports **zero**: the ring reads `0 / 0` and the history panel says "Collecting samples…". Tracked in [TODO.md](../dev-progress/TODO.md) V2 ("Network throughput in containers"); decide fallback (sum non-`lo`, or configurable iface) when it comes up.
+- **⚠️ Container caveat:** inside Docker, `eth0` is a `veth` with no `/device` entry → physical set is empty → reports **zero**: the ring reads `0 / 0` and the history panel says "Collecting samples…". Tracked in [BACKLOG.md](../BACKLOG.md) ("Network throughput in containers"); decide fallback (sum non-`lo`, or configurable iface) when it comes up.
 - **Seam note (two endpoints, one widget):** current values come from `/network-status`; the *history* rides on the shared `/system-resources/history` as `netOut`/`netIn`. Both feed off the same in-memory ring sampled in `StatsCollector`.
 
 ## 2. GPU (aggregate ring + per-device breakdown): ✅ REAL DATA
@@ -44,10 +44,10 @@ shape; hooks just poll. See ARCHITECTURE.md *Placeholder data*.
 ## 3. Cluster summary (per-node CPU/memory): ✅ REAL DATA, ⚠️ no trend sparklines
 
 - **Shows:** per-node status dot + CPU% + Memory% meters, "N of M healthy" pill. Renders only when clustered.
-- **Reads:** the same real endpoints as the Phase-14 cluster page via `useCluster()`
+- **Reads:** the same real endpoints as the cluster page via `useCluster()`
   (`GET /rest/v2/cluster-mode-status` + `GET /rest/v2/cluster/nodes/{offset}/{size}`). CPU/Mem are real.
 - **Gap vs prototype:** the prototype drew per-node **trend sparklines**; there is no cluster per-node
-  time-series, so current-value **meters** stand in (consistent with Phase-14's NodeCard).
+  time-series, so current-value **meters** stand in (consistent with the cluster page's NodeCard).
 - **TODO to restore sparklines:** a cluster per-node metric-history store/endpoint (the heartbeat carries
   only the latest sample). Same shape as `system-resources/history`, but keyed by node id.
   Also note per-node streams/viewers/GPU are mock-projected (see API.md "does NOT exist yet"); node **notes** are real (`PUT /cluster/node/{id}/note`).
@@ -74,7 +74,7 @@ shape; hooks just poll. See ARCHITECTURE.md *Placeholder data*.
 
 ### Shortcomings / edge cases (per-app metrics-history)
 - **In-memory only**: history is **lost on server restart** and rebuilds from empty (takes up to 12h to fill).
-  Durable/persisted history is parked in [TODO.md](../dev-progress/TODO.md).
+  Durable/persisted history is parked in [TODO.md](../TODO.md).
 - **`writeStatsToDatastore` dependency**: `viewers` reads viewer counts from the DataStore, which are only written
   when `writeStatsToDatastore` is on (the **default**). If an operator disables it, **viewers read 0** (streams are
   unaffected). It **must** stay on in cluster mode (it's how viewers aggregate across nodes); noted at `AppSettings#writeStatsToDatastore`.
@@ -85,7 +85,7 @@ shape; hooks just poll. See ARCHITECTURE.md *Placeholder data*.
 - **`health` unimplemented**: `PublishStatsEvent` already carries every input `health.ts` checks (speed /
   packetLostRatio / roundTripTimeMs / jitterMs / inputQueueSize / encodingQueueSize) and `addStreamSample`
   already receives it, so serving it is aggregation, not collection. Work + open design call:
-  [TODO.md](../dev-progress/TODO.md) V2.
+  [BACKLOG.md](../BACKLOG.md).
 - **RTMP viewers excluded**: `getTotalViewersCount()` sums WebRTC+HLS+DASH only (the playback protocols the panel surfaces).
 - **Cluster redundancy**: every node samples independently; fine at this cadence, but a future "sample on one node only"
   optimization would cut duplicate DataStore aggregations on large clusters.

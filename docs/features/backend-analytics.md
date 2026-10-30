@@ -1,8 +1,8 @@
-# Backend analytics (Phase C + Phase 16)
+# Backend analytics
 
 Design + invariants for the five backend analytics endpoints the panel uses. The code
 lives in Ant-Media-Server (community), plus Ant-Media-Enterprise for the cluster stores.
-Wire contracts: [API.md](../API.md). Open verification + tests: [TODO.md](../dev-progress/TODO.md).
+Wire contracts: [API.md](../API.md). Open tests: [TODO.md](../TODO.md).
 
 ## REST house style
 
@@ -36,7 +36,7 @@ Wire contracts: [API.md](../API.md). Open verification + tests: [TODO.md](../dev
 - Unprivileged reads, no new dependency (matches the `SystemUtils` direct-file-read style).
 - **Container caveat:** inside Docker, `eth0` is a veth with no `/device` entry, so the physical
   set is empty and a containerized AMS reports zero. Fallback options are code-commented at
-  `readPhysicalNetworkTotals` in `StatsCollector.java`; tracked as a V2 item.
+  `readPhysicalNetworkTotals` in `StatsCollector.java`; tracked in BACKLOG.md.
 
 ## `GET /applications/{name}/metrics-history`
 
@@ -58,9 +58,8 @@ Wire contracts: [API.md](../API.md). Open verification + tests: [TODO.md](../dev
 - **Why the shared DataStore, not in-process beans:** each AMS app owns its own DataStore, so
   "per-app" is free; edges atomically `inc` the shared broadcast record's viewer counts, so
   reading the store yields cluster-wide totals with zero cross-node calls, and the same path
-  works standalone and clustered. Every node samples redundantly (harmless). The one assumption
-  still to verify on a real cluster: HLS/DASH counts are `inc`-summed across edges, not
-  last-writer-wins (TODO.md).
+  works standalone and clustered. Every node samples redundantly (harmless). This relies on
+  HLS/DASH counts being `inc`-summed across edges, not last-writer-wins.
 - Config: `server.app_metrics_history_sample_period_ms` (15000) +
   `server.app_metrics_history_size` (2880, about 12h).
 - `viewers` depends on `writeStatsToDatastore` (default on; off means 0; must stay on in

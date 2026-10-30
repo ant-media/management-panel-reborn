@@ -1,4 +1,4 @@
-# Spec: Cluster view (Phase 14)
+# Spec: Cluster view
 
 Status: **shipped**. Reads existing backend endpoints; no new backend.
 Code: `src/features/cluster/` (`types.ts`, `parse.ts`, `use-cluster.ts`, `page.tsx`, `node-card.tsx`) + mock `src/lib/api/mocks/cluster.ts`.
@@ -6,7 +6,7 @@ Code: `src/features/cluster/` (`types.ts`, `parse.ts`, `use-cluster.ts`, `page.t
 **Locked decisions:**
 1. **Cards today, table later.** Per-node cards, ported from the prototype. When clusters get large, swap to the dense table idiom; the hook/types/`parseNode` are layout-agnostic, only `node-card` changes.
 2. **Trust the backend's binary status; add only a *derived* warn tier.** No fake 3-state status field: `status` stays the server's authoritative alive/dead; the client refines an *alive* node into healthy/warn from cpu/mem/db pressure.
-3. **No node delete.** `DELETE /cluster/node/{id}` exists but a live node re-registers in 5s; this is a read-only health view (delete → TODO.md V2).
+3. **No node delete.** `DELETE /cluster/node/{id}` exists but a live node re-registers in 5s; this is a read-only health view (delete → BACKLOG.md).
 
 ## Backend reality
 
@@ -51,6 +51,6 @@ The prototype's **"warn" status** is realised as a *derived* tier (above), not a
 - **Delete semantics.** Deleting a live node is pointless (re-registers in 5s); if added later, gate it to dead/stale rows.
 
 ## Not in scope → TODO.md
-- **Per-node logs**: no backend proxy to a specific node's `/log-file`. The `LogSource` seam is ready; revisit with a backend proxy (V2). The card carries no log action until then.
-- **Node delete**, **dense table** for large clusters (both V2), and **origin/edge analytics** (Phase 19, V1).
-- **Real per-node streams/viewers/GPU**: swap the mock for backend heartbeat fields, no UI change (V2). (Node **notes** are real; see "Prototype gaps" above.)
+- **Per-node logs**: no backend proxy to a specific node's `/log-file`. The `LogSource` seam is ready; revisit with a backend proxy (BACKLOG.md). The card carries no log action until then.
+- **Node delete**, **dense table** for large clusters (both BACKLOG.md), and **origin/edge analytics** (Phase 19, TODO.md).
+- **Real per-node streams/viewers/GPU**: swap the mock for backend heartbeat fields, no UI change (BACKLOG.md). (Node **notes** are real; see "Prototype gaps" above.)

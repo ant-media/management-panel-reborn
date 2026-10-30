@@ -46,7 +46,7 @@ export function useUsers() {
 
 // We use the system-scoped model (Phase 12 decision) and send BOTH the legacy
 // scope+userType AND the appNameUserType map, so whichever path the backend reads
-// persists the same role. (Per-app scoping is deferred; docs/dev-progress/TODO.md V2.)
+// persists the same role. (Per-app scoping is deferred; docs/BACKLOG.md.)
 function systemUser(email: string, role: UserRole, extra: Partial<User> = {}): User {
   return { email, userType: role, scope: SYSTEM_SCOPE, appNameUserType: { [SYSTEM_SCOPE]: role }, ...extra }
 }

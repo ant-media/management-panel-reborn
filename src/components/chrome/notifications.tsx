@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button'
 import { useEscapeKey } from '@/lib/use-escape-key'
 
 // DISABLED, NOT WIRED UP. Nothing imports this file, so it never renders and never ships
-// (the bundler drops it). The server-wide event feed behind it is Phase 15, V2
-// (docs/dev-progress/TODO.md); this designed "coming soon" state is kept so Phase 15 restores
+// (the bundler drops it). The server-wide event feed behind it is Phase 15
+// (docs/BACKLOG.md); this designed "coming soon" state is kept so Phase 15 restores
 // a panel instead of rebuilding one.
 //
 // To re-enable, restore the two pieces that were removed:

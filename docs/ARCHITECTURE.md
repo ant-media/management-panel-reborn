@@ -10,7 +10,7 @@ Living doc for cross-cutting structure. Add sections as patterns solidify.
 
 Every network call flows through the same stack, top to bottom. The point of the
 split is that **components never touch `fetch`**, so the day polling swaps to
-SSE (TODO.md V2), or mocks flip to a real server, nothing above the transport
+SSE (BACKLOG.md), or mocks flip to a real server, nothing above the transport
 line changes.
 
 ```
@@ -112,7 +112,7 @@ costs at most one settings read, not one per call per poll. `mint()` never throw
 (localhost excepted), so a panel served over HTTP cannot mint at all; a JWT-protected app then
 needs a pasted `{app}jwtToken`, or TLS. The secret entering the browser is a known tradeoff
 either way; the clean replacement is a backend mint endpoint, tracked in
-[TODO.md](dev-progress/TODO.md) V2.
+[BACKLOG.md](BACKLOG.md).
 
 ### Deployed next to the legacy console
 
@@ -145,7 +145,8 @@ deleted row vanishes immediately instead of reappearing until the next poll.
 The second owner is the licence: `LicenceProvider` (`src/features/server-settings/use-licence.tsx`,
 also mounted in `ProtectedLayout`) owns the poll of `last-licence-status`, the `status` → tone/label
 mapping, and `recheck(key)`. The topbar pill, the dashboard header pill, the Server Settings badge
-and the warning dialog all read it.
+and the warning dialog all read it. A bad licence re-raises the dialog on page changes, at most once
+a minute.
 
 The rule when a new widget needs data: check whether a provider/hook already owns it before
 adding a poll. A second `useApi` poll for the same data means duplicate traffic and two copies

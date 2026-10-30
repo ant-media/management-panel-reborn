@@ -5,7 +5,7 @@ import { storage } from '@/lib/localStorage'
 // settings) and sign a short-lived HS256 token. AMS's JWTFilter validates signature + exp
 // only (no required claims); verified against a live server. Done lazily on a 403 so open
 // apps pay nothing. The clean long-term replacement (secret never leaves the server) is a
-// backend mint endpoint; tracked in docs/dev-progress/TODO.md (V2).
+// backend mint endpoint; tracked in docs/BACKLOG.md.
 
 const TTL_MS = 5 * 60_000
 const MARGIN_MS = 30_000

@@ -1,4 +1,4 @@
-# Spec: App Settings editor + Import/Export (Phase 11)
+# Spec: App Settings editor + Import/Export
 
 Status: **shipped** (11-a advanced-field UX parked; TODO.md). Frontend-only: reads/writes the
 existing settings endpoints, no new backend.
@@ -104,7 +104,7 @@ Wrapper mirrors the streams convention ([streams-import-export.md](streams-impor
 
 ## Not in scope → TODO.md
 
-- **Copy app settings on create** (V1).
-- **Server settings import/export** (V2).
+- **Copy app settings on create** (TODO.md).
+- **Server settings import/export** (BACKLOG.md).
 - **Server-tab phantom marks** (BUGS): the canon-compare pattern still needs porting there.
 - **Phase 11-a**: advanced-field UX (the `advanced` flag is metadata only today).

@@ -17,7 +17,7 @@ Architectural risks, security caveats, and edge cases identified during reviews.
 **Why we accept:** the requirement is "the panel must reach a JWT-protected app with or without a pasted token," and only an admin (who can already read every app's secret) can trigger this. No backend change was available.
 **Mitigations in place:** lazy: the secret is read only when an app actually 403s (open apps never fetch it); token is short-TTL and never persisted; app 403 is isolated from the global session (`suppressAuthEmit`).
 **Over plain HTTP the panel cannot mint at all:** `crypto.subtle` exists only in a secure context (localhost excepted), so `mint()` returns `null` and the 403 stands. A JWT-protected app then needs a pasted `{app}jwtToken`, or TLS. Not a regression (minting never worked there), but it *looks* like the IP-filter symptom above, so check the origin before debugging the proxy.
-**Future:** a backend endpoint that mints an app token for the authenticated admin, so the secret never leaves the server. Then delete `app-jwt.ts`'s mint path. Tracked in [TODO.md](dev-progress/TODO.md) V2.
+**Future:** a backend endpoint that mints an app token for the authenticated admin, so the secret never leaves the server. Then delete `app-jwt.ts`'s mint path. Tracked in [BACKLOG.md](BACKLOG.md).
 
 ### App with JWT control enabled but NO secret key → every per-app call 403s (and the client-side mint can't rescue it)
 **Symptom:** `GET /{app}/rest/v2/...` returns 403 ("Invalid App JWT Token") for *all* calls; the streams list shows "Could not load streams: Forbidden". Not the session cookie, not the IP filter: the app's REST `JWTFilter`.
@@ -70,7 +70,7 @@ Architectural risks, security caveats, and edge cases identified during reviews.
 ### Dashboard mixes real and placeholder widgets
 **Where:** `src/features/dashboard/*` + `dashboard-widgets.md`.
 **Risk:** The dashboard mixes real and placeholder data sources, so a presented number may be fabricated. The only placeholder left is the cluster page's per-node streams/viewers/GPU (mock-projected optional fields); per-app **health** renders nothing at all rather than a fake. Everything else is real: history charts, app-drilldown viewers/streams, GPU, cluster CPU/Mem, network bandwidth (host-only, reads zero in containers; see [dashboard-widgets.md](features/dashboard-widgets.md) §1). Easy to mistake one for the other, or to "fix" an empty widget against a real server when the endpoint simply doesn't exist yet.
-**Why we accept:** The whole point is a complete-looking panel ahead of the future backend endpoints (TODO.md V2); placeholders sit behind real-shaped endpoints so the swap is zero-frontend-change.
+**Why we accept:** The whole point is a complete-looking panel ahead of the future backend endpoints (BACKLOG.md); placeholders sit behind real-shaped endpoints so the swap is zero-frontend-change.
 **Watch:** Before claiming a dashboard metric is live, check the real/placeholder table in `dashboard-widgets.md`. When a backend ships, delete the mock and the widget lights up with no UI change.
 **Robustness already in place:** `useDashboardData` merges `/system-resources/history` over `EMPTY_HISTORY` **per key**, and `app-row` normalises its history, so a real endpoint that returns a *subset* of the series (e.g. no `netOut`/`netIn`) degrades to an empty chart instead of crashing on `undefined.length`. Keep that contract if you touch the history hooks.
 **Minor cost:** the dashboard mounts `useCluster()` to gate the cluster card, so it polls `cluster-mode-status` + `cluster/nodes` every 5s even on a standalone server (card hidden). Cheap; revisit only if standalone dashboards show poll pressure.
@@ -112,7 +112,7 @@ Architectural risks, security caveats, and edge cases identified during reviews.
 ### Settings schema `def`s must mirror `AppSettings.java` initializers
 **Where:** `settings-schema.ts` (`def`, `parseFieldValue`; value-semantics rules are documented there) + reset buttons and import in `settings-tab.tsx`.
 **Risk:** absent/null values display `def`, and reset buttons write it. If a `def` drifts from the Java initializer, the form shows one value while a save that omits the key lands the other; no error, just a silent mismatch. Same class as the field-name risk above, but for values.
-**Watch:** copy `def`s from `AppSettings.java`, not from docs, and interpret values only through `parseFieldValue`; a local re-coercion reintroduces the display-vs-wire divergence that design killed. The V2 settings-descriptor API retires this class.
+**Watch:** copy `def`s from `AppSettings.java`, not from docs, and interpret values only through `parseFieldValue`; a local re-coercion reintroduces the display-vs-wire divergence that design killed. The settings-descriptor API (BACKLOG.md) retires this class.
 
 ### App settings save is last-write-wins
 **Where:** `settings-tab.tsx` → `saveAppSettings` (POST the whole POJO).
@@ -147,7 +147,7 @@ Architectural risks, security caveats, and edge cases identified during reviews.
 ### SSL is write-only and restarts the server
 **Where:** `src/features/server-settings/use-ssl.ts` → `POST /ssl-settings` (multipart).
 **Risk:** No GET: the panel can't tell which cert is active. `sslEnabled` in server settings only says a secure connector exists, so the TLS tab shows on/off, never the cert. Applying **restarts Ant Media Server** (drops streams, panel unreachable ~1 min). `type` is `valueOf()`'d server-side, so a wrong string fails with "Unknown SSL configuration type". An **empty multipart body 400s** in Jersey before the handler runs, and the domain-only types (`CUSTOM_DOMAIN`, `ANTMEDIA_SUBDOMAIN`, the AWS Marketplace path) have no files to send. A **successful apply usually never answers**: `enable_ssl.sh` ends in `service antmedia restart` while the handler waits on it, so the request dies with the JVM. `extractFQDN` takes the first FQDN-looking run (`find()`, TLD capped at 6 letters), so a sloppy domain, or a TLD over 6 letters, silently becomes another one. The antmedia.cloud subdomain is only handed out to a licensed key or a `buildForMarket` server.
-**Mitigation:** A confirm modal spells out the restart; `type` is constrained to the enum names in code; an honest "can't read back the active cert" note is shown. `server.configureSsl` always sends `type` as a form part so the body is never empty; the mock 400s an empty body to keep that honest. `configureSsl` reads a dropped connection or a 502-504 as `restarting`, not a failure. `checkDomain` accepts only a bare FQDN that `extractFQDN` reads whole (at most 11 labels, an ending of 2 to 6 letters), so a longer ending is blocked with its own message instead of being truncated (legacy let it through). The subdomain option locks with legacy's rule: no licence carrying a `licenceId` and not a marketplace build.
+**Mitigation:** A confirm modal spells out the restart; `type` is constrained to the enum names in code; an honest "can't read back the active cert" note is shown. The TLS tab follows legacy: a status row (on/off, `https://serverName:5443`, Change SSL) over the apply form, which opens by itself only while SSL is off. `server.configureSsl` always sends `type` as a form part so the body is never empty; the mock 400s an empty body to keep that honest. `configureSsl` reads a dropped connection or a 502-504 as `restarting`, not a failure. `checkDomain` accepts only a bare FQDN that `extractFQDN` reads whole (at most 11 labels, an ending of 2 to 6 letters), so a longer ending is blocked with its own message instead of being truncated (legacy let it through). The subdomain option locks with legacy's rule: no licence carrying a `licenceId` and not a marketplace build.
 **Watch:** If a `GET /ssl-settings` ever ships, wire it so the tab shows current state instead of flying blind.
 
 ### Playlist item `streamUrl` must be a full, openable URL
@@ -201,13 +201,12 @@ regression here. Keep the dirty check.
 **Where:** `usePlayUrl` (`features/streams/use-play-url.ts`) → the `play.html` iframe in `player-modal.tsx`.
 **Risk:** an app can gate playback three ways, and each behaves differently. `playTokenControlEnabled` mints a **one-time** token: the iframe spends it, so the modal's "Open in new tab" (which reuses the resolved URL) plays a spent token and fails. `playJwtControlEnabled` mints a JWT (reusable until it expires, 100s). `enableTimeTokenForPlay` (TOTP) cannot be minted client-side at all.
 **Mitigation:** the token is minted per playback and short-lived (legacy console parity: `now + 100s`, so the window to first frame, not a durable grant). TOTP is refused with an explicit message instead of a black player. A failed mint degrades to a bare URL so the player reports the auth error itself.
-**Watch:** the `⋯ > Play With WebRTC/HLS` items and row middle-click open **untokenized** tabs (they are synchronous, and a mint is not), so on a gated app those tabs won't play; the embedded player is the tokenized path. Fixing that properly needs a server-side mint (same V2 item as the app-JWT one above).
+**Watch:** the `⋯ > Play With WebRTC/HLS` items and row middle-click open **untokenized** tabs (they are synchronous, and a mint is not), so on a gated app those tabs won't play; the embedded player is the tokenized path. Fixing that properly needs a server-side mint (same backlog item as the app-JWT one above).
 
 ### PTZ rides on `play.html`'s player internals
 **Where:** `enablePtz` (`features/streams/ptz.ts`), called through `PlayerFrame`'s `onPlayerLoad`.
 **Risk:** the overlay exists only while the app's `play.html` exposes `window.webPlayer` (StreamApp since 2024-04) with web_player's `isIPCamera`, `restAPIPromise` and `injectPtzElements`, the API the legacy console drives. A StreamApp that drops them loses PTZ silently. Reaching into the iframe needs the same origin: true when the panel ships inside AMS, false under `pnpm dev` (play.html loads from `VITE_BACKEND`), so PTZ can't be exercised in dev or mock mode.
 **Mitigation:** a player without `injectPtzElements` is left alone, so playback never breaks. Moves go through the proxied `ipcamera(app).move`, which is why the player's own direct REST call (403 by the app IP filter) is never used.
-**Watch:** verify PTZ on a deployed build only.
 
 ### Identity does not ride the session
 **Where:** `src/contexts/auth-context.tsx` (`ams.auth.user`) + `src/lib/auth/api.ts` (`toAuthUser`).
@@ -255,11 +254,11 @@ And **static assets go through the bundler**: `import logo from '@/assets/…'` 
 **Where:** `src/features/streams/use-broadcasts.ts`: list + count + active-count.
 **Risk:** 36 req/min per open Streams tab. With N tabs open, N×36/min.
 **Why we accept:** Each endpoint serves a distinct UI concern; combining couples failure modes.
-**Watch:** If traffic profiles complain, combine into one request that returns all three, or use SSE via a future backend transport (TODO.md V2).
+**Watch:** If traffic profiles complain, combine into one request that returns all three, or use SSE via a future backend transport (BACKLOG.md).
 
 ### A cross-app "all streams" table is O(apps) per poll
 **Risk:** there is no cross-app streams endpoint, so a global table must fan out per app. At 2 endpoints per app every 8s, 50 apps is ≈12.5 req/sec for one page. This is why streams live under App › Live Streams and there is no global `/streams` page.
-**If it returns (TODO.md V2):** it needs durable per-app aggregates or one combined backend query first. Never reintroduce the per-app fan-out.
+**If it returns (BACKLOG.md):** it needs durable per-app aggregates or one combined backend query first. Never reintroduce the per-app fan-out.
 
 ## UX / accessibility
 
@@ -294,7 +293,7 @@ Deliberate product decisions. Don't re-litigate them casually; reopen them only 
   toolbars). `refresh()` stays for mutations and error-retry banners; the Cluster page's
   refresh icon doubles as its fetch spinner and stays.
 - **System-scoped user roles only** in the Users UI; the per-app `appNameUserType` matrix is
-  preserved on the wire but not editable (V2).
+  preserved on the wire but not editable (BACKLOG.md).
 - **The embedded player is an `iframe` of the app's own `play.html`**, not the
   `@antmedia/web_player` bundle (~5.5MB). The page negotiates the protocol itself; the panel only
   supplies `playOrder` and, on gated apps, a token.

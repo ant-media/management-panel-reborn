@@ -5,10 +5,15 @@ Rewrite of the Ant Media Server admin panel. Replaces the legacy Angular console
 ## Stack
 Vite 8 + React 19 + TypeScript + Tailwind + shadcn/ui + Recharts. pnpm, pinned via `packageManager`.
 
+## Project state
+Released. The panel ships inside AMS: the legacy console keeps `/`, this panel lives at `/reborn-panel/`. Every page runs on the real REST API; a mock transport covers offline dev.
+
+Backend work done for the panel (analytics endpoints, `create-list`, cluster node notes) lives in Ant-Media-Server and Ant-Media-Enterprise. The legacy console's switch to this panel lives in Ant-Media-Management-Console, behind its `rebornSwitcher` build flag.
+
 ## Docs map (source of truth)
-Read STATUS + TODO before starting; consult the rest as the task dictates.
-- **[docs/dev-progress/STATUS.md](docs/dev-progress/STATUS.md)**: where the project stands + the phase map.
-- **[docs/dev-progress/TODO.md](docs/dev-progress/TODO.md)**: open work, split V1 / V2.
+Read the docs your task touches. Read TODO.md when picking up work.
+- **[docs/TODO.md](docs/TODO.md)**: open work and known bugs.
+- **[docs/BACKLOG.md](docs/BACKLOG.md)**: future scope. Don't read it unless asked; never start an item from it without explicit approval.
 - **[docs/ui-kit.md](docs/ui-kit.md)**: shared UI primitives (Field, FormError, CodeChip, Pagination, useRangeSelection…). Check before building any UI.
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**: cross-cutting structure: the data/request layering, the two transports. Read before touching `src/lib/api/`.
 - **[docs/API.md](docs/API.md)**: REST endpoints the backend exposes (verified against live 4.0.0 + Java; wire shapes in the appendix).
@@ -16,7 +21,7 @@ Read STATUS + TODO before starting; consult the rest as the task dictates.
 - **[docs/RISKS.md](docs/RISKS.md)**: known gotchas, standing rules, locked product decisions.
 - **[docs/features/](docs/features/README.md)**: design doc per shipped feature, incl. [backend-analytics.md](docs/features/backend-analytics.md) for the Java side.
 - **[docs/CI.md](docs/CI.md)**: how the panel is built, released, and delivered to AMS (workflows, build stamp, release.sh).
-- **[README.md](README.md)**: install, run (mock vs live), build. **[docs/README.md](docs/README.md)**: the docs index.
+- **[README.md](README.md)**: install, run (mock vs live), build, release.
 
 ## Coding rules
 Universal rules, any language, any repo area.
@@ -59,15 +64,17 @@ Universal rules, any language, any repo area.
 - Charts: never `preserveAspectRatio="none"` with a fixed viewBox on anything that draws text/markers (ui-kit.md, LineChart).
 - Never change backend security behavior to fix panel compatibility; those fixes are frontend-only (hard project rule; RISKS.md, JWT lockout entry).
 - The panel is served from a subfolder of the AMS root webapp with a relative asset base, not from the origin root. So REST paths stay origin-absolute (`/rest/v2/...`) and the router stays hash-based. Both are load-bearing (docs/features/legacy-switcher.md).
-- The V2 line in docs/dev-progress/TODO.md is hard: never pull a V2 item into active work without explicit approval.
+- docs/BACKLOG.md is hard future scope: never pull an item from it into active work without explicit approval.
 
 ## Docs
-Docs change in the **same commit as the code**, never as a follow-up. Stale docs are worse than none.
+Docs hold what the code can't tell you: contracts, traps, and the reasons behind a design. These rules live here only; other docs link here instead of restating them.
 
-- **Write for the next reader, who is usually an LLM.** State the current contract and the intended next step. Nothing else: no change history, no "was X, then Y", no commit hashes, no staged/pushed status, no re-arguing a settled decision. Cut any sentence that doesn't change what someone does. Use the shortest wording that still survives being read cold. Dense beats thorough.
+- **Update docs only when a change touches something others rely on**: an API or wire contract, an invariant, a backend trap, a locked decision, a shared primitive, or the layering. Then the doc edit goes in the same commit as the code. Bug fixes, visual tweaks, copy changes, and refactors inside one feature need no doc edit.
+- **No visual spec.** Feature docs explain the design and why, never colors, sizes, opacity, spacing, or animation values. A non-obvious styling trap gets a code comment where the trap is.
+- **No testing in docs.** The developer tests every change. Never write check items, test steps, or verification state ("verified", "pending a live pass") into any doc.
+- **Write for the next reader, who is usually an LLM.** State the current contract. No change history, no "was X, then Y", no commit hashes, no branch or merge state of any repo, no re-arguing a settled decision. Cut any sentence that doesn't change what someone does. Dense beats thorough.
 - **One home per fact.** Link instead of repeating. A detail that belongs in a feature doc gets summarised in one clause elsewhere, not restated.
-- **Where it goes**: shipped → STATUS.md, and delete the TODO.md entry · deferred idea → TODO.md V2 · gotcha, standing rule, or locked decision → RISKS.md · feature design → docs/features/ · new shared primitive → a row in docs/ui-kit.md · cross-cutting structure (layers, transports, contexts) → ARCHITECTURE.md.
-- Verification state (unverified / standalone-verified / cluster-verified) is real state, tracked in STATUS.md + TODO.md, but only for backend and cluster behavior and for paths only a live server exercises (mock mode can't). A UI fix gets its check steps in the report or PR, never a TODO entry. A branch name is fine when it's the pointer someone needs; date it.
+- **Where it goes**: shipped → delete its TODO.md entry · bug → TODO.md *Bugs* · deferred idea → BACKLOG.md · gotcha, standing rule, or locked decision → RISKS.md · feature design → docs/features/ · new shared primitive → a row in docs/ui-kit.md · cross-cutting structure (layers, transports, contexts) → ARCHITECTURE.md.
 
 ## Working with this repo
-Ship in agreed chunks; stop and report after each so the user can test.
+Ship in agreed chunks; stop and report after each so the user can test. The handover says what changed. Add one line about testing only when it needs an unusual setup (a cluster, Mongo, an IP camera, a deployed build), never test steps.

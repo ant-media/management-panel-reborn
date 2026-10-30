@@ -41,7 +41,7 @@ export type PlaylistDraftItem = {
   key: number // render identity only, never on the wire
   streamUrl: string
   name?: string // display name of a picked VoD; dropped when the URL is typed over
-  // No UI yet (V2), but an edit replaces the whole list, so carry them through or an offset
+  // No UI yet (backlog), but an edit replaces the whole list, so carry them through or an offset
   // set in the old console is silently zeroed.
   seekTimeInMs?: number
   type?: string

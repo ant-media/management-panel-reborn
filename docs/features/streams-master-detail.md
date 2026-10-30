@@ -138,9 +138,14 @@ Four properties fall out of the diff, and each is a bug the moment someone "simp
 
 Viewer limits show blank for the wire's `-1` sentinel and never surface it; inputs are digit-coerced and
 length-capped, so `0` is the only invalid value a user can type. Playlist items round-trip `seekTimeInMs`
-and `type` through `PlaylistDraftItem` even though neither has a UI yet (V2): a save replaces the whole
+and `type` through `PlaylistDraftItem` even though neither has a UI yet (BACKLOG.md): a save replaces the whole
 list, so an offset set in the old console would otherwise be silently zeroed. Editing a row's URL keeps
 them and drops only the picked VoD's name.
+
+The playlist item editor (`playlist-items.tsx`) adds VoDs through as-you-type suggestions or a
+multi-select picker modal (search, thumbnails, pagination), and rows drag to reorder. A pick inserts
+the VoD's playable URL via `vodPlaylistUrl` (`features/vods/url-builder.ts`), with a play JWT on
+`playJwtControlEnabled` apps. URL contract: RISKS.md.
 
 **Live pulled sources restart on save.** The backend stops, patches and restarts a live `streamSource`
 or `ipCamera` whatever the field changed, and a rejected save leaves the stream down. The modal renders a
@@ -249,6 +254,10 @@ expressing it.
   report the auth error itself. Caveats: [RISKS.md](../RISKS.md), *Playback tokens ride on the
   player URL*.
 
+VoDs play in the same modal through `useVodPlayUrl` (`features/vods/use-vod-play-url.ts`): the
+same gating and fallbacks, with the token minted for the `vodId` and the file path as the player id
+(the player detects VoD from its `streams/` prefix).
+
 ## Gotchas
 
 - **Every media URL comes from `mediaOrigin()`** (`lib/media-origin.ts`), never `window.location`
@@ -256,5 +265,5 @@ expressing it.
   iframe or `<img>` has to actually load.
 - **ESC closes the top layer only** (player, confirm or `⋯` menu before the drawer under it), via
   `useEscapeKey`; see RISKS.md.
-- **The future cross-app streams table** (TODO.md V2) should reuse this table + drawer, not fork
+- **The future cross-app streams table** (BACKLOG.md) should reuse this table + drawer, not fork
   them.

@@ -24,6 +24,6 @@ export const system = {
   // REAL: cpu/mem/disk/heap/db/live + netOut/netIn from StatsCollector's in-memory ring.
   // Per-key EMPTY_HISTORY merge still defaults any absent series to []. quiet: older servers 404 it.
   resourcesHistory: (signal?: AbortSignal) => api.get<Partial<DashboardHistory>>('/system-resources/history', { signal, quiet: true }),
-  // REAL: physical-NIC throughput from StatsCollector (host-only, zero in containers; docs/dev-progress/TODO.md V2).
+  // REAL: physical-NIC throughput from StatsCollector (host-only, zero in containers; docs/BACKLOG.md).
   networkStatus: (signal?: AbortSignal) => api.get<NetworkStatus>('/network-status', { signal, quiet: true }),
 }

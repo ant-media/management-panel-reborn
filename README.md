@@ -73,7 +73,7 @@ Real releases should come from CI, not from your machine. See [CI](#ci) below.
 `/reborn-panel/`, and both login pages get a pill that links to the other one. Same origin, same
 session.
 
-It clones the console from GitHub (branch `feature/reborn-panel-switcher`). Point it at a checkout
+It clones the console from GitHub (`master`). Point it at a checkout
 you already have and it builds that instead:
 
 ```bash
@@ -152,14 +152,9 @@ The project is built with agentic development in mind. The docs in `docs/` and t
 [AGENTS.md](AGENTS.md) exist so an AI agent can pick up the full project state on its own, without
 anyone explaining it.
 
-Open the project in Claude Code or similar and tell it something like *"we are devs on Ant Media
-Server, please load up the project's knowledge"*. Wait for it to read the docs, then you are ready to
-work.
-
-Open work lives in [docs/dev-progress/TODO.md](docs/dev-progress/TODO.md), current state in
-[STATUS.md](docs/dev-progress/STATUS.md). Agents pick work from the TODO, keep both files current,
-and never pull future scope (V2) without approval. This setup is temporary. Once the V1 list is done
-both files go away and tracking moves to GitHub issues.
+Agents load [AGENTS.md](AGENTS.md) on their own and read the rest of the docs as a task needs them,
+so there is no warm-up step. Open work and known bugs live in [docs/TODO.md](docs/TODO.md); future
+scope lives in [docs/BACKLOG.md](docs/BACKLOG.md) and is never picked up without approval.
 
 ## CI
 

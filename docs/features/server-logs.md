@@ -1,4 +1,4 @@
-# Spec: Server Logs (Phase 13)
+# Spec: Server Logs
 
 Status: **shipped**. Reads an existing backend endpoint; no new backend.
 Code: `src/features/logs/` (`log-sources.ts`, `parse.ts`, `use-log-tail.ts`, `page.tsx`, `log-toolbar.tsx`, `log-console.tsx`, `log-row.tsx`) + mock `src/lib/api/mocks/logs.ts`.
@@ -6,11 +6,11 @@ Code: `src/features/logs/` (`log-sources.ts`, `parse.ts`, `use-log-tail.ts`, `pa
 ## Decisions
 
 1. **Own thin viewer**, not `react-lazylog` / `@melloware/react-logviewer` (raw-text engines that would throw away the parsed level/logger columns + per-level counts). `@tanstack/react-virtual` is skipped; the rendered window is small enough. Revisit if rendered row counts get large.
-2. **Cluster node selector: deferred (TODO.md V2).** The data layer is built around a `LogSource` seam so per-node logs drop in later without touching the viewer. The Source selector is real today with two entries (Server log + Error log) and grows by adding sources.
+2. **Cluster node selector: deferred (BACKLOG.md).** The data layer is built around a `LogSource` seam so per-node logs drop in later without touching the viewer. The Source selector is real today with two entries (Server log + Error log) and grows by adding sources.
 3. **Live tail = simple periodic fetch + client-side reconciliation.** No SSE (backend has none). Re-fetch the tail window on an interval, diff against what we hold by stable line id, append only new lines: no flicker, scroll preserved. QOL on top: search, level filters with counts, auto-refresh toggle + interval, pause, follow-tail, line-wrap, download.
 4. **Auto-refresh default**: on, 5s, follow-tail pinned to bottom. Interval select offers Off/2s/5s/10s; Pause is separate.
 5. **Default source**: Server log (`ant-media-server.log`). Errors is one selector-click away.
-6. **"Load older"**: tail-only today (`offset=-1`, last 256KB, reconcile); backward paging by decreasing byte offsets is deferred (TODO.md V2). See the head-trim caveat under Gotchas.
+6. **"Load older"**: tail-only today (`offset=-1`, last 256KB, reconcile); backward paging by decreasing byte offsets is deferred (BACKLOG.md). See the head-trim caveat under Gotchas.
 7. **Buffer cap**: default 1500, user-selectable in the toolbar (500 / 1k / 1.5k / 5k / 10k). Lowering it live-trims the held buffer.
 
 ## Backend reality
@@ -51,7 +51,7 @@ interface LogSource {
 ```
 
 - Two real sources over the same endpoint: `server` (default) and `errors` (`?logType=error`).
-- Later, `nodeLogSource(node)` (hitting a per-node proxy) is just another entry in the list; the viewer never learns it's a cluster. Source construction lives in one factory (`log-sources.ts`) so node sources land there and nowhere else (deferred; TODO.md V2).
+- Later, `nodeLogSource(node)` (hitting a per-node proxy) is just another entry in the list; the viewer never learns it's a cluster. Source construction lives in one factory (`log-sources.ts`) so node sources land there and nowhere else (deferred; BACKLOG.md).
 
 **`useLogTail(source, { charSize, pollMs, enabled })`**: owns polling + reconciliation. Built on the existing `useApi` polling idiom (abort-on-unmount, no-flicker poll ticks) but with a custom merge:
 
@@ -77,7 +77,7 @@ interface LogEntry { id: string; ts: string; thread: string; level: LogLevel; lo
 ### Presentation layer
 
 - **`LogsPage`** (`src/features/logs/page.tsx`): orchestrator. Holds source selection + filter/search/view state; derives the visible list client-side (level filter + search) from `entries`.
-- **`LogToolbar`**: uses the shared `Toolbar` / `ToolbarLeading` / `ToolbarActions` primitives (Phase 10/11) and the shared search input idiom.
+- **`LogToolbar`**: uses the shared `Toolbar` / `ToolbarLeading` / `ToolbarActions` primitives and the shared search input idiom.
 - **`LogConsole`**: the scroll container. **Follow-tail** = auto-scroll only while pinned to bottom; the moment the user scrolls up, following stops and a **"jump to bottom"** pill appears (standard tail UX; avoids fighting the user's scroll).
 - **`LogRow`**: parsed structured row `ts · LEVEL · [logger] · msg`, per-level left border + color (ERROR=`--danger`, WARN=`--warn`, INFO=`--info`, DEBUG dimmed), honors line-wrap toggle (`break-all` vs single-line + horizontal scroll).
 
@@ -90,12 +90,12 @@ Source selector (Server / Errors) · search across msg+logger+thread with match 
 - **Byte-offset slicing cuts lines.** A tail window starts mid-line ~always; trim the partial head line or the first row is garbage. Don't assume the slice begins at a line boundary.
 - **Reconcile, don't replace.** Re-rendering the whole window every tick flickers. Merge by content id; only new tail lines mount.
 - **Multi-line entries.** Stack traces span many physical lines. A line that doesn't match the timestamp regex belongs to the previous entry; fold it in during parse, or filters/search/counts will treat trace lines as their own rows.
-- **Counts/search are loaded-window only.** Labelled honestly ("in view"); they are NOT whole-file stats (no backend search). Same honesty rule as Phase 12's TLS tab.
+- **Counts/search are loaded-window only.** Labelled honestly ("in view"); they are NOT whole-file stats (no backend search). Same honesty rule as the TLS tab.
 - **`-1` vs explicit offset.** Use `offset = -1` for the steady tail. The change-gate compares `logFileSize` across ticks; only fetch+parse when it grew. (If "Load older" lands later, that path uses explicit decreasing offsets and must not disturb the tail buffer's head-trim.)
 - **System endpoint, not app-scoped.** Goes through the base `api` client, not `appApi(name)`. No per-app JWT, no `/{app}/rest/v2` prefix.
 - **Bounded memory.** A server tailing for hours produces a lot; the buffer is capped (see Decisions). Going past the cap deliberately is what "Load older" is for (deferred).
 
-## Not in scope → TODO.md (V2)
+## Not in scope → BACKLOG.md
 
 - **Per-node cluster logs**: each node only serves its own `/log-file`; no proxy exists. The `LogSource` seam is ready; needs a backend proxy (see cluster.md).
 - **Server-side search / level filter**: client-side over the loaded window only until a backend query API ships.
