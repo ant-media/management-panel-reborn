@@ -1,7 +1,20 @@
 import { useMemo } from 'react'
-import { errorMessage } from '@/lib/api'
+import { ApiError, errorMessage } from '@/lib/api'
 import { broadcasts } from '@/lib/api/endpoints'
 import type { Broadcast, Result } from './types'
+
+// A rejected create (stream id taken or invalid, bad source URL) answers 400 with a Result body,
+// and ApiError carries that body raw. Show its message, never the JSON.
+function bodyMessage(err: unknown): string | undefined {
+  if (!(err instanceof ApiError) || typeof err.body !== 'string') return undefined
+  try {
+    const parsed: unknown = JSON.parse(err.body)
+    const message = (parsed as Partial<Result> | null)?.message
+    return typeof message === 'string' ? message.trim() || undefined : undefined
+  } catch {
+    return undefined
+  }
+}
 
 // Single hook collecting every stream mutation so components don't have to
 // thread the app through each action. Normalises responses to a Result.
@@ -20,7 +33,7 @@ export function useBroadcastActions(appName: string | undefined) {
         }
         return { success: true }
       } catch (err) {
-        return { success: false, message: errorMessage(err, 'The request failed. Check that the server is reachable.') }
+        return { success: false, message: bodyMessage(err) ?? errorMessage(err, 'The request failed. Check that the server is reachable.') }
       }
     }
 

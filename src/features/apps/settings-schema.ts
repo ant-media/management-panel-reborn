@@ -151,6 +151,10 @@ const SETTINGS_SCHEMA: SettingSection[] = [
             message: 'Needs at least one rendition: without transcoding no preview is produced. Add one under Adaptive Streaming › Renditions.' },
         ] },
       { key: 'objectDetectionEnabled', label: 'Use object detection', type: 'bool', def: false, advanced: true, hint: 'Adds significant CPU load on the origin.' },
+      // Readers: StreamFetcherManager (boot resume, cluster takeover) and Enterprise NdiAdaptor (every discovery tick).
+      { key: 'startStreamFetcherAutomatically', label: 'Start sources automatically', type: 'bool', def: false,
+        hint: 'Resume stream sources and IP cameras when the server starts, and start NDI streams whenever their source appears.',
+        info: 'In a cluster, a surviving node also takes over the sources of a node that left. Sources set to start and stop with viewers are left alone.' },
       { key: 'vodFolder', label: 'VoD streaming folder', type: 'text', def: '' },
       { key: 'listenerHookURL', label: 'Webhook URL', type: 'text', def: '', info: 'Stream lifecycle events are POSTed to this URL.' },
     ],

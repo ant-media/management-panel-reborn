@@ -383,7 +383,7 @@ export function AppStreamsTab({ appName, onOpenStream, onGoToSettings }: Props) 
         open={newOpen}
         appName={appName}
         onClose={() => setNewOpen(false)}
-        onCreated={() => { setNewOpen(false); refresh() }}
+        onCreated={(_, notice) => { setNewOpen(false); if (notice) flash('warn', notice); refresh() }}
       />
       {pendingDelete && (
         <ConfirmDeleteStreamsModal

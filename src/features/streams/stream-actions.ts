@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
 import type { IconName } from '@/components/ui/icon'
 import { resultError } from '@/lib/api'
-import type { Toast } from '@/lib/use-toast'
 import type { AppSettings } from '@/features/apps/use-app-settings'
 import { useBroadcastActions } from './use-broadcast-actions'
 import { isLive, isStartable, type Broadcast } from './types'
@@ -32,7 +31,8 @@ export const STREAM_ACTIONS: Record<StreamAction, { label: string; short: string
   forceStop: { label: 'Force Stop Ingest', short: 'Force Stop', icon: 'power', tint: 'text-[var(--danger)]' },
 }
 
-type Flash = (kind: Toast['kind'], message: string) => void
+// Narrower than useToast's flash on purpose: drawer callers pass their own ok/err-only callback.
+type Flash = (kind: 'ok' | 'err', message: string) => void
 
 // Owns execution for every call site. forceStop cuts a live publisher off mid-broadcast, so it
 // defers to <ForceStopModal>, which confirms and then runs the same stop.

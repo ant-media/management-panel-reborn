@@ -42,9 +42,14 @@ export function broadcasts(app: string) {
       c.get<Broadcast[]>(`/broadcasts/list/${offset}/${size}`, { query: listQuery(opts), signal }),
     get: (streamId: string, signal?: AbortSignal) =>
       c.get<Broadcast>(`/broadcasts/${id(streamId)}`, { signal }),
-    // autoStart only matters for ipCamera/streamSource: true = start pulling now.
+    // autoStart only matters for ipCamera/streamSource/NDI: true = start pulling now, and the
+    // answer is then a Result (dataId = stream id), not the Broadcast.
     create: (input: Partial<Broadcast>, opts: { autoStart?: boolean } = {}) =>
-      c.post<Broadcast>('/broadcasts/create', { type: 'liveStream', ...input }, { query: { autoStart: opts.autoStart } }),
+      c.post<Broadcast | Result>('/broadcasts/create', { type: 'liveStream', ...input }, { query: { autoStart: opts.autoStart } }),
+    // NDI source names the server sees on its network, sorted. Server-wide, not per app, and an
+    // empty list on Community, without the NDI library, or with nothing on the network.
+    ndiSources: (signal?: AbortSignal) =>
+      c.get<string[]>('/broadcasts/ndi-streams', { signal }),
     // Bulk create (import). onDuplicate omitted → the whole request 400s if any id
     // already exists; 'skip' keeps existing streams, 'overwrite' replaces them.
     // Returns one Result per stream: dataId = stream id, message = created|skipped|overridden|failed.

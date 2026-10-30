@@ -3,12 +3,14 @@ import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { Icon, type IconName } from '@/components/ui/icon'
 import { FormError } from '@/components/shared/form'
-import { resultError } from '@/lib/api'
+import { Tooltip } from '@/components/shared/tooltip'
+import { resultError, resultMessage, useApi } from '@/lib/api'
+import { server } from '@/lib/api/endpoints'
 import { cn } from '@/lib/utils'
 import { useBroadcastActions } from '../use-broadcast-actions'
 import type { Broadcast, BroadcastType } from '../types'
 import { toPlayListItems, STREAM_URL_HINT, STREAM_URL_RE, type PlaylistDraftItem } from './draft'
-import { FieldLabel, OnvifCameraHostField, TEXTAREA_CLS, TextField, ToggleRow } from './fields'
+import { FieldLabel, NdiSourceField, OnvifCameraHostField, TEXTAREA_CLS, TextField, ToggleRow } from './fields'
 import { PlaylistItemsEditor } from './playlist-items'
 
 // Backend accepts {streamId} as alphanumeric/dashes/underscores; we cap to match
@@ -16,7 +18,7 @@ import { PlaylistItemsEditor } from './playlist-items'
 // streamId reach the wire.
 const STREAM_ID_RE = /^[A-Za-z0-9_-]{1,128}$/
 
-// The four real backend stream types (verified against the Angular console + Java
+// The real backend stream types (verified against the Angular console + Java
 // `AntMediaApplicationAdapter` constants). The prototype's separate "RTMP pull" and
 // "Stream source" collapse into one; both are `streamSource` + a pull URL on the wire.
 // `note` is a second description line, shown only where a type needs the extra nuance.
@@ -26,13 +28,17 @@ const TYPES: { id: Kind; label: string; icon: IconName; desc: string; note?: str
   { id: 'streamSource', label: 'Stream source', icon: 'link',   desc: 'Pull a remote RTMP / RTSP / SRT / HLS URL.' },
   { id: 'ipCamera',     label: 'IP camera',     icon: 'camera', desc: 'Connect to an ONVIF / RTSP camera.' },
   { id: 'playlist',     label: 'Playlist',      icon: 'list',   desc: 'Rebroadcast a sequence of VoDs as one live stream.' },
+  { id: 'NDI',          label: 'NDI',           icon: 'network', desc: 'Ingest an NDI source from the server\'s local network.', note: 'Starts as soon as it is created. If the source is not on the network yet, the stream is saved and you can start it later.' },
 ]
+
+const NDI_COMMUNITY = 'NDI needs Enterprise Edition. This server runs Community Edition.'
 
 type Props = {
   open: boolean
   appName: string | undefined
   onClose: () => void
-  onCreated?: (streamId: string) => void
+  // `notice` is a success the user still has to act on, e.g. an NDI stream saved but not started.
+  onCreated?: (streamId: string, notice?: string) => void
 }
 
 export function NewStreamModal({ open, appName, onClose, onCreated }: Props) {
@@ -49,6 +55,8 @@ export function NewStreamModal({ open, appName, onClose, onCreated }: Props) {
   const [password, setPassword] = useState('')
   // playlist
   const [items, setItems] = useState<PlaylistDraftItem[]>([])
+  // NDI
+  const [ndiSource, setNdiSource] = useState('')
   // options
   const [startNow, setStartNow] = useState(true)
   const [loop, setLoop] = useState(true)
@@ -58,17 +66,22 @@ export function NewStreamModal({ open, appName, onClose, onCreated }: Props) {
   const [serverError, setServerError] = useState<string | null>(null)
   const descId = useId()
 
+  // NDI is Enterprise only. Unknown (loading, failed) never blocks; the server has the last word.
+  const edition = useApi(s => server.enterpriseEdition(s), { enabled: open })
+  const community = edition.data?.success === false
+
   useEffect(() => {
     if (!open) return
     setKind('liveStream'); setName(''); setStreamId(''); setDescription('')
     setStreamUrl(''); setIpAddr(''); setUsername('admin'); setPassword('')
-    setItems([])
+    setItems([]); setNdiSource('')
     setStartNow(true); setLoop(true); setRecordMp4(false)
     setBusy(false); setServerError(null)
   }, [open])
 
   const trimmedName = name.trim()
   const trimmedId = streamId.trim()
+  const trimmedSource = ndiSource.trim()
   const idShapeOk = !trimmedId || STREAM_ID_RE.test(trimmedId)
   const validItems = items.filter(it => it.streamUrl.trim())
   const pulled = kind === 'streamSource' || kind === 'ipCamera'
@@ -83,6 +96,9 @@ export function NewStreamModal({ open, appName, onClose, onCreated }: Props) {
     : kind === 'streamSource' && !STREAM_URL_RE.test(streamUrl.trim()) ? STREAM_URL_HINT
     : kind === 'ipCamera' && (!ipAddr.trim() || !username.trim() || !password) ? 'Camera host, username, and password are required.'
     : kind === 'playlist' && validItems.length === 0 ? 'Add at least one playlist item.'
+    // The segment is blocked on Community; this covers the edition answer landing after NDI was picked.
+    : kind === 'NDI' && community ? NDI_COMMUNITY
+    : kind === 'NDI' && !trimmedSource ? 'Pick an NDI source or type its exact name.'
     : null
   const canSubmit = !validation && !busy && Boolean(appName)
 
@@ -95,16 +111,23 @@ export function NewStreamModal({ open, appName, onClose, onCreated }: Props) {
       streamId: trimmedId || undefined,
       description: description.trim() || undefined,
     }
-    if (recordMp4) payload.mp4Enabled = 1
+    if (recordMp4 && kind !== 'NDI') payload.mp4Enabled = 1
     if (kind === 'streamSource') payload.streamUrl = streamUrl.trim()
     if (kind === 'ipCamera') { payload.ipAddr = ipAddr.trim(); payload.username = username.trim(); payload.password = password }
     if (kind === 'playlist') {
       payload.playListItemList = toPlayListItems(items)
       payload.playlistLoopEnabled = loop
     }
-    const res = await actions.create(payload, { autoStart: pulled ? startNow : undefined })
+    // NDI always starts on create, as in the legacy console. autoStart is also the only create
+    // path that tags the record as NDI on the server, and its answer is a Result: a saved but
+    // unstarted source still reports success, and only the message says so.
+    if (kind === 'NDI') {
+      payload.streamUrl = trimmedSource
+      payload.name = trimmedName || trimmedSource
+    }
+    const res = await actions.create(payload, { autoStart: kind === 'NDI' ? true : pulled ? startNow : undefined })
     setBusy(false)
-    if (res.success) { onCreated?.(res.id ?? trimmedId); onClose() }
+    if (res.success) { onCreated?.(res.id ?? res.dataId ?? trimmedId, kind === 'NDI' ? resultMessage(res) : undefined); onClose() }
     else setServerError(resultError(res, 'Could not create the stream. The server gave no reason. Check the server logs.'))
   }
 
@@ -132,27 +155,31 @@ export function NewStreamModal({ open, appName, onClose, onCreated }: Props) {
         {/* Type: segmented control + the selected type's description (no separate
             label; the control is self-evident and the description explains it) */}
         <div>
-          <div role="radiogroup" aria-label="Stream type" className="flex gap-1 p-1 rounded-[9px] bg-[var(--bg-2)] border border-[var(--border)]">
+          {/* A grid, not a flex row: the tooltip wraps a blocked segment in a span, which then
+              has to fill the cell like a bare button does. */}
+          <div role="radiogroup" aria-label="Stream type" className="grid grid-flow-col auto-cols-fr gap-1 p-1 rounded-[9px] bg-[var(--bg-2)] border border-[var(--border)]">
             {TYPES.map(t => {
               const active = kind === t.id
+              const blocked = t.id === 'NDI' && community
               return (
-                <button
-                  key={t.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => setKind(t.id)}
-                  disabled={busy}
-                  className={cn(
-                    'flex-1 min-w-0 flex items-center justify-center gap-1.5 rounded-[6px] px-2 py-2 text-[12.5px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:opacity-50',
-                    active
-                      ? 'bg-[var(--card)] text-[var(--fg)] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
-                      : 'text-[var(--fg-3)] hover:text-[var(--fg)]',
-                  )}
-                >
-                  <Icon name={t.icon} size={13} className={cn('shrink-0', active && 'text-[var(--accent)]')} />
-                  <span className="truncate">{t.label}</span>
-                </button>
+                <Tooltip key={t.id} content={blocked && NDI_COMMUNITY} delay={0}>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setKind(t.id)}
+                    disabled={busy || blocked}
+                    className={cn(
+                      'w-full min-w-0 flex items-center justify-center gap-1.5 rounded-[6px] px-2 py-2 text-[12.5px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:opacity-50',
+                      active
+                        ? 'bg-[var(--card)] text-[var(--fg)] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
+                        : 'text-[var(--fg-3)] hover:text-[var(--fg)]',
+                    )}
+                  >
+                    <Icon name={t.icon} size={13} className={cn('shrink-0', active && 'text-[var(--accent)]')} />
+                    <span className="truncate">{t.label}</span>
+                  </button>
+                </Tooltip>
               )
             })}
           </div>
@@ -171,7 +198,7 @@ export function NewStreamModal({ open, appName, onClose, onCreated }: Props) {
           <TextField
             label="Display name" optional
             value={name} onChange={setName}
-            placeholder="Main Stage Camera" disabled={busy} maxLength={128}
+            placeholder={kind === 'NDI' && trimmedSource ? trimmedSource : 'Main Stage Camera'} disabled={busy} maxLength={128}
           />
         </div>
 
@@ -201,6 +228,10 @@ export function NewStreamModal({ open, appName, onClose, onCreated }: Props) {
           </div>
         )}
 
+        {kind === 'NDI' && !community && (
+          <NdiSourceField appName={appName} value={ndiSource} onChange={setNdiSource} disabled={busy} />
+        )}
+
         {/* Description */}
         <div>
           <FieldLabel htmlFor={descId} optional>Description</FieldLabel>
@@ -216,8 +247,9 @@ export function NewStreamModal({ open, appName, onClose, onCreated }: Props) {
           />
         </div>
 
-        {/* Options */}
-        <div className="border-t border-[var(--border)] pt-4 flex flex-col gap-3">
+        {/* Options. NDI has none: it always starts on create, and the legacy console never offered
+            a recording override for it. */}
+        {kind !== 'NDI' && <div className="border-t border-[var(--border)] pt-4 flex flex-col gap-3">
           <div className="text-[12px] font-medium uppercase tracking-wide text-[var(--fg-3)]">Options</div>
           {pulled && (
             <ToggleRow
@@ -231,7 +263,7 @@ export function NewStreamModal({ open, appName, onClose, onCreated }: Props) {
             <ToggleRow checked={loop} onChange={setLoop} label="Loop the playlist" />
           )}
           <ToggleRow checked={recordMp4} onChange={setRecordMp4} label="Record as MP4" />
-        </div>
+        </div>}
 
         {validation && <div className="text-[12px] text-[var(--danger)]">{validation}</div>}
         {serverError && <FormError>{serverError}</FormError>}

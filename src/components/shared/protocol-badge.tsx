@@ -4,6 +4,7 @@ const TONES: Record<string, { bg: string; fg: string }> = {
   SRT:    { bg: 'oklch(0.94 0.06 150 / 0.55)', fg: 'oklch(0.40 0.14 150)' },
   HLS:    { bg: 'oklch(0.94 0.05 200 / 0.55)', fg: 'oklch(0.42 0.14 200)' },
   RTSP:   { bg: 'oklch(0.94 0.05 340 / 0.55)', fg: 'oklch(0.45 0.16 340)' },
+  NDI:    { bg: 'oklch(0.94 0.06 105 / 0.55)', fg: 'oklch(0.44 0.13 105)' },
 }
 
 const FALLBACK = { bg: 'var(--bg-2)', fg: 'var(--fg-2)' }
