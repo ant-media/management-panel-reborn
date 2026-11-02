@@ -146,6 +146,9 @@ function seed(app: AppName): Broadcast[] {
 // starting or stopping a stream in mock mode moves the badge like it would on a real server.
 export const liveCountOf = (app: AppName) => storeOf(app).filter(b => b.status === 'broadcasting').length
 
+export const streamsMatching = (app: AppName, search: string) => storeOf(app).filter(b =>
+  (b.name ?? '').toLowerCase().includes(search) || b.streamId.toLowerCase().includes(search))
+
 function storeOf(app: AppName): Broadcast[] {
   let s = stores.get(app)
   if (!s) { s = seed(app); stores.set(app, s) }

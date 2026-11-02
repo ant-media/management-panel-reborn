@@ -5,6 +5,9 @@ import type { AppSettings } from '@/features/apps/use-app-settings'
 
 const id = (v: string) => encodeURIComponent(v)
 
+export type StreamSearchItem = { streamId: string; name: string | null; appName: string }
+export type StreamSearchResult = { results: StreamSearchItem[]; truncated: boolean }
+
 // Management apps surface (console scope, `/rest/v2`).
 export const apps = {
   // GET /applications → { applications: string[] }; unwrap to the names.
@@ -12,6 +15,9 @@ export const apps = {
     api.get<{ applications: string[] }>('/applications', { signal }).then(r => r.applications ?? []),
   info: (signal?: AbortSignal) =>
     api.get<ApplicationInfo[]>('/applications-info', { signal }),
+  // One server query across the apps the user can access, instead of a per-app fan-out.
+  searchStreams: (q: string, signal?: AbortSignal) =>
+    api.get<StreamSearchResult>('/streams/search', { query: { q }, signal }),
   // Default create is a plain POST (JSON); a custom app rides as a multipart PUT
   // with the packaged WAR (`file`) + its filename (`file_info`). Mirrors the backend
   // (POST @Consumes JSON / PUT @Consumes multipart) and the legacy console.

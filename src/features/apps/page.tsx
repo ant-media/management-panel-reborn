@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/auth-context'
 import { fmtBytes } from '@/lib/format'
 import { ConfirmDeleteModal } from './confirm-delete-modal'
 import { NewAppModal } from './new-app-modal'
+import { StreamSearchCard } from './stream-search-card'
 import { useApplications, type ApplicationInfo } from './use-applications'
 
 export function AppsPage() {
@@ -44,6 +45,8 @@ export function AppsPage() {
       )}
     >
       {error && <LoadErrorBanner entity="applications" error={error} onRetry={refresh} className="mb-5" />}
+
+      <StreamSearchCard />
 
       <Card className="overflow-hidden">
         <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2">

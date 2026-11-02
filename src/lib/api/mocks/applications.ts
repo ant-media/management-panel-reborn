@@ -1,7 +1,7 @@
 import { registerMock } from '@/lib/api'
 import { APP_NAME_RE } from '@/features/apps/use-applications'
 import type { AppSettings } from '@/features/apps/use-app-settings'
-import { liveCountOf } from './broadcasts'
+import { liveCountOf, streamsMatching } from './broadcasts'
 
 const GB = 1024 ** 3
 const MB = 1024 ** 2
@@ -17,6 +17,14 @@ const apps: MockApp[] = [
 // and moves when a stream is started or stopped.
 registerMock('GET', '/rest/v2/applications-info', () =>
   apps.map(a => ({ ...a, liveStreamCount: liveCountOf(a.name) })))
+
+registerMock('GET', '/rest/v2/streams/search', ({ query }) => {
+  const search = String(query.q ?? '').trim().toLowerCase()
+  if (search.length < 2 || search.length > 100) return { results: [], truncated: false }
+  const matches = apps.flatMap(a => streamsMatching(a.name, search)
+    .map(b => ({ streamId: b.streamId, name: b.name ?? null, appName: a.name })))
+  return { results: matches.slice(0, 50), truncated: matches.length > 50 }
+})
 
 // /applications/{name}/metrics-history: REAL backend now (StatsCollector in-memory ring,
 // viewers + streams). Mock kept for offline dev (matches the real shape). Health is NOT served

@@ -72,6 +72,7 @@ Maps every `src/lib/api/endpoints/*` method to its REST endpoint, whether a mock
 | Method | Endpoint | Mock | Status | Consumer |
 |---|---|---|---|---|
 | `info` | `applications-info` | ✓ | wired | `useApplications` |
+| `searchStreams` | `streams/search` | ✓ | wired | `useStreamSearch` |
 | `create` | `applications/{name}` (POST default · PUT multipart WAR) | ✓ | wired (+ optional custom-WAR upload) | `useApplications` / new-app modal |
 | `remove` | `applications/{name}` (DELETE) | ✓ | wired | `useApplications` |
 | `getSettings` | `applications/settings/{name}` | ✓ | wired | `useAppSettings` (+ the flag readers in `use-app-settings.ts`: `useViewerStatsEnabled`, `usePlayJwtEnabled`) |
