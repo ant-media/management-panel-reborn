@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import { useAuth } from '@/contexts/auth-context'
 import { useApi } from '@/lib/api/use-api'
 import { server, type Licence } from '@/lib/api/endpoints'
 import type { PillTone } from '@/components/shared/pill'
@@ -48,9 +49,10 @@ type Context = {
 const LicenceContext = createContext<Context | null>(null)
 
 export function LicenceProvider({ children }: { children: ReactNode }) {
+  const { isAdmin } = useAuth()
   const { data: licence, refresh } = useApi<Licence | null>(
     signal => server.lastLicenceStatus(signal),
-    { pollMs: LICENCE_POLL_MS },
+    { pollMs: LICENCE_POLL_MS, enabled: isAdmin },
   )
   const [warningDismissedAt, setWarningDismissedAt] = useState<number | null>(null)
 
