@@ -1,7 +1,7 @@
 # Spec: Server Logs
 
 Status: **shipped**. Reads an existing backend endpoint; no new backend.
-Code: `src/features/logs/` (`log-sources.ts`, `parse.ts`, `use-log-tail.ts`, `page.tsx`, `log-toolbar.tsx`, `log-console.tsx`, `log-row.tsx`) + mock `src/lib/api/mocks/logs.ts`.
+Code: `src/features/logs/` (`log-sources.ts`, `parse.ts`, `ansi.ts`, `use-log-tail.ts`, `page.tsx`, `log-toolbar.tsx`, `log-console.tsx`, `log-row.tsx`) + mock `src/lib/api/mocks/logs.ts`.
 
 ## Decisions
 
@@ -66,7 +66,7 @@ interface LogSource {
 **`parseLogback(raw): LogEntry[]`**
 
 ```ts
-interface LogEntry { id: string; ts: string; thread: string; level: LogLevel; logger: string; msg: string; raw: string }
+interface LogEntry { id: string; ts: string; thread: string; level: string; bucket: LogBucket; logger: string; msg: string; plainMsg: string; raw: string }
 ```
 
 - Regex off the logback pattern: `^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d,\d{3}) \[([^\]]+)\] (\w+)\s+(\S+) - ([\s\S]*)$` per line.
@@ -79,7 +79,7 @@ interface LogEntry { id: string; ts: string; thread: string; level: LogLevel; lo
 - **`LogsPage`** (`src/features/logs/page.tsx`): orchestrator. Holds source selection + filter/search/view state; derives the visible list client-side (level filter + search) from `entries`.
 - **`LogToolbar`**: uses the shared `Toolbar` / `ToolbarLeading` / `ToolbarActions` primitives and the shared search input idiom.
 - **`LogConsole`**: the scroll container. **Follow-tail** = auto-scroll only while pinned to bottom; the moment the user scrolls up, following stops and a **"jump to bottom"** pill appears (standard tail UX; avoids fighting the user's scroll).
-- **`LogRow`**: parsed structured row `ts · LEVEL · [logger] · msg`, per-level left border + color (ERROR=`--danger`, WARN=`--warn`, INFO=`--info`, DEBUG dimmed), honors line-wrap toggle (`break-all` vs single-line + horizontal scroll).
+- **`LogRow`**: parsed structured row `ts · LEVEL · [logger] · msg`, per-level left border + color (ERROR=`--danger`, WARN=`--warn`, INFO=`--info`, DEBUG dimmed), honors line-wrap toggle (`break-all` vs single-line + horizontal scroll). `msg` renders its ANSI SGR styling via `parseAnsi`.
 
 ### Toolbar / QOL
 
@@ -92,6 +92,7 @@ Source selector (Server / Errors) · search across msg+logger+thread with match 
 - **Multi-line entries.** Stack traces span many physical lines. A line that doesn't match the timestamp regex belongs to the previous entry; fold it in during parse, or filters/search/counts will treat trace lines as their own rows.
 - **Counts/search are loaded-window only.** Labelled honestly ("in view"); they are NOT whole-file stats (no backend search). Same honesty rule as the TLS tab.
 - **`-1` vs explicit offset.** Use `offset = -1` for the steady tail. The change-gate compares `logFileSize` across ticks; only fetch+parse when it grew. (If "Load older" lands later, that path uses explicit decreasing offsets and must not disturb the tail buffer's head-trim.)
+- **Messages can carry ANSI escapes.** Plugins relay child-process output (e.g. the MoQ sidecar's colored tracing log) into the log file verbatim. `ansi.ts` turns SGR into styled segments and drops every other escape; `msg` keeps the escapes for rendering, `plainMsg` is stripped and is what search matches. Download keeps `raw`, escapes included, matching the file.
 - **System endpoint, not app-scoped.** Goes through the base `api` client, not `appApi(name)`. No per-app JWT, no `/{app}/rest/v2` prefix.
 - **Bounded memory.** A server tailing for hours produces a lot; the buffer is capped (see Decisions). Going past the cap deliberately is what "Load older" is for (deferred).
 

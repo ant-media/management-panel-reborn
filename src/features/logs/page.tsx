@@ -44,7 +44,7 @@ export function LogsPage() {
     return entries.filter(e => {
       if (!levels.includes(e.bucket)) return false
       if (!q) return true
-      return e.msg.toLowerCase().includes(q) || e.logger.toLowerCase().includes(q) || e.thread.toLowerCase().includes(q)
+      return e.plainMsg.toLowerCase().includes(q) || e.logger.toLowerCase().includes(q) || e.thread.toLowerCase().includes(q)
     })
   }, [entries, levels, search])
 

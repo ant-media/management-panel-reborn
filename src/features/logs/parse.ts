@@ -1,3 +1,5 @@
+import { stripAnsi } from './ansi'
+
 // Logback line parsing. Backend serves a raw byte-slice of the log file; we turn it
 // into structured rows. Pattern (conf/logback.xml): `%d{ISO8601} [%thread] %-5level %logger{35} - %msg%n`.
 
@@ -19,7 +21,8 @@ export interface LogEntry {
   level: string
   bucket: LogBucket
   logger: string
-  msg: string
+  msg: string // may carry ANSI escapes; render through parseAnsi
+  plainMsg: string // msg without escapes: what search matches
   raw: string
 }
 
@@ -64,6 +67,7 @@ export function parseLogback(raw: string, trimHead: boolean): LogEntry[] {
       const prev = entries[entries.length - 1]
       if (prev) {
         prev.msg += '\n' + line
+        prev.plainMsg += '\n' + stripAnsi(line)
         prev.raw += '\n' + line
       }
       continue
@@ -74,7 +78,7 @@ export function parseLogback(raw: string, trimHead: boolean): LogEntry[] {
     const [, ts, thread, level, logger, msg] = m
     entries.push({
       id: n ? `${base}-${n}` : base,
-      ts, thread, level, bucket: levelBucket(level), logger, msg, raw: line,
+      ts, thread, level, bucket: levelBucket(level), logger, msg, plainMsg: stripAnsi(msg), raw: line,
     })
   }
   return entries

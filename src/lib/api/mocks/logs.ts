@@ -61,7 +61,19 @@ const STACK_TRACE = [
   '\tat io.antmedia.muxer.MuxAdaptor.closeResources(MuxAdaptor.java:1604)',
 ]
 
+// A plugin relaying its sidecar's colored tracing output: ANSI escapes inside a multi-line entry.
+const E = '\x1b'
+const SIDECAR = [
+  `${E}[2m2026-06-14T09:10:21.559697Z${E}[0m ${E}[32m INFO${E}[0m ${E}[1mconn${E}[0m${E}[1m{${E}[0m${E}[3mid${E}[0m${E}[2m=${E}[0m9${E}[1m}${E}[0m${E}[2m:${E}[0m ${E}[2mmoq_relay::connection${E}[0m${E}[2m:${E}[0m negotiated ${E}[3mversion${E}[0m${E}[2m=${E}[0mmoq-lite-05`,
+  `${E}[2m2026-06-14T09:10:21.560349Z${E}[0m ${E}[33m WARN${E}[0m ${E}[2mmoq_native::bind${E}[0m${E}[2m:${E}[0m UDP receive buffer is smaller than requested ${E}[3mwanted${E}[0m${E}[2m=${E}[0m8388608 ${E}[3mgranted${E}[0m${E}[2m=${E}[0m4194304`,
+  `${E}[2m2026-06-14T09:10:21.561038Z${E}[0m ${E}[31mERROR${E}[0m ${E}[2mmoq_relay::relay${E}[0m${E}[2m:${E}[0m connection closed ${E}[3merr${E}[0m${E}[2m=${E}[0mtransport: connection error: timed out`,
+]
+
 const server = seedFixture(140, new Date(2026, 5, 14, 9, 8, 40))
+server.lines.push(
+  fmtLine(server.clock, 'pool-4-thread-1', 'INFO', 'io.antmedia.plugin.MoQPlugin', `[moq moq-relay] ${SIDECAR[0]}`),
+  ...SIDECAR.slice(1),
+)
 const errors = seedFixture(0, new Date(2026, 5, 14, 9, 9, 0))
 errors.lines.push(
   fmtLine(new Date(2026, 5, 14, 9, 11, 58, 210), 'vert.x-worker-thread-9', 'ERROR', 'io.antmedia.muxer.MuxAdaptor', 'Recording write failed: disk quota exceeded'),

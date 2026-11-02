@@ -448,30 +448,33 @@ function JsonDrawer({ className, text, error, onChange, onCopy, onClose }: {
           <Button variant="ghost" size="iconSm" title="Close" onClick={onClose}><Icon name="x" size={12} /></Button>
         </div>
       </div>
-      {/* Layers, back to front: active-line band → gutter numbers → the transparent textarea. */}
-      <div className="relative flex-1 min-h-0 overflow-hidden focus-within:bg-[var(--bg)] transition-colors">
+      {/* Layers, back to front: active-line band → gutter numbers → the transparent textarea. The
+          textarea sits beside the gutter, not under it, so horizontal scroll clips at the gutter edge. */}
+      <div className="relative flex-1 min-h-0 flex overflow-hidden focus-within:bg-[var(--bg)] transition-colors">
         <div ref={bandRef} aria-hidden style={{ height: LINE_H, top: PAD_Y }}
           className="pointer-events-none absolute left-0 right-0 bg-[var(--bg-3)]" />
         <div aria-hidden style={{ width: gutterW }}
-          className="pointer-events-none absolute inset-y-0 left-0 overflow-hidden border-r border-[var(--border)] select-none">
-          <div ref={gutterRef} style={{ paddingTop: PAD_Y }} className="font-mono text-[11px] will-change-transform">
+          className="pointer-events-none relative shrink-0 overflow-hidden border-r border-[var(--border)] select-none font-mono text-[11px]">
+          <div ref={gutterRef} style={{ paddingTop: PAD_Y }} className="will-change-transform">
             {nums}
           </div>
         </div>
-        <textarea
-          ref={taRef}
-          value={text}
-          wrap="off"
-          onChange={e => { onChange(e.target.value); trackCaret() }}
-          onScroll={sync}
-          onSelect={trackCaret}
-          onKeyUp={trackCaret}
-          onClick={trackCaret}
-          spellCheck={false}
-          style={{ paddingTop: PAD_Y, paddingBottom: PAD_Y, paddingRight: 12, paddingLeft: gutterW, lineHeight: `${LINE_H}px` }}
-          className={cn('absolute inset-0 text-[11.5px] font-mono bg-transparent text-[var(--fg-2)] outline-none resize-none border-0 overflow-auto',
-            error && 'text-[var(--danger)]')}
-        />
+        <div className="relative flex-1 min-w-0">
+          <textarea
+            ref={taRef}
+            value={text}
+            wrap="off"
+            onChange={e => { onChange(e.target.value); trackCaret() }}
+            onScroll={sync}
+            onSelect={trackCaret}
+            onKeyUp={trackCaret}
+            onClick={trackCaret}
+            spellCheck={false}
+            style={{ paddingTop: PAD_Y, paddingBottom: PAD_Y, paddingLeft: 10, paddingRight: 12, lineHeight: `${LINE_H}px` }}
+            className={cn('absolute inset-0 text-[11.5px] font-mono bg-transparent text-[var(--fg-2)] outline-none resize-none border-0 overflow-auto',
+              error && 'text-[var(--danger)]')}
+          />
+        </div>
       </div>
       <div className={cn('px-3 py-2 border-t border-[var(--border)] flex items-start gap-2 text-[10.5px]',
         error ? 'text-[var(--danger)] bg-[var(--danger-bg)]' : 'text-[var(--fg-3)]')}>
