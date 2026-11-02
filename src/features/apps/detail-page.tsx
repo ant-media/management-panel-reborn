@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Icon } from '@/components/ui/icon'
 import { CopyChip } from '@/components/shared/copy-chip'
+import { useAuth } from '@/contexts/auth-context'
 import { cn } from '@/lib/utils'
 import { AppStreamsTab } from '@/features/streams/app-streams-tab'
 import { AppVodsTab } from '@/features/vods/app-vods-tab'
@@ -26,6 +27,7 @@ export function AppDetailPage() {
   const { name = '' } = useParams<{ name: string }>()
   const navigate = useNavigate()
   const { apps } = useApplications()
+  const { isAdmin } = useAuth()
   const [tab, setTab] = useState<Tab>('streams')
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [settingsDirty, setSettingsDirty] = useState(false)
@@ -68,17 +70,19 @@ export function AppDetailPage() {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="dangerOutline"
-            size="sm"
-            onClick={() => setDeleteOpen(true)}
-            disabled={exists === false}
-            title={exists === false ? 'This application no longer exists' : 'Delete this application'}
-          >
-            <Icon name="trash" size={12} /> Delete app
-          </Button>
-        </div>
+        {isAdmin && (
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="dangerOutline"
+              size="sm"
+              onClick={() => setDeleteOpen(true)}
+              disabled={exists === false}
+              title={exists === false ? 'This application no longer exists' : 'Delete this application'}
+            >
+              <Icon name="trash" size={12} /> Delete app
+            </Button>
+          </div>
+        )}
       </div>
 
       {exists === false ? (

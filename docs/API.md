@@ -43,7 +43,7 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 - Per-metric subsets: `GET /cpu-status` · `/system-memory-status` · `/jvm-memory-status` · `/file-system-status` · `/system-status` · `/live-clients-size` · `/server-time`
 - `GET /gpu-status` → `GpuInfo[]`: **real** (`StatsCollector`), also embedded as `system-resources.gpuUsageInfo` (what the dashboard reads). Per device: `{ index, deviceName, gpuUtilization, memoryUtilization, encoderUtilization, decoderUtilization, memoryTotal, memoryUsed, memoryFree }`; util 0-100 ints, memory bytes, **no temperature**. `[]` on community / no NVIDIA GPU.
 - `GET /version` → `{ versionName, versionType, buildNumber }`
-- `GET /applications-info` → `{ name, liveStreamCount, vodCount, storage }[]`
+- `GET /applications-info` → `{ name, liveStreamCount, vodCount, storage }[]`. Only the apps the session user can access.
 - **Ops** *(catalog, not in layer):* `GET /thread-dump` · `/thread-dump-json` · `/threads` · `/heap-dump` · `/liveness` · `POST /system/gc` · `GET /shutdown-proper-status` · `GET /shutdown-properly`
 
 ### Applications  (`RestServiceV2`)

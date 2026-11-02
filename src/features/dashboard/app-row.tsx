@@ -18,6 +18,8 @@ const POLL_MS = 15_000
 
 type Props = {
   app: ApplicationInfo
+  // False for app-scoped users: trends are 403 for them, so a click opens the app instead.
+  canManage: boolean
   onOpen: (name: string) => void
   onDelete: (name: string) => void
 }
@@ -25,7 +27,7 @@ type Props = {
 // Applications table row. Click toggles a drilldown of per-app trends (viewers / live
 // streams) fetched lazily on expand. History is an in-memory ring on the server, so it
 // builds up over time and resets on a server restart (see dashboard-widgets.md).
-export function AppRow({ app, onOpen, onDelete }: Props) {
+export function AppRow({ app, canManage, onOpen, onDelete }: Props) {
   const [open, setOpen] = useState(false)
   const { data, error, isLoading } = useApi<Partial<AppMetricsHistory>>(
     signal => apps.metricsHistory(app.name, signal),
@@ -44,11 +46,11 @@ export function AppRow({ app, onOpen, onDelete }: Props) {
   return (
     <>
       <tr
-        onClick={() => setOpen(o => !o)}
+        onClick={() => { if (canManage) setOpen(o => !o); else onOpen(app.name) }}
         className={cn('border-b border-[var(--border)] hover:bg-[var(--bg-2)] cursor-pointer transition-colors', open && 'bg-[var(--bg-2)]')}
       >
         <td className="px-6 py-3 text-[var(--fg-3)] w-10">
-          <Icon name="chevron-right" size={14} className={cn('transition-transform', open && 'rotate-90')} />
+          {canManage && <Icon name="chevron-right" size={14} className={cn('transition-transform', open && 'rotate-90')} />}
         </td>
         <td className="px-6 py-3">
           <div className="flex items-center gap-2.5">
@@ -68,9 +70,11 @@ export function AppRow({ app, onOpen, onDelete }: Props) {
             <Button variant="outline" size="sm" onClick={() => onOpen(app.name)}>
               Go to app <Icon name="arrow-right" size={12} />
             </Button>
-            <Button variant="dangerOutline" size="sm" className="w-7 px-0" onClick={() => onDelete(app.name)} aria-label={`Delete ${app.name}`} title="Delete application">
-              <Icon name="trash" size={13} />
-            </Button>
+            {canManage && (
+              <Button variant="dangerOutline" size="sm" className="w-7 px-0" onClick={() => onDelete(app.name)} aria-label={`Delete ${app.name}`} title="Delete application">
+                <Icon name="trash" size={13} />
+              </Button>
+            )}
           </div>
         </td>
       </tr>

@@ -1,7 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { onAuthFailure } from '@/lib/api'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { ApiError, onAuthFailure } from '@/lib/api'
 import { storage } from '@/lib/localStorage'
 import {
+  checkAuthenticated,
   login as apiLogin,
   logout as apiLogout,
   probeBoot,
@@ -76,7 +77,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Layout guards own the redirect; they have the correct `useLocation()` to capture
   // the page the user was on, so login can return them there afterwards.
-  useEffect(() => onAuthFailure(() => apply(null, 'unauthenticated')), [apply])
+  // A 403 can just mean this user may not do that, so only a dead session ends the login. An
+  // unreachable backend throws and is left to the connection banner. The ref collapses the burst
+  // of 403s a page's polls can produce into one check.
+  const checkingSession = useRef(false)
+  useEffect(() => onAuthFailure(() => {
+    if (checkingSession.current) return
+    checkingSession.current = true
+    void checkAuthenticated()
+      .then(alive => { if (!alive) apply(null, 'unauthenticated') })
+      .catch(err => {
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) apply(null, 'unauthenticated')
+      })
+      .finally(() => { checkingSession.current = false })
+  }), [apply])
 
   const login = useCallback(async (email: string, password: string) => {
     const next = await apiLogin(email, password)

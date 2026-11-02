@@ -25,7 +25,8 @@ function parseScopes(message: string | undefined): Scopes {
 
 export function toAuthUser(email: string, message: string | undefined): AuthUser {
   const scopes = parseScopes(message)
-  return { email, scopes, isAdmin: SYSTEM_SCOPE in scopes }
+  // No scopes at all is an older user, which the server treats as system.
+  return { email, scopes, isAdmin: SYSTEM_SCOPE in scopes || Object.keys(scopes).length === 0 }
 }
 
 export async function login(email: string, password: string): Promise<AuthUser | null> {
@@ -52,7 +53,8 @@ export async function probeBoot(): Promise<BootProbe> {
 }
 
 // Is the session cookie still valid. Throws when the backend is unreachable.
+// Never emits: the auth-failure listener calls this, so a 403 here must not re-trigger it.
 export async function checkAuthenticated(): Promise<boolean> {
-  const res = await api.get<SuccessPayload>('/authentication-status')
+  const res = await api.get<SuccessPayload>('/authentication-status', { suppressAuthEmit: true })
   return res.success
 }

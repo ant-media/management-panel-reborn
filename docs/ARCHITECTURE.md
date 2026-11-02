@@ -45,6 +45,8 @@ transport.request()  ── "transport" layer ──
   live server, sends `credentials:'include'`, normalises errors to `ApiError`,
   routes 401/403 to the auth-failure listener **unless `suppressAuthEmit` is set**
   (app calls set it; a JWT 403 there means "mint a token", not "session dead").
+  The listener (`AuthProvider`) logs out only if `/authentication-status` says the session
+  is dead: a 403 can just mean this user lacks the permission (RISKS.md, *App-scoped users*).
   This is what ships to production.
 - **`MockTransport`**: the **fake** one. No network; pattern-matches the path
   against `registerMock(...)` handlers in `src/lib/api/mocks/*` and returns made-up data.

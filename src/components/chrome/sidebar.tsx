@@ -130,14 +130,16 @@ export function Sidebar({ collapsed, onToggle }: Props) {
                     className="w-full h-7 pl-7 pr-2 text-[13px] bg-[var(--bg-2)] border border-[var(--border)] focus:border-[var(--border-strong)] rounded-[5px] outline-none text-[var(--fg)] placeholder:text-[var(--fg-3)]"
                   />
                 </div>
-                <button
-                  type="button"
-                  aria-label="New application"
-                  onClick={() => setNewAppOpen(true)}
-                  className="w-7 h-7 shrink-0 rounded-[5px] bg-[var(--accent)] text-white hover:brightness-110 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-                >
-                  <Icon name="plus" size={12} />
-                </button>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    aria-label="New application"
+                    onClick={() => setNewAppOpen(true)}
+                    className="w-7 h-7 shrink-0 rounded-[5px] bg-[var(--accent)] text-white hover:brightness-110 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+                  >
+                    <Icon name="plus" size={12} />
+                  </button>
+                )}
               </div>
               {filteredApps.map(app => (
                 <NavLink
@@ -163,7 +165,7 @@ export function Sidebar({ collapsed, onToggle }: Props) {
           )}
         </div>
 
-        {SECONDARY.map(item => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
+        {isAdmin && SECONDARY.map(item => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
       </nav>
 
       <div className={cn('relative shrink-0 border-t border-[var(--border)] p-2', collapsed && 'flex justify-center')}>

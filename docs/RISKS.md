@@ -260,6 +260,11 @@ And **static assets go through the bundler**: `import logo from '@/assets/…'` 
 **Risk:** there is no cross-app streams endpoint, so a global table must fan out per app. At 2 endpoints per app every 8s, 50 apps is ≈12.5 req/sec for one page. This is why streams live under App › Live Streams and there is no global `/streams` page.
 **If it returns (BACKLOG.md):** it needs durable per-app aggregates or one combined backend query first. Never reintroduce the per-app fan-out.
 
+### App-scoped users
+**Risk:** `AuthenticationFilter` returns 403 on almost every management endpoint for a user limited to specific apps (`scopes` without `system`). A poll that fires one of those used to log the user out, so any new system call made outside `isAdmin` shows up as a failed request for these users.
+**Mitigation:** `isAdmin` gates the system dashboard, licence poll, per-app metric history, Cluster, Server settings, Logs, and creating or deleting apps. A 403 only ends the login when the session is dead. The server allows these users `/applications-info` (filtered), `/users/logout`, and their apps through the proxy.
+**Watch:** `isAdmin` hides UI only; the server enforces permissions. No scopes at all means an older user the server treats as system, so it counts as `isAdmin`.
+
 ## UX / accessibility
 
 ### Modal autofocus relies on a `data-autofocus` attribute

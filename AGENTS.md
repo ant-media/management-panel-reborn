@@ -53,7 +53,7 @@ Universal rules, any language, any repo area.
 - **UI comes from the kit** (docs/ui-kit.md). Modals especially: `ConfirmModal` for any "are you sure?" (it owns busy/error + the footer; never re-roll that state machine), `Modal` + `Field` + `FormError` for everything else. Never hand-roll inputs or error boxes.
 - **Componentize when files grow.** When a feature file passes ~300 lines or contains repeated visual chunks, split into sub-components co-located with the feature.
 - **Don't add backwards-compat shims or feature flags.** This is a greenfield rewrite.
-- **Auth**: server-session via HttpOnly cookie; API client uses `credentials: 'include'`; 401/403 redirects to `/login`. Router splits public vs protected layouts. See API.md + ARCHITECTURE.md.
+- **Auth**: server-session via HttpOnly cookie; API client uses `credentials: 'include'`; a 401/403 on a management call redirects to `/login` only if `/authentication-status` says the session is dead. Router splits public vs protected layouts. See API.md + ARCHITECTURE.md.
 
 ## Hard invariants (breaking these = production bugs; context in docs/RISKS.md)
 - App settings save POSTs the **whole fetched POJO** with edits merged. Never build the body from the visible/schema keys; a partial POST wipes the ~160 unsurfaced fields.
