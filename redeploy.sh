@@ -1,13 +1,13 @@
 #!/bin/bash
-# Builds the new panel and drops it into the reborn-panel subfolder of the AMS root webapp.
-# The legacy console living in webapps/root is left untouched. Does not touch the server process.
+# Builds the new panel and drops it into the AMS root webapp. Everything else in webapps/root,
+# the classic console in classic-panel/ included, is left untouched. Does not touch the server process.
 set -e
 
 usage() {
     cat <<USAGE
 Usage: ./redeploy.sh [--no-build] [-h|--help]
 
-Builds the panel and copies dist/ into \$AMS_DIR/webapps/root/reborn-panel.
+Builds the panel and copies dist/ into \$AMS_DIR/webapps/root.
 
 Options:
   --no-build   Skip install + build, deploy the dist/ already there (e.g. built on another
@@ -17,7 +17,7 @@ Options:
 
 Environment:
   AMS_DIR       Server install (default: ~/softwares/ant-media-server)
-  PANEL_SWITCH  on|off, the login switch pill (default: on)
+  PANEL_SWITCH  on|off, the login switch pill (default: on if the server has classic-panel/)
 USAGE
 }
 
@@ -34,7 +34,6 @@ cd "$(dirname "$0")"
 
 AMS_DIR=${AMS_DIR:-$HOME/softwares/ant-media-server}
 ROOT=$AMS_DIR/webapps/root
-DEST=$ROOT/reborn-panel
 SRC=dist
 
 if [ ! -d "$ROOT" ]; then
@@ -42,9 +41,9 @@ if [ ! -d "$ROOT" ]; then
     exit 1
 fi
 
-# This script always deploys next to the legacy console, so the login switch pill belongs here.
-# PANEL_SWITCH=off drops it (vite.config.ts bakes it in).
-export PANEL_SWITCH=${PANEL_SWITCH:-on}
+# The login switch pill links to classic-panel/, so it is on only when the server has one.
+# PANEL_SWITCH forces it either way (vite.config.ts bakes it in).
+export PANEL_SWITCH=${PANEL_SWITCH:-$([ -f "$ROOT/classic-panel/index.html" ] && echo on || echo off)}
 case "$PANEL_SWITCH" in on|off) ;; *) echo "PANEL_SWITCH must be on or off, got: $PANEL_SWITCH"; exit 1 ;; esac
 
 on_nix() {
@@ -92,13 +91,14 @@ if [ ! -f "$SRC/index.html" ]; then
     exit 1
 fi
 
-# The new panel owns only the reborn-panel subfolder, so a clean wipe of just DEST is safe:
-# the legacy console and its WEB-INF/META-INF sit next to it in root and are never touched.
-echo "clearing $DEST"
-rm -rf "$DEST"
-mkdir -p "$DEST"
+# The panel owns only the top-level entries its dist ships (index.html, favicon.png, assets/), so
+# clear exactly those. WEB-INF, META-INF, images/, streams/ and classic-panel/ sit beside them.
+echo "clearing the previous panel files in $ROOT"
+for entry in "$SRC"/*; do
+    rm -rf "${ROOT:?}/$(basename "$entry")"
+done
 
-echo "copying $SRC -> $DEST"
-cp -r "$SRC"/. "$DEST"/
+echo "copying $SRC -> $ROOT"
+cp -r "$SRC"/. "$ROOT"/
 
-echo "done. panel deployed to $DEST"
+echo "done. panel deployed to $ROOT"

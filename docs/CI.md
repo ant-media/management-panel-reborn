@@ -3,8 +3,8 @@
 How the panel gets built, packaged, and delivered to Ant Media Server. Everything runs on
 GitHub Actions. You can build locally too, but real releases should come from CI.
 
-The panel does not ship alone. The zip CI builds carries both panels: the legacy console at the web
-root and this panel under `reborn-panel/`. AMS unzips it over `webapps/root`.
+The panel does not ship alone. The zip CI builds carries both panels: this panel at the web root and
+the legacy console under `classic-panel/`. AMS unzips it over `webapps/root`.
 
 ## How to release
 
@@ -44,8 +44,11 @@ flowchart LR
 ## Branch snapshots
 
 `snapshot.yml` runs on every push to every branch. It builds the full combined zip and uploads
-it to the `WORK-BRANCHES` pre-release, overwriting that branch's previous zip. So the download
-URL for a branch never changes:
+it to the `WORK-BRANCHES` pre-release, overwriting that branch's previous zip. The legacy console
+comes from the console repo's branch of the same name when one exists, master otherwise
+(`build-legacy.sh` picks it, so AMS's local fallback build below does the same), so a change
+spanning both repos builds together before either merges. Releases pin console master. The
+download URL for a branch never changes:
 
 ```
 https://github.com/ant-media/management-panel-reborn/releases/download/WORK-BRANCHES/panel-<slug>.zip
@@ -68,13 +71,13 @@ two-panel layout:
 
 ```
 panel-release-<version>.zip
-├── index.html, *.js, ...     legacy console (web root)
-├── reborn-panel/             this panel
+├── index.html, assets/, ...  this panel (web root)
+├── classic-panel/            legacy console
 └── version.json              build stamp, CI only, do not deploy
 ```
 
-A plain `./release.sh` builds the other layout: this panel at the zip root, no legacy console, and
-the login switch pill off. Nothing in CI uses it, it is there for a panel-only deploy.
+A plain `./release.sh` builds the same layout without `classic-panel/`, and with the login switch
+pill off. Nothing in CI uses it, it is there for a panel-only deploy.
 
 Deploy by hand:
 

@@ -75,17 +75,14 @@ export function LoginPage() {
   )
 }
 
-// Only rendered in a build that ships both panels: the classic console owns the origin root and
-// this panel sits in a subfolder beside it.
+// Only rendered in a build that ships both panels: this panel owns the origin root and the classic
+// console sits in classic-panel/ beside it.
 function PanelSwitch() {
-  const opt = 'h-[30px] px-4 flex items-center gap-1.5 rounded-full border text-[12.5px] font-medium transition-colors'
+  const opt = 'h-[30px] px-4 flex items-center rounded-full border text-[12.5px] font-medium transition-colors'
   return (
     <div className="w-max mx-auto mb-4 flex p-[3px] rounded-full bg-[var(--bg-2)] border border-[var(--border)]">
-      <a href="/" className={`${opt} border-transparent text-[var(--fg-3)] hover:text-[var(--fg)]`}>Classic</a>
-      <span className={`${opt} border-[var(--border)] bg-[var(--card)] text-[var(--fg)]`}>
-        New UI
-        <span className="px-1 py-0.5 rounded-[3px] bg-[var(--bg-3)] text-[9px] font-bold tracking-wider text-[var(--fg-2)]">BETA</span>
-      </span>
+      <a href="/classic-panel/" className={`${opt} border-transparent text-[var(--fg-3)] hover:text-[var(--fg)]`}>Classic</a>
+      <span className={`${opt} border-[var(--border)] bg-[var(--card)] text-[var(--fg)]`}>New UI</span>
     </div>
   )
 }
