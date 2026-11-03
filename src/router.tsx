@@ -1,10 +1,11 @@
-import { Outlet, Route, createHashRouter, createRoutesFromElements } from 'react-router'
+import { Navigate, Outlet, Route, createHashRouter, createRoutesFromElements } from 'react-router'
 import { AuthShell } from '@/components/chrome/auth-shell'
 import { ProtectedLayout } from '@/layouts/protected-layout'
 import { PublicLayout } from '@/layouts/public-layout'
 import { DashboardPage } from '@/features/dashboard/page'
 import { AppsPage } from '@/features/apps/page'
 import { AppDetailPage } from '@/features/apps/detail-page'
+import { ClassicAppRedirect } from '@/features/apps/classic-app-redirect'
 import { ClusterPage } from '@/features/cluster/page'
 import { ServerSettingsPage } from '@/features/server-settings/page'
 import { LogsPage } from '@/features/logs/page'
@@ -37,6 +38,14 @@ export const router = createHashRouter(
           <Route path="*" element={<NotFoundPage />} handle={{ breadcrumb: 'Not found' }} />
         </Route>
       </Route>
+
+      {/* The classic console's hash routes, which old bookmarks and docs still point at on this
+          origin. Outside AuthShell so they redirect before the auth guard records where to return. */}
+      <Route path="/dashboard/*" element={<Navigate to="/" replace />} />
+      <Route path="/applications" element={<Navigate to="/apps" replace />} />
+      <Route path="/applications/:name" element={<ClassicAppRedirect />} />
+      <Route path="/serverSettings" element={<Navigate to="/settings" replace />} />
+      <Route path="/pages/*" element={<Navigate to="/login" replace />} />
 
       {/* Dev-only primitives reference, outside AuthShell (it needs no backend). The prod build
           folds `import.meta.env.DEV` to false, so the route and the page drop out of the bundle. */}

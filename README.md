@@ -54,7 +54,7 @@ Two layouts:
 
 ```bash
 ./release.sh                  # panel alone at the zip root, so it serves at /
-./release.sh --with-legacy    # old console at /, this panel at /reborn-panel/
+./release.sh --with-legacy    # same, plus the old console at /classic-panel/
 ```
 
 Then deploy it:
@@ -69,22 +69,22 @@ Real releases should come from CI, not from your machine. See [CI](#ci) below.
 
 ### Build with the legacy panel switcher
 
-`--with-legacy` puts both panels in one zip. The old console keeps `/`, this panel goes to
-`/reborn-panel/`, and both login pages get a pill that links to the other one. Same origin, same
+`--with-legacy` puts both panels in one zip. This panel owns `/`, the old console goes to
+`/classic-panel/`, and both login pages get a pill that links to the other one. Same origin, same
 session.
 
-It clones the console from GitHub (`master`). Point it at a checkout
-you already have and it builds that instead:
+It clones the console from GitHub: the branch named like your current one when the console repo has
+it, `master` otherwise. Point it at a checkout you already have and it builds that instead:
 
 ```bash
 ./release.sh --with-legacy ../Ant-Media-Management-Console
 ```
 
 The switch pill is a build flag, not a runtime check. `--with-legacy` turns it on and every other
-build leaves it off, because with no old console at `/` the pill would link to this panel itself.
+build leaves it off, because with no old console in `classic-panel/` the pill would link to a 404.
 Force it either way with `PANEL_SWITCH=on` or `PANEL_SWITCH=off`.
 
-Other knobs: `RELEASE_VERSION`, `OUT_ZIP`, `PANEL_SUBDIR`, plus the `LEGACY_*` vars that
+Other knobs: `RELEASE_VERSION`, `OUT_ZIP`, plus the `LEGACY_*` vars that
 `build-legacy.sh` reads. Run `./release.sh --help` for the full list.
 
 ## Docker
@@ -117,8 +117,9 @@ proxied, not thumbnails or VoD playback, so those fall back to placeholders in d
 
 ### Deploy to a local server
 
-`redeploy.sh` builds the panel and drops it into `webapps/root/reborn-panel` on a server installed on
-your machine. The legacy console next to it is left alone and the server process is not touched.
+`redeploy.sh` builds the panel and drops it into `webapps/root` on a server installed on your
+machine. It replaces only the panel's own files; the legacy console in `classic-panel/` is left alone
+and the server process is not touched.
 
 ```bash
 ./redeploy.sh                                # defaults to ~/softwares/ant-media-server
@@ -128,9 +129,9 @@ AMS_DIR=/usr/local/antmedia ./redeploy.sh    # server somewhere else
 ```
 
 This is the only setup that runs the panel behind the real backend, so it is how you test anything
-that depends on the server, like the REST proxy or the IP filter. The login switch pill is on here,
-since the old console is sitting right next to it. `PANEL_SWITCH=off ./redeploy.sh` drops it. It is baked
-in at build time, so for `--no-build` build with `PANEL_SWITCH=on pnpm build`.
+that depends on the server, like the REST proxy or the IP filter. The login switch pill is on when the
+server has `classic-panel/`, off otherwise; `PANEL_SWITCH=on|off` forces it. It is baked in at build
+time, so for `--no-build` build with `PANEL_SWITCH=on pnpm build`.
 
 ### Layout
 

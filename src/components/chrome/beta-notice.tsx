@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Modal } from '@/components/ui/modal'
 import { useStoredState } from '@/lib/localStorage'
+import { legacySwitch } from '@/lib/panel-build'
 import logo from '@/assets/ant-media-logo.png'
 
 // First-run welcome. The checkbox is what makes the dismissal permanent, and it starts ticked,
@@ -39,14 +40,14 @@ export function BetaNotice() {
 
         <div className="mt-5 max-w-[410px] flex flex-col gap-3 text-[13px] leading-relaxed text-[var(--fg-2)]">
           <p>
-            Hello there! This is a ground-up rebuild of the Ant Media web panel. It's still in{' '}
-            <strong className="font-semibold text-[var(--fg)]">beta</strong>, so you may find a feature
-            missing, and hit a rough edge or two.
+            Hello there! This is the new Ant Media web panel, rebuilt from the ground up.
           </p>
-          <p className="text-[var(--fg-3)]">
-            We'll keep growing it. The classic panel is still there whenever you want it: log out, then
-            pick it on the login screen.
-          </p>
+          {legacySwitch && (
+            <p className="text-[var(--fg-3)]">
+              A few features still live only in the classic panel. It's there whenever you want it: log
+              out, then pick Classic on the login screen.
+            </p>
+          )}
         </div>
 
         <label className="mt-6 flex items-center gap-2.5 cursor-pointer select-none">

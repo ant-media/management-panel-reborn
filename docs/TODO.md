@@ -5,8 +5,10 @@ Open work and known bugs. Future scope is in [BACKLOG.md](BACKLOG.md). Rules for
 
 ## Build
 
-- [ ] **Backend: reserve the `reborn-panel` app name.** An app with that name registers a Tomcat context
-  at `/reborn-panel` that shadows the panel folder and 404s it.
+- [ ] **Drop the old reborn-panel layout once the classic-panel switch is merged in every repo.**
+  Enterprise `yml/build_server.yml` stops accepting a `reborn-panel/` zip, the console drops its
+  `reborn` build config and `environment.reborn.ts`, and the `Fetch web panel` comment in AMS's
+  `.github/actions/build-projects/action.yml` stops saying the legacy console is at the root.
 
 - [ ] **Generic error surface for unhandled API errors.** Every unexpected/unhandled error off the
   API should surface in one place, elegant and non-annoying, never a wall of raw failures. Handle the

@@ -1,11 +1,11 @@
 #!/bin/bash
-# Builds the legacy Ant Media management console with the reborn panel switcher enabled and
-# drops the result in ./.legacy-dist. This repo keeps no legacy source: the console is cloned
-# (or pointed at with LEGACY_DIR) and built on demand.
+# Builds the legacy Ant Media management console for the classic-panel/ subfolder, with the panel
+# switcher enabled, and drops the result in ./.legacy-dist. This repo keeps no legacy source: the
+# console is cloned (or pointed at with LEGACY_DIR) and built on demand.
 #
 # Config (all optional, env vars):
 #   LEGACY_REPO    console git URL          (default: public HTTPS remote)
-#   LEGACY_BRANCH  branch to build          (default: master)
+#   LEGACY_BRANCH  branch to build          (default: the one named like this checkout's, else master)
 #   LEGACY_DIR     build this local checkout instead of cloning (fast local iteration)
 #   OUT_DIR        where to place the dist  (default: .legacy-dist)
 #   FORCE_INSTALL  =1 to reinstall node_modules even if present
@@ -15,7 +15,7 @@ cd "$(dirname "$0")"
 
 # ---- config (defaults chosen so the script just runs) -----------------------
 LEGACY_REPO=${LEGACY_REPO:-https://github.com/ant-media/Ant-Media-Management-Console.git}
-LEGACY_BRANCH=${LEGACY_BRANCH:-master}
+LEGACY_BRANCH=${LEGACY_BRANCH:-}
 LEGACY_DIR=${LEGACY_DIR:-}
 OUT_DIR=${OUT_DIR:-.legacy-dist}
 FORCE_INSTALL=${FORCE_INSTALL:-}
@@ -36,7 +36,7 @@ require() {
 }
 
 # node >= 20.19 builds the panel; legacy also needs the openssl-legacy-provider flag, which
-# the build:reborn script sets (valid on node 17+).
+# the build:classic script sets (valid on node 17+).
 check_node() {
     local ver major minor
     ver=$(node --version | sed 's/^v//')
@@ -62,6 +62,18 @@ if [ -n "$LEGACY_DIR" ]; then
     SRC=$(cd "$LEGACY_DIR" && pwd)
     echo "using local legacy checkout: $SRC"
 else
+    # A change spanning both repos lives on same-named branches, so build them together.
+    # ls-remote exits 2 for "no such branch"; anything else (network, auth) is fatal.
+    if [ -z "$LEGACY_BRANCH" ]; then
+        branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo master)
+        if git ls-remote --exit-code --heads "$LEGACY_REPO" "refs/heads/$branch" >/dev/null; then
+            LEGACY_BRANCH=$branch
+        elif [ $? -eq 2 ]; then
+            LEGACY_BRANCH=master
+        else
+            echo "error: cannot reach $LEGACY_REPO"; exit 1
+        fi
+    fi
     SRC=$(mktemp -d)
     CLONED=1
     echo "cloning $LEGACY_REPO ($LEGACY_BRANCH)"
@@ -71,14 +83,14 @@ cleanup() { if [ -n "$CLONED" ]; then rm -rf "$SRC"; fi; }
 trap cleanup EXIT
 
 # ---- build ------------------------------------------------------------------
-cmd="npm run build:reborn"
+cmd="npm run build:classic"
 if [ ! -d "$SRC/node_modules" ] || [ -n "$FORCE_INSTALL" ]; then
     cmd="npm install && $cmd"
 else
     echo "node_modules present, skipping install (FORCE_INSTALL=1 to override)"
 fi
 
-echo "building legacy console with the reborn switcher"
+echo "building legacy console for classic-panel/"
 if command -v nix-shell >/dev/null 2>&1 && [ -f "$SRC/shell.nix" ]; then
     ( cd "$SRC" && nix-shell --run "$cmd" )
 else

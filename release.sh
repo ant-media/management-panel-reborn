@@ -2,8 +2,8 @@
 # Builds the reborn panel release zip. Two layouts:
 #
 #   ./release.sh                 panel alone at the zip root, so it serves at /
-#   ./release.sh --with-legacy   legacy console at the root, panel in reborn-panel/,
-#                                plus the switch pill on both login pages
+#   ./release.sh --with-legacy   same, plus the legacy console in classic-panel/ and the
+#                                switch pill on both login pages
 #
 # The zip is content-only (no WEB-INF/META-INF/images); extract it OVER an existing
 # webapps/root, the same way dev deploys today.
@@ -11,13 +11,12 @@
 # Config (all optional, env vars):
 #   RELEASE_VERSION  version for the zip name  (default: version from package.json)
 #   OUT_ZIP          output zip path           (default: panel-release-<version>.zip)
-#   PANEL_SUBDIR     panel folder under --with-legacy   (default: reborn-panel)
 #   PANEL_SWITCH     on|off, forces the login switch pill (default: on with legacy, else off)
 #   plus what build-legacy.sh reads, --with-legacy only (LEGACY_BRANCH, LEGACY_DIR, ...)
 #
 # Flags:
-#   --with-legacy [DIR]  also build the legacy console and give it the zip root. DIR builds
-#                        that local checkout instead of cloning (same as LEGACY_DIR).
+#   --with-legacy [DIR]  also build the legacy console into classic-panel/. DIR builds that
+#                        local checkout instead of cloning (same as LEGACY_DIR).
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -27,7 +26,8 @@ VERSION=${RELEASE_VERSION:-$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^
 [ -n "$VERSION" ] || { echo "error: could not read version from package.json; set RELEASE_VERSION"; exit 1; }
 OUT_ZIP=${OUT_ZIP:-panel-release-$VERSION.zip}
 LEGACY_DIR=${LEGACY_DIR:-}
-PANEL_SUBDIR=${PANEL_SUBDIR:-reborn-panel}
+# Not configurable: other repos hardcode it too, see docs/RISKS.md (An app named after a root path).
+LEGACY_SUBDIR=classic-panel
 LEGACY_OUT=.legacy-dist
 STAGING=.release-staging
 # -----------------------------------------------------------------------------
@@ -106,11 +106,11 @@ echo "reborn release $VERSION"
 if [ -z "$WITH_LEGACY" ]; then
     echo "  layout: panel at the zip root, no legacy console"
 else
-    echo "  layout: legacy console at the zip root, panel in $PANEL_SUBDIR/"
+    echo "  layout: panel at the zip root, legacy console in $LEGACY_SUBDIR/"
     if [ -n "$LEGACY_DIR" ]; then
         echo "  legacy: local checkout $LEGACY_DIR"
     else
-        echo "  legacy: branch ${LEGACY_BRANCH:-master}"
+        echo "  legacy: branch ${LEGACY_BRANCH:-named like this one, else master}"
     fi
 fi
 echo "  switch: $PANEL_SWITCH"
@@ -119,7 +119,7 @@ echo
 
 if [ -n "$WITH_LEGACY" ]; then
     banner "[1/3] Building legacy management panel."
-    ./build-legacy.sh
+    OUT_DIR=$LEGACY_OUT ./build-legacy.sh
     banner "Legacy management panel build done!" "[2/3] Starting reborn panel build."
 else
     banner "[1/3] No legacy console in this build (--with-legacy adds it)." \
@@ -140,17 +140,14 @@ nix_run "pnpm install --frozen-lockfile && pnpm build"
 [ -f dist/index.html ] || { echo "error: new panel build produced no dist/index.html"; exit 1; }
 
 banner "Reborn panel build done!" "[3/3] Packaging release zip."
-# assemble: with the legacy console it takes the root and the panel moves into a subfolder,
-# without it the panel owns the root
+# assemble: the panel owns the root, the legacy console goes into its subfolder
 rm -rf "$STAGING"
-PANEL_DEST=$STAGING/root
+mkdir -p "$STAGING/root"
+cp -r dist/. "$STAGING/root"/
 if [ -n "$WITH_LEGACY" ]; then
-    mkdir -p "$STAGING/root"
-    cp -r "$LEGACY_OUT"/. "$STAGING/root"/
-    PANEL_DEST=$STAGING/root/$PANEL_SUBDIR
+    mkdir -p "$STAGING/root/$LEGACY_SUBDIR"
+    cp -r "$LEGACY_OUT"/. "$STAGING/root/$LEGACY_SUBDIR"/
 fi
-mkdir -p "$PANEL_DEST"
-cp -r dist/. "$PANEL_DEST"/
 
 # CI-only build stamp: NOT web content. Lives at the zip root so AMS reads it straight from the
 # zip (`unzip -p <zip> version.json | jq -r .commit`) to check staleness, and the deploy extraction
@@ -170,7 +167,7 @@ nix_run "cd '$STAGING/root' && zip -qr '$ABS_ZIP' ."
 
 if [ -n "$WITH_LEGACY" ]; then
     banner "Release done: $OUT_ZIP ($(du -h "$OUT_ZIP" | cut -f1))" \
-           "legacy console at /, panel at /$PANEL_SUBDIR/"
+           "panel at /, legacy console at /$LEGACY_SUBDIR/"
 else
     banner "Release done: $OUT_ZIP ($(du -h "$OUT_ZIP" | cut -f1))" "panel at /, no legacy console"
 fi
