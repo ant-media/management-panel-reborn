@@ -55,6 +55,7 @@ Architectural risks, security caveats, and edge cases identified during reviews.
 **Symptom:** an empty red banner. Nothing but the icon and the close button.
 **Cause:** several backend failures answer `{"success":false,"message":"","dataId":"","errorId":0}`. Starting a playlist or a stream source whose file will not open is the reliable one: the REST layer returns the empty `Result` and the real reason only ever reaches the server log. Read a failure with `res.message ?? fallback` and the empty string wins, because `??` only guards null/undefined.
 **Same hole on the throw path:** `statusText` is always empty over HTTP/2, so an `ApiError` built from an empty body has no server text to show; `transport.ts` falls back to `Request failed (HTTP <status>)`.
+**And the opposite:** `broadcasts/create` rejects a taken or invalid stream id (and a bad source URL) with HTTP 400 and a JSON `Result` body, so `ApiError.message` is that raw JSON. `useBroadcastActions` reads the body's `message` first; the import modal parses its own.
 **Rule:** never read `res.message` (or a caught `err.message`) directly for display. Go through `resultError(res, fallback)` / `errorMessage(e, fallback)`, and write a fallback that says what failed and where to look, because when it fires the server has told the user nothing. `resultMessage(res)` returns `undefined` (not `''`) for the call sites that prefix the server's own words.
 **Backstop:** `useToast.flash` substitutes a generic message for a blank one, so a missed call site degrades to a vague banner rather than an empty one. It is a net, not a licence to skip the fallback.
 
@@ -196,6 +197,17 @@ is non-empty, so a no-op patch can never be sent. Values are compared **after** 
 limit sentinel, playlist projection), so retyping the same value or adding a trailing space is not dirty.
 **Watch:** the in-memory and map stores don't have this behaviour, so a mock-only test will never catch a
 regression here. Keep the dirty check.
+
+### NDI create can succeed without starting, and NDI Stop always fails
+**Where:** `RestServiceBase.addNdiSource`; `AntMediaApplicationAdapter.stopStreaming`, which has no NDI
+branch (nor does Enterprise's `WebRTCApplication` override).
+**Risk:** `create?autoStart=true` answers `success:true` both when the source started and when it was only
+saved because the server does not see it yet; only `message` tells them apart. Stop on an NDI stream
+answers `{success:false, message:""}` every time; the stream ends only when its source goes silent.
+**Mitigation:** the new-stream modal passes a non-empty NDI create message to the tab, which flashes it as
+a `warn` toast. Stop keeps the legacy console's button and lands on the generic "Could not stop" fallback.
+The mock (`mocks/broadcasts.ts`) answers both the same way.
+**Watch:** never read a successful NDI create as "running", and never drop `message` on a success path.
 
 ### Playback tokens ride on the player URL
 **Where:** `usePlayUrl` (`features/streams/use-play-url.ts`) → the `play.html` iframe in `player-modal.tsx`.

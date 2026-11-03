@@ -138,7 +138,7 @@ export function UiSinkPage() {
 
       <Section title="Protocol badges">
         <div className="flex flex-wrap items-center gap-2">
-          {['WebRTC', 'RTMP', 'SRT', 'HLS', 'RTSP', 'MPEG-TS'].map(t => (
+          {['WebRTC', 'RTMP', 'SRT', 'HLS', 'RTSP', 'NDI', 'MPEG-TS'].map(t => (
             <ProtocolBadge key={t} type={t} />
           ))}
         </div>

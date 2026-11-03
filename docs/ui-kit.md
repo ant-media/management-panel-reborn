@@ -157,7 +157,7 @@ The `/login` and `/register` pages, under `layouts/public-layout.tsx`. Why it lo
 | Export | Use it for |
 | --- | --- |
 | `useRangeSelection(orderedIds)` | table multi-select: `{ selected, select(id, shift), toggleAll, clear, remove }` |
-| `useToast()` | transient status: `{ toast, flash(kind, msg), dismiss }` (pair with `ToastBanner`) |
+| `useToast()` | transient status: `{ toast, flash(kind, msg), dismiss }` (pair with `ToastBanner`). `kind` is `ok`, `err`, or `warn` for a success the user still has to act on |
 | `useIsNarrow(max=640)` | responsive branch (drawer inline vs overlay) |
 | `useViewportWidth()` (`use-viewport-width.ts`) | layout viewport width in CSS px; stable during in-page animations (only window resize / zoom changes it), so it's the right basis for a thresholded layout decision that must not flicker while a sidebar/panel animates |
 | `useEscapeKey(active, onEscape)` (`use-escape-key.ts`) | close on Escape: modal, drawer, menu, popover. Only the most recently opened active layer gets the key, so a press never closes what is underneath. Never add a raw `keydown` Escape listener (RISKS.md) |

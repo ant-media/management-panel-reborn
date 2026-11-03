@@ -84,6 +84,7 @@ drawer tile), so a stream's label, icon and click cannot disagree.
 | `streamSource` | **Start** (play, green) | **Stop** (stop, red) | **Stop** (stop, red) | **Start** (play, green) |
 | `ipCamera` | **Start** (play, green) | **Stop** (stop, red) | **Stop** (stop, red) | **Start** (play, green) |
 | `playlist` | **Start** (play, green) | **Stop** (stop, red) | **Stop** (stop, red) | **Start** (play, green) |
+| `NDI` | **Start** (play, green) | **Stop** (stop, red) | **Stop** (stop, red) | **Start** (play, green) |
 | `liveStream` (publisher) | *none* | **Force Stop Ingest** (power, red) | **Force Stop Ingest** (power, red) | *none* |
 | `VoD` | *none* | *none* | *none* | *none* |
 
@@ -97,6 +98,8 @@ drawer tile), so a stream's label, icon and click cannot disagree.
 - **In the row**, *none* renders an empty slot of the button's exact width, so `⋯` keeps a constant
   x down the column. Compact mode (drawer docked) drops the button and keeps `⋯`.
 - Row action buttons are gated by the shared `busy` flag, so rapid clicks don't fan out.
+- **NDI Stop always fails on the current backend** and lands on the generic "Could not stop" toast; the
+  button stays, as in the legacy console (RISKS.md, NDI). A failed NDI Start carries the server's reason.
 
 ## Editing
 
@@ -119,6 +122,7 @@ Every type gets display name, description and the three viewer limits (WebRTC / 
 | `streamSource` | Source URL, Auto start/stop | stops + restarts if live |
 | `ipCamera` | Camera host (with ONVIF Discover), Username, Password, Auto start/stop | stops + restarts if live; ONVIF reconnect; bad credentials abort |
 | `playlist` | Items editor, Loop, Schedule (`plannedStartDate`) | none; re-arms the schedule timer |
+| `NDI` | none (the source is fixed, as in the legacy console, which has no NDI edit at all) | none, merged in place even while live |
 
 **`draft.ts` is the whole contract, pure and outside React**, so it is checkable without a renderer:
 `toDraft`/`toDraftItems` seed from a `Broadcast`, `toWire` projects a draft to the wire values for one
@@ -150,6 +154,19 @@ the VoD's playable URL via `vodPlaylistUrl` (`features/vods/url-builder.ts`), wi
 **Live pulled sources restart on save.** The backend stops, patches and restarts a live `streamSource`
 or `ipCamera` whatever the field changed, and a rejected save leaves the stream down. The modal renders a
 callout, relabels Save to *Save and restart*, and says so in the error. Detail: RISKS.md.
+
+### Creating an NDI stream
+
+Mirrors the legacy console's NDI dialog. `NdiSourceField` (`fields.tsx`) loads `GET /broadcasts/ndi-streams`
+when the NDI type is picked, lists the sources with a Reload button, and takes a typed name too, which
+stands in for the legacy *Custom...* option (a source not on the network yet). The display name defaults
+to the source. NDI always posts `autoStart=true` and has no Options block: no start toggle, and no
+*Record as MP4*, which the legacy dialog never offered for NDI.
+
+A source the server cannot start yet still creates with `success:true` and a message (RISKS.md, NDI);
+`onCreated(id, notice)` hands it to the tab, which flashes it as a `warn` toast. On Community (`/enterprise-edition` answers `success:false`) the NDI segment is disabled with a
+tooltip; an unknown edition never blocks, and the server's own "NDI support is not available." still
+reaches the form.
 
 ### What create and edit share, and what they must not
 

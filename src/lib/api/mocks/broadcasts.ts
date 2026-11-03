@@ -101,6 +101,23 @@ function seed(app: AppName): Broadcast[] {
         date: nowMinus(30),
         ipAddr: '192.168.1.91', username: 'viewer',
       },
+      {
+        // Live NDI: Stop fails, as on a real server, which has no NDI stop.
+        streamId: 'studio-ndi', name: 'STUDIO-PC (OBS)', type: 'NDI',
+        status: 'broadcasting', publishType: 'NDI',
+        date: nowMinus(1), startTime: Date.now() - 900_000, duration: 900_000,
+        webRTCViewerCount: 6, hlsViewerCount: 14,
+        bitrate: 3_200_000, width: 1920, height: 1080,
+        speed: 1.0, encoderQueueSize: 1, packetLostRatio: 0,
+        streamUrl: 'STUDIO-PC (OBS)',
+      },
+      {
+        // Idle NDI whose source left the network: Start fails with the server's own message.
+        streamId: 'gym-ndi', name: 'Gym Camera', type: 'NDI',
+        status: 'finished', publishType: 'NDI',
+        date: nowMinus(9),
+        streamUrl: 'GYM-PC (NDI Cam)',
+      },
     ]
   }
   if (app === 'WebRTCAppEE') {
@@ -167,6 +184,18 @@ const PROTO_BY_TYPE: Record<BroadcastType, PublishType | undefined> = {
   streamSource: 'Pull',
   playlist: 'Pull',
   VoD: undefined,
+  NDI: 'NDI',
+}
+
+// What the mock server sees on its network, sorted like the real answer.
+const NDI_SOURCES = ['CAMERA-PC (Main Cam)', 'STUDIO-PC (OBS)', 'VMIX-01 (Output 1)']
+
+// NdiAdaptor.startNdiSource: refuses a source it does not see, or a stream that already runs.
+function startNdi(b: Broadcast): boolean {
+  if (!NDI_SOURCES.includes(b.streamUrl ?? '') || b.status === 'broadcasting') return false
+  b.status = 'broadcasting'
+  b.startTime = Date.now()
+  return true
 }
 
 // ── LIST ────────────────────────────────────────────────────────────
@@ -206,6 +235,10 @@ registerMock('GET', '/:app/rest/v2/broadcasts/count/:search',   ({ params }) => 
 registerMock('GET', '/:app/rest/v2/broadcasts/active-live-stream-count', ({ params }) => ({
   number: storeOf(params.app).filter(b => b.status === 'broadcasting').length,
 }))
+
+// ── NDI DISCOVERY ───────────────────────────────────────────────────
+// Ahead of GET ONE, which would otherwise swallow the path.
+registerMock('GET', '/:app/rest/v2/broadcasts/ndi-streams', () => NDI_SOURCES)
 
 // ── GET ONE ─────────────────────────────────────────────────────────
 registerMock('GET', '/:app/rest/v2/broadcasts/:id', ({ params }) => {
@@ -294,16 +327,35 @@ registerMock('DELETE', '/:app/rest/v2/broadcasts/:id/endpoint', ({ params, query
 })
 
 // ── CREATE ──────────────────────────────────────────────────────────
-// autoStart only applies to ipCamera/streamSource; when set, the source starts
+// autoStart only applies to ipCamera/streamSource/NDI; when set, the source starts
 // pulling immediately (status broadcasting); otherwise everything lands "created".
 registerMock('POST', '/:app/rest/v2/broadcasts/create', ({ params, body, query }) => {
   const input = (body ?? {}) as Partial<Broadcast>
   const streamId = input.streamId?.trim() || generateId('stream')
   const store = storeOf(params.app)
+  // BroadcastRestService.createBroadcast rejects a taken id with a 400, before any type logic.
   if (store.some(b => b.streamId === streamId)) {
-    return { success: false, message: `Stream ID "${streamId}" already exists.` }
+    return badRequest('Stream id is already being used. Please change stream id or keep it empty')
   }
   const type = (input.type ?? 'liveStream') as BroadcastType
+  // RestServiceBase.addNdiSource: answers a Result, and saves the stream even when it cannot start it.
+  if (type === 'NDI' && String(query.autoStart) === 'true') {
+    if (!input.streamUrl?.trim()) return { success: false, message: 'NDI source name is not defined.' }
+    const ndi: Broadcast = {
+      streamId,
+      name: input.name?.trim() ? input.name : input.streamUrl,
+      description: input.description,
+      type,
+      status: 'created',
+      date: Date.now(),
+      publishType: 'NDI',
+      streamUrl: input.streamUrl,
+    }
+    store.push(ndi)
+    return startNdi(ndi)
+      ? { success: true, dataId: streamId, message: '' }
+      : { success: true, dataId: streamId, message: 'NDI source is saved but it is not available or is already running. You can start it later.' }
+  }
   const pulled = type === 'ipCamera' || type === 'streamSource'
   const autoStart = pulled && String(query.autoStart) === 'true'
   // IP camera: backend connects via ONVIF and derives an authed RTSP URL.
@@ -431,6 +483,11 @@ registerMock('DELETE', '/:app/rest/v2/broadcasts/', ({ params, query }) => {
 registerMock('POST', '/:app/rest/v2/broadcasts/:id/start', ({ params }) => {
   const b = storeOf(params.app).find(x => x.streamId === params.id)
   if (!b) return { success: false, message: 'Not found' }
+  if (b.type === 'NDI') {
+    return startNdi(b)
+      ? { success: true, dataId: b.streamId, message: '' }
+      : { success: false, dataId: b.streamId, message: 'NDI source is not available or is already running.' }
+  }
   b.status = 'broadcasting'
   b.startTime = Date.now()
   return { success: true }
@@ -439,6 +496,8 @@ registerMock('POST', '/:app/rest/v2/broadcasts/:id/start', ({ params }) => {
 registerMock('POST', '/:app/rest/v2/broadcasts/:id/stop', ({ params }) => {
   const b = storeOf(params.app).find(x => x.streamId === params.id)
   if (!b) return { success: false, message: 'Not found' }
+  // AntMediaApplicationAdapter.stopStreaming has no NDI branch: success:false, no message.
+  if (b.type === 'NDI') return { success: false, message: '' }
   b.status = 'finished'
   b.duration = b.startTime ? Date.now() - b.startTime : 0
   return { success: true }
