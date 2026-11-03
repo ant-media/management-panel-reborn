@@ -112,12 +112,16 @@ function derive(sys: SystemResources | null): DashboardMetrics {
   const sysMem = sys.systemMemoryInfo
   const fs = sys.fileSystemInfo
   const heap = sys.jvmMemoryUsage
+  const sysTotal = sysMem?.totalMemory ?? 0
+  const sysAvail = sysMem?.availableMemory ?? 0
   return {
     cpu: cpu ? {
       systemPct:  Math.max(0, cpu.systemCPULoad  ?? 0),
       processPct: Math.max(0, cpu.processCPULoad ?? 0),
     } : null,
-    systemMem: capacity(sysMem?.inUseMemory, sysMem?.totalMemory, sysMem?.freeMemory),
+    systemMem: sysAvail > 0 && sysAvail < sysTotal
+      ? capacity(sysTotal - sysAvail, sysTotal, sysAvail)
+      : capacity(sysMem?.inUseMemory, sysMem?.totalMemory, sysMem?.freeMemory),
     disk:      capacity(fs?.inUseSpace,      fs?.totalSpace,      fs?.freeSpace),
     heap:      capacity(heap?.inUseMemory,   heap?.maxMemory,     heap?.freeMemory),
     live: {
