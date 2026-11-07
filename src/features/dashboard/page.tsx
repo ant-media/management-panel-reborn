@@ -5,6 +5,7 @@ import { Collapse } from '@/components/shared/collapse'
 import { Page } from '@/components/shared/page'
 import { Pill } from '@/components/shared/pill'
 import { threshColor } from '@/components/shared/ring'
+import { useAuth } from '@/contexts/auth-context'
 import { NewAppModal } from '@/features/apps/new-app-modal'
 import { useApplications } from '@/features/apps/use-applications'
 import { useCluster } from '@/features/cluster/use-cluster'
@@ -23,6 +24,22 @@ const TIER1_KEYS: OpenKey[] = ['cpu', 'db', 'live']
 type Capacity = { usedBytes: number; totalBytes: number; freeBytes: number }
 
 export function DashboardPage() {
+  const { isAdmin } = useAuth()
+  return isAdmin ? <SystemDashboard /> : <AppUserDashboard />
+}
+
+// System metrics are 403 for app-scoped users, so they only get their applications.
+function AppUserDashboard() {
+  const { apps, error, isLoading, refresh } = useApplications()
+  return (
+    <Page title="Dashboard" subtitle="Your applications">
+      {error && <LoadErrorBanner entity="applications" error={error} onRetry={refresh} className="mb-5" />}
+      <ApplicationsCard apps={apps} isLoading={isLoading} />
+    </Page>
+  )
+}
+
+function SystemDashboard() {
   const { metrics, history, network, version, error, isLoading, refresh } = useDashboardData()
   const { apps, isLoading: appsLoading, refresh: refreshApps } = useApplications()
   const { inCluster, nodes } = useCluster()

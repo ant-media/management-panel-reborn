@@ -7,13 +7,16 @@ import { Page } from '@/components/shared/page'
 import { Pill } from '@/components/shared/pill'
 import { SearchInput } from '@/components/shared/search-input'
 import { LoadErrorBanner } from '@/components/shared/load-error-banner'
+import { useAuth } from '@/contexts/auth-context'
 import { fmtBytes } from '@/lib/format'
 import { ConfirmDeleteModal } from './confirm-delete-modal'
 import { NewAppModal } from './new-app-modal'
+import { StreamSearchCard } from './stream-search-card'
 import { useApplications, type ApplicationInfo } from './use-applications'
 
 export function AppsPage() {
   const { apps, error, isLoading, refresh } = useApplications()
+  const { isAdmin } = useAuth()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [newOpen, setNewOpen] = useState(false)
@@ -37,11 +40,13 @@ export function AppsPage() {
             {total} installed
             {liveCount > 0 && <> · <span className="text-[var(--accent)]">{liveCount}</span> with live streams</>}
           </>}
-      actions={
+      actions={isAdmin && (
         <Button variant="primary" size="sm" onClick={() => setNewOpen(true)}><Icon name="plus" size={12} /> New application</Button>
-      }
+      )}
     >
       {error && <LoadErrorBanner entity="applications" error={error} onRetry={refresh} className="mb-5" />}
+
+      <StreamSearchCard />
 
       <Card className="overflow-hidden">
         <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2">
@@ -65,9 +70,9 @@ export function AppsPage() {
             ? <EmptyState icon="search" title="No matches" subtitle={`No application name contains "${search}"`} />
             : <EmptyState
                 icon="box"
-                title="No applications installed"
-                subtitle="Create a streaming endpoint to get started."
-                action={<Button variant="primary" size="md" onClick={() => setNewOpen(true)}><Icon name="plus" size={12} /> New application</Button>}
+                title={isAdmin ? 'No applications installed' : 'No applications available'}
+                subtitle={isAdmin ? 'Create a streaming endpoint to get started.' : 'Ask an administrator for access to an application.'}
+                action={isAdmin && <Button variant="primary" size="md" onClick={() => setNewOpen(true)}><Icon name="plus" size={12} /> New application</Button>}
               />
         ) : (
           <table className="w-full text-[13px]">
@@ -85,6 +90,7 @@ export function AppsPage() {
                 <AppRow
                   key={a.name}
                   app={a}
+                  canDelete={isAdmin}
                   onOpen={() => void navigate(`/apps/${encodeURIComponent(a.name)}`)}
                   onDelete={() => setPendingDelete(a.name)}
                 />
@@ -109,7 +115,7 @@ export function AppsPage() {
   )
 }
 
-function AppRow({ app, onOpen, onDelete }: { app: ApplicationInfo; onOpen: () => void; onDelete: () => void }) {
+function AppRow({ app, canDelete, onOpen, onDelete }: { app: ApplicationInfo; canDelete: boolean; onOpen: () => void; onDelete: () => void }) {
   return (
     <tr
       onClick={onOpen}
@@ -130,9 +136,11 @@ function AppRow({ app, onOpen, onDelete }: { app: ApplicationInfo; onOpen: () =>
       <td className="px-5 py-3 text-right font-mono tabular-nums text-[var(--fg-2)]">{app.vodCount}</td>
       <td className="px-5 py-3 text-right font-mono tabular-nums text-[var(--fg-2)]">{fmtBytes(app.storage)}</td>
       <td className="px-5 py-3 text-right">
-        <Button variant="dangerOutline" size="sm" className="w-7 px-0" onClick={e => { e.stopPropagation(); onDelete() }} aria-label={`Delete ${app.name}`} title="Delete application">
-          <Icon name="trash" size={13} />
-        </Button>
+        {canDelete && (
+          <Button variant="dangerOutline" size="sm" className="w-7 px-0" onClick={e => { e.stopPropagation(); onDelete() }} aria-label={`Delete ${app.name}`} title="Delete application">
+            <Icon name="trash" size={13} />
+          </Button>
+        )}
       </td>
     </tr>
   )

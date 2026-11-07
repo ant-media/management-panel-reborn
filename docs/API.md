@@ -43,7 +43,8 @@ Verified against a live **Enterprise 4.0.0-SNAPSHOT** server + the Java source (
 - Per-metric subsets: `GET /cpu-status` · `/system-memory-status` · `/jvm-memory-status` · `/file-system-status` · `/system-status` · `/live-clients-size` · `/server-time`
 - `GET /gpu-status` → `GpuInfo[]`: **real** (`StatsCollector`), also embedded as `system-resources.gpuUsageInfo` (what the dashboard reads). Per device: `{ index, deviceName, gpuUtilization, memoryUtilization, encoderUtilization, decoderUtilization, memoryTotal, memoryUsed, memoryFree }`; util 0-100 ints, memory bytes, **no temperature**. `[]` on community / no NVIDIA GPU.
 - `GET /version` → `{ versionName, versionType, buildNumber }`
-- `GET /applications-info` → `{ name, liveStreamCount, vodCount, storage }[]`
+- `GET /applications-info` → `{ name, liveStreamCount, vodCount, storage }[]`. Only the apps the session user can access.
+- `GET /streams/search?q=` → `{ results: { streamId, name, appName }[], truncated }`: stream id and name across the apps the session user can access. At most 50 results; `q` shorter than 2 or longer than 100 characters returns nothing. Searches one app at a time and each query takes that app's datastore lock, so call it on demand and never poll it. On Mongo apps `q` is a case-insensitive regex; on MapDB it's a literal match.
 - **Ops** *(catalog, not in layer):* `GET /thread-dump` · `/thread-dump-json` · `/threads` · `/heap-dump` · `/liveness` · `POST /system/gc` · `GET /shutdown-proper-status` · `GET /shutdown-properly`
 
 ### Applications  (`RestServiceV2`)

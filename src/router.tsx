@@ -2,6 +2,7 @@ import { Outlet, Route, createHashRouter, createRoutesFromElements } from 'react
 import { AuthShell } from '@/components/chrome/auth-shell'
 import { ProtectedLayout } from '@/layouts/protected-layout'
 import { PublicLayout } from '@/layouts/public-layout'
+import { SystemOnly } from '@/layouts/system-only'
 import { DashboardPage } from '@/features/dashboard/page'
 import { AppsPage } from '@/features/apps/page'
 import { AppDetailPage } from '@/features/apps/detail-page'
@@ -31,9 +32,11 @@ export const router = createHashRouter(
             <Route index element={<AppsPage />} />
             <Route path=":name" element={<AppDetailPage />} handle={{ breadcrumb: (p: { name?: string }) => p.name ?? '' }} />
           </Route>
-          <Route path="/cluster" element={<ClusterPage />} handle={{ breadcrumb: 'Cluster' }} />
-          <Route path="/settings" element={<ServerSettingsPage />} handle={{ breadcrumb: 'Server settings' }} />
-          <Route path="/logs" element={<LogsPage />} handle={{ breadcrumb: 'Logs' }} />
+          <Route element={<SystemOnly />}>
+            <Route path="/cluster" element={<ClusterPage />} handle={{ breadcrumb: 'Cluster' }} />
+            <Route path="/settings" element={<ServerSettingsPage />} handle={{ breadcrumb: 'Server settings' }} />
+            <Route path="/logs" element={<LogsPage />} handle={{ breadcrumb: 'Logs' }} />
+          </Route>
           <Route path="*" element={<NotFoundPage />} handle={{ breadcrumb: 'Not found' }} />
         </Route>
       </Route>

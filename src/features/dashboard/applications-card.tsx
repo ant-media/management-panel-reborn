@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Icon } from '@/components/ui/icon'
+import { useAuth } from '@/contexts/auth-context'
 import { ConfirmDeleteModal } from '@/features/apps/confirm-delete-modal'
 import type { ApplicationInfo } from '@/features/apps/use-applications'
 import { AppRow } from './app-row'
@@ -10,10 +11,11 @@ import { AppRow } from './app-row'
 type Props = {
   apps: ApplicationInfo[] | null
   isLoading: boolean
-  onNewApp: () => void
+  onNewApp?: () => void
 }
 
 export function ApplicationsCard({ apps, isLoading, onNewApp }: Props) {
+  const { isAdmin } = useAuth()
   const navigate = useNavigate()
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   const rows = apps ?? []
@@ -31,9 +33,11 @@ export function ApplicationsCard({ apps, isLoading, onNewApp }: Props) {
                 : `${rows.length} ${rows.length === 1 ? 'application' : 'applications'} · click a row for detail`}
             </div>
           </div>
-          <Button variant="primary" size="md" onClick={onNewApp}>
-            <Icon name="plus" size={13} /> New application
-          </Button>
+          {isAdmin && (
+            <Button variant="primary" size="md" onClick={onNewApp}>
+              <Icon name="plus" size={13} /> New application
+            </Button>
+          )}
         </div>
 
         {rows.length === 0 ? (
@@ -54,7 +58,7 @@ export function ApplicationsCard({ apps, isLoading, onNewApp }: Props) {
             </thead>
             <tbody>
               {rows.map(a => (
-                <AppRow key={a.name} app={a} onOpen={goToApp} onDelete={setPendingDelete} />
+                <AppRow key={a.name} app={a} canManage={isAdmin} onOpen={goToApp} onDelete={setPendingDelete} />
               ))}
             </tbody>
           </table>
