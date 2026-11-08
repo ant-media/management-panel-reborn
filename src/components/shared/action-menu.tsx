@@ -38,8 +38,7 @@ type Props = {
 
 const MARGIN = 6 // keep the submenu flyout clear of the viewport edge
 
-// nowrap: a flyout has no room to grow into, so without it every word would wrap.
-const ROW_CLASS = 'w-full px-2.5 py-1.5 text-left text-[12px] flex items-center gap-2 whitespace-nowrap transition-colors'
+const ROW_CLASS = 'w-full px-2.5 py-1.5 text-left text-[12px] flex items-center gap-2 transition-colors'
 const PANEL_CLASS = 'min-w-[180px] bg-[var(--card)] border border-[var(--border)] rounded-[7px] shadow-xl py-1'
 
 export function ActionMenu({ items, align = 'right', trigger }: Props) {
@@ -150,20 +149,21 @@ function MenuRow({ item, onClick, trailing, hovered }: {
 
 function SubMenu({ item, close }: { item: MenuEntry; close: () => void }) {
   const [open, setOpen] = useState(false)
-  const [fly, setFly] = useState({ left: false, top: -4 }) // flip side + vertical nudge to stay on-screen
+  const [fly, setFly] = useState({ x: 0, top: -4, flip: false }) // offsets from the row, kept on-screen
   const wrapRef = useRef<HTMLDivElement>(null)
   const flyRef = useRef<HTMLDivElement>(null)
 
+  // Opens to the right, flips left when it doesn't fit, then clamps into the viewport (narrow screens).
   useLayoutEffect(() => {
     if (!open) return
     const row = wrapRef.current?.getBoundingClientRect()
     const el = flyRef.current
     if (!row || !el) return
+    const w = el.offsetWidth
+    const flip = row.right + w + MARGIN > window.innerWidth
+    const x = Math.min(Math.max(flip ? -w : row.width, MARGIN - row.left), window.innerWidth - MARGIN - w - row.left)
     const overflowBottom = row.top - 4 + el.offsetHeight + MARGIN - window.innerHeight
-    setFly({
-      left: row.right + el.offsetWidth + MARGIN > window.innerWidth,
-      top: overflowBottom > 0 ? -4 - overflowBottom : -4,
-    })
+    setFly({ x, flip, top: overflowBottom > 0 ? -4 - overflowBottom : -4 })
   }, [open])
 
   return (
@@ -182,15 +182,16 @@ function SubMenu({ item, close }: { item: MenuEntry; close: () => void }) {
       {open && (
         // Transparent wrapper touches the row edge so a slow pointer never crosses dead
         // space and trips onMouseLeave; the visual gap is inner padding, not an outer margin.
+        // w-max: an absolute box beside its row has no room to grow into, so it would wrap every word.
         <div
           ref={flyRef}
-          style={{ top: fly.top }}
-          className={cn('absolute z-10', fly.left ? 'right-full pr-1' : 'left-full pl-1')}
+          style={{ left: fly.x, top: fly.top, maxWidth: `calc(100vw - ${2 * MARGIN}px)` }}
+          className={cn('absolute z-10 w-max', fly.flip ? 'pr-1' : 'pl-1')}
         >
           <div role="menu" className={PANEL_CLASS}>
             <MenuList items={item.children!} close={close} />
             {item.note && (
-              <div className="mt-1 mx-2.5 pt-1.5 pb-0.5 border-t border-[var(--border)] text-[10.5px] text-[var(--fg-3)] whitespace-nowrap">
+              <div className="mt-1 mx-2.5 pt-1.5 pb-0.5 border-t border-[var(--border)] text-[10.5px] text-[var(--fg-3)]">
                 {item.note}
               </div>
             )}
