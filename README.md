@@ -101,8 +101,9 @@ docker run -p 8080:8080 ams-admin-panel   # then open http://localhost:8080
 ### Run it
 
 ```bash
-pnpm dev          # mock mode, no backend needed, http://localhost:5173
-pnpm dev-live     # live mode, proxies to a real AMS at http://localhost:5080
+pnpm dev            # mock mode, no backend needed, http://localhost:5173
+pnpm dev-community  # mock mode as a Community Edition server (enterprise features locked)
+pnpm dev-live       # live mode, proxies to a real AMS at http://localhost:5080
 ```
 
 Point live mode at another server:

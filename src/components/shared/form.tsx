@@ -77,7 +77,7 @@ type SelectFieldProps = {
   required?: boolean
   value: string
   onChange: (value: string) => void
-  options: [value: string, label: string][]
+  options: [value: string, label: string, disabled?: boolean][]
   disabled?: boolean
   autoFocus?: boolean
 }
@@ -94,7 +94,7 @@ export function SelectField({ label, hint, error, required, value, onChange, opt
         disabled={disabled}
         className={cn(INPUT_CLS, 'focus:border-[var(--accent)] cursor-pointer')}
       >
-        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        {options.map(([v, l, off]) => <option key={v} value={v} disabled={off}>{l}</option>)}
       </select>
     </FieldShell>
   )

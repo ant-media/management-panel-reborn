@@ -3,6 +3,8 @@ import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Icon } from '@/components/ui/icon'
 import { InfoDot } from '@/components/shared/info-dot'
+import { EnterpriseBadge, EnterpriseLock } from '@/components/shared/enterprise'
+import { useEnterprise } from '@/contexts/edition-context'
 import { cn } from '@/lib/utils'
 import { RENDITION_HEIGHTS, asString, bpsToKbps, kbpsToBps, parseFieldValue, type FieldStatus, type Rendition, type SettingField } from './settings-schema'
 
@@ -19,9 +21,11 @@ type FieldRow = {
 
 export function SettingFieldRow({ field, value, dirty, status, onChange, onReset }: FieldRow) {
   const id = useId()
+  const locked = useEnterprise() === false && field.enterprise === true
   const shown = parseFieldValue(field, value).value
   const fullWidth = FULL_WIDTH.has(field.type)
   const isBool = field.type === 'bool'
+  const rowToggles = isBool && !locked
   // Group controls (radio, renditions) aren't a single labelable element; they
   // carry their own group label instead. Bool rows toggle on a whole-row click, so
   // we drop the label association there too (avoids a double-toggle on label clicks).
@@ -29,8 +33,9 @@ export function SettingFieldRow({ field, value, dirty, status, onChange, onReset
 
   const labelRow = (
     <div className="flex items-center gap-1.5 min-w-0">
-      <label htmlFor={labelTargetId} className={cn('text-[12.5px] text-[var(--fg)]', isBool ? 'cursor-pointer' : 'cursor-default')} title={field.key}>{field.label}</label>
+      <label htmlFor={labelTargetId} className={cn('text-[12.5px] text-[var(--fg)]', rowToggles ? 'cursor-pointer' : 'cursor-default')} title={field.key}>{field.label}</label>
       {field.info && <span onClick={stop}><InfoDot text={field.info} /></span>}
+      {field.enterprise && <EnterpriseBadge />}
       {dirty && (
         <button
           type="button"
@@ -44,6 +49,14 @@ export function SettingFieldRow({ field, value, dirty, status, onChange, onReset
     </div>
   )
 
+  const input = field.type === 'renditions'
+    ? <RenditionEditor value={shown as Rendition[]} onChange={onChange} />
+    : field.type === 'textarea'
+      ? <TextareaControl id={id} field={field} value={asString(shown)} onChange={onChange} status={status} />
+      : <Control id={id} field={field} value={value} shown={shown} onChange={onChange} />
+  // Only the control locks: the label stays readable and "unsaved" can still revert an imported value.
+  const control = field.enterprise ? <EnterpriseLock>{input}</EnterpriseLock> : input
+
   // `data-field` is the scroll anchor the warnings menu and the blocker banner jump to.
   if (fullWidth) {
     return (
@@ -52,9 +65,7 @@ export function SettingFieldRow({ field, value, dirty, status, onChange, onReset
           {labelRow}
           {field.hint && <span className="ml-auto text-[10.5px] text-[var(--fg-3)] text-right">{field.hint}</span>}
         </div>
-        {field.type === 'renditions'
-          ? <RenditionEditor value={shown as Rendition[]} onChange={onChange} />
-          : <TextareaControl id={id} field={field} value={asString(shown)} onChange={onChange} status={status} />}
+        {control}
         <StatusNote status={status} />
       </div>
     )
@@ -65,8 +76,8 @@ export function SettingFieldRow({ field, value, dirty, status, onChange, onReset
   return (
     <div
       data-field={field.key}
-      className={cn('py-2 px-2 -mx-2 rounded-[6px] hover:bg-[var(--bg)] transition-colors', isBool && 'cursor-pointer')}
-      onClick={isBool ? () => onChange(shown !== true) : undefined}
+      className={cn('py-2 px-2 -mx-2 rounded-[6px] hover:bg-[var(--bg)] transition-colors', rowToggles && 'cursor-pointer')}
+      onClick={rowToggles ? () => onChange(shown !== true) : undefined}
     >
       <div className="flex items-center gap-3">
         <div className="flex-1 min-w-0">
@@ -74,7 +85,7 @@ export function SettingFieldRow({ field, value, dirty, status, onChange, onReset
           {field.hint && <div className="text-[11px] text-[var(--fg-3)] mt-0.5">{field.hint}</div>}
         </div>
         <div className="shrink-0 flex justify-end" onClick={isBool ? stop : undefined}>
-          <Control id={id} field={field} value={value} shown={shown} onChange={onChange} />
+          {control}
         </div>
       </div>
       <StatusNote status={status} />

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Icon } from '@/components/ui/icon'
 import { Pill } from '@/components/shared/pill'
+import { EnterpriseBadge, EnterpriseLock } from '@/components/shared/enterprise'
 import type { AppSettings } from '@/features/apps/use-app-settings'
 import { recordStream, type RecordType } from '../stream-actions'
 import { useBroadcastActions } from '../use-broadcast-actions'
@@ -32,27 +33,32 @@ export function RecordingSection({ appName, broadcast, mp4On, webmOn, settings, 
   return (
     <div className="space-y-2">
       <RecordRow kind="MP4"  on={mp4On}  live={live} busy={busy} onToggle={() => void toggle(mp4On, 'mp4')} />
-      <RecordRow kind="WebM" on={webmOn} live={live} busy={busy} onToggle={() => void toggle(webmOn, 'webm')} />
+      <RecordRow kind="WebM" on={webmOn} live={live} busy={busy} enterprise onToggle={() => void toggle(webmOn, 'webm')} />
     </div>
   )
 }
 
-function RecordRow({ kind, on, live, busy, onToggle }: {
+function RecordRow({ kind, on, live, busy, enterprise, onToggle }: {
   kind: string
   on: boolean
   live: boolean
   busy: boolean
+  enterprise?: boolean
   onToggle: () => void
 }) {
+  const button = (
+    <Button variant={on ? 'dangerOutline' : 'outline'} size="sm" onClick={onToggle} disabled={busy}>
+      <Icon name="record" size={12} /> {live ? (on ? 'Stop' : 'Start') : (on ? 'Disable' : 'Enable')}
+    </Button>
+  )
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2 min-w-0">
         <span className="text-[11px] font-mono text-[var(--fg-2)] w-11 shrink-0">{kind}</span>
         {on ? <Pill tone="err" dot>recording</Pill> : <Pill tone="neutral">off</Pill>}
+        {enterprise && <EnterpriseBadge />}
       </div>
-      <Button variant={on ? 'dangerOutline' : 'outline'} size="sm" onClick={onToggle} disabled={busy}>
-        <Icon name="record" size={12} /> {live ? (on ? 'Stop' : 'Start') : (on ? 'Disable' : 'Enable')}
-      </Button>
+      {enterprise ? <EnterpriseLock>{button}</EnterpriseLock> : button}
     </div>
   )
 }

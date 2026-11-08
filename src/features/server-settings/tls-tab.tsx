@@ -9,6 +9,7 @@ import { ToastBanner } from '@/components/shared/toast'
 import { Modal } from '@/components/ui/modal'
 import { resultMessage } from '@/lib/api'
 import { useToast } from '@/lib/use-toast'
+import { useEnterprise } from '@/contexts/edition-context'
 import { checkDomain, configureSsl, type CertFiles, type SslType } from './use-ssl'
 import { useLicence } from './use-licence'
 import { useServerSettings } from './use-server-settings'
@@ -19,6 +20,7 @@ const HTTPS_PORT = 5443
 export function TlsTab() {
   const { toast, flash, dismiss } = useToast()
   const { licence } = useLicence()
+  const community = useEnterprise() === false
   const settings = useServerSettings()
   const [type, setType] = useState<SslType>('CUSTOM_DOMAIN')
   const [domain, setDomain] = useState('')
@@ -36,11 +38,11 @@ export function TlsTab() {
   // enable_ssl.sh only hands out an antmedia.cloud subdomain to a licensed or marketplace server.
   // Legacy's rule: any licence carrying an id, or a marketplace build. Locked while loading.
   const subdomainLocked = !settings.data?.buildForMarket && !licence?.licenceId
-  const types: [SslType, string][] = [
+  const types: [SslType, string, boolean?][] = [
     ['CUSTOM_DOMAIN', 'Use your own domain (auto Let’s Encrypt)'],
     ['ANTMEDIA_SUBDOMAIN', subdomainLocked
       ? 'Subdomain of antmedia.cloud (Enterprise licence required)'
-      : 'Subdomain of antmedia.cloud (Enterprise / AWS Marketplace)'],
+      : 'Subdomain of antmedia.cloud (Enterprise / AWS Marketplace)', community],
     ['CUSTOM_CERTIFICATE', 'Import your own certificate'],
   ]
 
