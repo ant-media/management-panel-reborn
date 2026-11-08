@@ -32,9 +32,7 @@ export function Sidebar({ collapsed, onToggle }: Props) {
   const location = useLocation()
   const { user, isAdmin } = useAuth()
   const { apps, isLoading } = useApplications()
-  // Blank until the probe resolves so we never flash the wrong one.
-  const enterprise = useEnterprise()
-  const editionLabel = enterprise == null ? '' : enterprise ? 'Enterprise Edition' : 'Community Edition'
+  const editionLabel = useEnterprise() ? 'Enterprise Edition' : 'Community Edition'
 
   const appsActive = location.pathname.startsWith('/apps')
   const appList = apps ?? []

@@ -149,8 +149,8 @@ and the warning dialog all read it. A bad licence re-raises the dialog on page c
 a minute.
 
 The third is the edition: `EditionProvider` (`src/contexts/edition-context.tsx`) asks
-`enterprise-edition` once, and `useEnterprise()` returns `true` / `false` / `null` (not known yet).
-**Only `false` may lock or hide anything**, so a lost probe never locks a paying user out.
+`enterprise-edition` once, and `useEnterprise()` is `false` only when the server answered Community.
+In flight, failed or malformed reads as Enterprise, so a lost probe never locks a paying user out.
 
 The rule when a new widget needs data: check whether a provider/hook already owns it before
 adding a poll. A second `useApi` poll for the same data means duplicate traffic and two copies
@@ -243,8 +243,8 @@ Three kinds of check feed it, worst-first: the declarative shorthands `required`
 (errors), then `rules` (a `when(draft, ctx)` predicate, so a field can depend on any other field
 or on server context like the edition probe), then the soft `minLen` (warning). Nothing is
 evaluated while `showWhen` hides the field or while it is locked on Community (`enterprise: true`),
-so a status can never point at a row the user can't reach or change. `ctx.enterprise` is `null`
-until `GET /enterprise-edition` answers; rules must read unknown as "stay quiet" rather than guess.
+so a status can never point at a row the user can't reach or change. `ctx.enterprise` is
+`useEnterprise()`, so an unknown edition reads as Enterprise.
 
 Rules that generalise get a named factory at the top of `settings-schema.ts`, next to `on(key)`.
 Compose them into a field's `rules`; first match wins, so put the most fundamental cause first.

@@ -41,8 +41,8 @@ export type SettingField = {
   rules?: FieldRule[]                 // conditional checks the shorthands can't express
 }
 
-// Server facts the draft can't carry. `null` = unknown (probe in flight or failed) ⇒ stay quiet.
-export type RuleContext = { enterprise: boolean | null }
+// Server facts the draft can't carry.
+export type RuleContext = { enterprise: boolean }
 
 // `when` sees the whole draft, so a rule may depend on any other field. First match wins; skipped
 // while `showWhen` hides the field. Predicates are code; they never come from a backend
