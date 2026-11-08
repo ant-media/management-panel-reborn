@@ -133,9 +133,9 @@ export function AppStreamsTab({ appName, onOpenStream, onGoToSettings }: Props) 
     else setDetailId(b.streamId)
   }, [onOpenStream])
 
-  // Per-app settings drive whether thumbnails should attempt to load.
+  // Per-app settings drive whether thumbnails should attempt to load. Community never writes previews.
   const { data: settings } = useAppSettings(appName)
-  const hasPreview = Boolean(settings?.generatePreview)
+  const hasPreview = !community && Boolean(settings?.generatePreview)
   // Loaded settings + preview off → nudge once per app; dismissed apps are remembered
   // browser-side (a list of app names), so each app gets its own first-time notice.
   // Never on Community: previews can't work there and the setting is locked.
@@ -215,7 +215,7 @@ export function AppStreamsTab({ appName, onOpenStream, onGoToSettings }: Props) 
       window.open(playPageUrl(appName, b.streamId, { playOrder }), '_blank', 'noopener')
 
     const mp4On = recordingOn(b.mp4Enabled, settings?.mp4MuxingEnabled)
-    const webmOn = recordingOn(b.webMEnabled, settings?.webMMuxingEnabled)
+    const webmOn = !community && recordingOn(b.webMEnabled, settings?.webMMuxingEnabled)  // Community never records WebM
     const recLabel = (on: boolean, kind: string) =>
       `${live ? (on ? 'Stop' : 'Start') : (on ? 'Disable' : 'Enable')} ${kind} Recording`
     // Red record dot while that mux type is on, gray otherwise (matches the menu's default icon tint).

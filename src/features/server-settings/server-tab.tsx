@@ -21,7 +21,7 @@ type VersionInfo = { versionName?: string; versionType?: string; buildNumber?: s
 export function ServerTab() {
   const { data, error, isLoading, refresh } = useServerSettings()
   const version = useApi<VersionInfo>(signal => system.version(signal))
-  // Unknown (probe in flight or failed) shows neither the licence nor the Community line.
+  // Unknown (probe in flight or failed) reads as Enterprise: a lost probe must never hide the licence key.
   const enterprise = useEnterprise()
   const { licence, state: licenceState, recheck } = useLicence()
   const { toast, flash, dismiss } = useToast()
@@ -35,7 +35,7 @@ export function ServerTab() {
   if (!draft || !baseline || isLoading) return <SettingsSkeleton />
 
   const marketBuild = draft.buildForMarket === true
-  const showLicenceKey = enterprise === true && !marketBuild
+  const showLicenceKey = enterprise !== false && !marketBuild
 
   // logLevel + licenceKey are the only edits the POST actually persists.
   const dirty = draft.logLevel !== baseline.logLevel || draft.licenceKey !== baseline.licenceKey
@@ -84,7 +84,7 @@ export function ServerTab() {
           <InfoRow label="TLS">
             {draft.sslEnabled ? <Pill tone="ok" dot>enabled</Pill> : <Pill tone="neutral" dot>disabled</Pill>}
           </InfoRow>
-          {enterprise === true && (
+          {enterprise !== false && (
             <InfoRow label="License"><LicenceBadge state={licenceState} endDate={licence?.endDate} marketBuild={marketBuild} /></InfoRow>
           )}
         </div>

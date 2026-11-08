@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { errorMessage } from '@/lib/api'
 import { fmtDuration } from '@/lib/format'
 import { useEscapeKey } from '@/lib/use-escape-key'
+import { useEnterprise } from '@/contexts/edition-context'
 import { ActionMenu, type MenuItem } from '@/components/shared/action-menu'
 import { CopyChip } from '@/components/shared/copy-chip'
 import { EndpointsSection } from '../endpoints-section'
@@ -46,6 +47,7 @@ export function StreamDetailDrawer({
 }: Props) {
   const { broadcast, viewers, webrtcClients, viewerStatsEnabled, settings, history, error, isLoading, refresh } =
     useStreamDetail(appName, streamId)
+  const community = useEnterprise() === false
 
   const panelRef = useRef<HTMLElement>(null)
   const overlay = mode === 'overlay'
@@ -63,7 +65,7 @@ export function StreamDetailDrawer({
 
   const live = isLive(broadcast?.status)
   const mp4On = recordingOn(broadcast?.mp4Enabled, settings?.mp4MuxingEnabled)
-  const webmOn = recordingOn(broadcast?.webMEnabled, settings?.webMMuxingEnabled)
+  const webmOn = !community && recordingOn(broadcast?.webMEnabled, settings?.webMMuxingEnabled)  // Community never records WebM
   const endpoints = broadcast?.endPointList ?? []
   const forwarding = endpoints.filter(e => e.status === 'broadcasting').length
 
