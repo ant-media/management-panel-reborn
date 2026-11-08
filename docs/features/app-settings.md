@@ -67,8 +67,10 @@ no status (below).
 
 Fields whose only backend reader is in Ant-Media-Enterprise carry `enterprise: true` (trace the
 reader: e.g. community wires `MockTokenService`, so its token checks always pass). On Community the
-control is locked with a badge by the label; an all-enterprise section locks as one block. Locked
-rows show the stored value and have no status; save, JSON and import are untouched.
+control is locked with a badge by the label; an all-enterprise section shows one badge in its header
+instead, and no Reset section. Only the control locks: the label and the "unsaved" reset stay usable.
+Locked rows show the stored value, have no status, and Reset section skips them; save, JSON and import
+are untouched.
 
 ### Import / export (`settings-io.ts` + `import-settings-modal.tsx`)
 

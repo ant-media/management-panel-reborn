@@ -115,7 +115,8 @@ export function SettingsTab({ name, onDirtyChange }: { name: string; onDirtyChan
     setDraft(d => {
       if (!d) return d
       const next = { ...d }
-      for (const f of section.fields) next[f.key] = f.def
+      // Locked fields are skipped.
+      for (const f of section.fields) if (!f.enterprise || enterprise !== false) next[f.key] = f.def
       return next
     })
     setJsonDraft(null); setJsonError(null)

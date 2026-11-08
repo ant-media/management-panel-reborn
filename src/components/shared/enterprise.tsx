@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, type ReactNode } from 'react'
 import { Icon } from '@/components/ui/icon'
 import { Pill } from '@/components/shared/pill'
 import { Tooltip } from '@/components/shared/tooltip'
@@ -8,15 +8,14 @@ const ENTERPRISE_URL = 'https://antmedia.io/#products'
 const AVAILABLE = 'Available in Enterprise Edition.'
 const SEE_PLANS = `${AVAILABLE} Click to see plans.`
 
-// Badge and lock render only on Community, so call sites never check the edition. Inside a lock
-// they stand down, the outer lock already covers them.
-const InsideLock = createContext(false)
+// Badge and lock render only on Community, so call sites never check the edition.
+const InGroup = createContext(false)
 
 // `link={false}` inside another link or button, where an <a> can't nest.
 export function EnterpriseBadge({ link = true }: { link?: boolean }) {
   const locked = useEnterprise() === false
-  const covered = useContext(InsideLock)
-  if (!locked || covered) return null
+  const grouped = useContext(InGroup)
+  if (!locked || grouped) return null
 
   const pill = (
     <Pill tone="info">
@@ -40,24 +39,21 @@ export function EnterpriseBadge({ link = true }: { link?: boolean }) {
   )
 }
 
+// Badges inside stand down: the group's header carries the only one.
+export function EnterpriseGroup({ children }: { children: ReactNode }) {
+  return <InGroup.Provider value>{children}</InGroup.Provider>
+}
+
+// Wraps a control, never its label. The badge by the label is the link to the plans page.
 export function EnterpriseLock({ children }: { children: ReactNode }) {
   const locked = useEnterprise() === false
-  const covered = useContext(InsideLock)
-  // A touch tap only explains, never jumps to another site. The badge is the link there.
-  const [touch, setTouch] = useState(false)
-  if (!locked || covered) return <>{children}</>
+  if (!locked) return <>{children}</>
 
-  // `inert` kills click, focus and keys inside; hover and click fall through to the outer div.
+  // `inert` blocks click, focus and keys inside; the outer div keeps hover for the tooltip and cursor.
   return (
-    <Tooltip content={touch ? AVAILABLE : SEE_PLANS} focusable={false} block>
-      <div
-        className="cursor-not-allowed [-webkit-tap-highlight-color:transparent]"
-        onPointerDown={e => setTouch(e.pointerType !== 'mouse')}
-        onClick={() => { if (!touch) window.open(ENTERPRISE_URL, '_blank', 'noopener') }}
-      >
-        <div inert className="opacity-50 grayscale">
-          <InsideLock.Provider value>{children}</InsideLock.Provider>
-        </div>
+    <Tooltip content={AVAILABLE} focusable={false} block>
+      <div className="cursor-not-allowed">
+        <div inert className="opacity-50 grayscale">{children}</div>
       </div>
     </Tooltip>
   )

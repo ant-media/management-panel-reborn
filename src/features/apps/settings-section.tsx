@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Icon } from '@/components/ui/icon'
 import { InfoDot } from '@/components/shared/info-dot'
-import { EnterpriseBadge, EnterpriseLock } from '@/components/shared/enterprise'
+import { EnterpriseBadge, EnterpriseGroup } from '@/components/shared/enterprise'
 import { useEnterprise } from '@/contexts/edition-context'
 import { cn } from '@/lib/utils'
 import { SettingFieldRow } from './settings-field'
@@ -28,7 +28,7 @@ export function SettingsSectionCard({
   // Collapsing a card hides its rows, so the header carries the flag; otherwise the toolbar's
   // warning count points at nothing. Count lives in the toolbar; here it's presence only.
   const hasWarning = section.fields.some(f => statuses[f.key]?.warning)
-  // An all-enterprise section locks as one block, badge in the header so it shows collapsed.
+  // An all-enterprise section shows one badge in its header (visible collapsed too) instead of one per row.
   const locked = useEnterprise() === false && section.fields.every(f => f.enterprise)
   const rows = open && renderRows(visibleFields, draft, dirtyKeys, statuses, onField, onResetField)
 
@@ -68,7 +68,7 @@ export function SettingsSectionCard({
 
       {open && (
         <div className="border-t border-[var(--border)] px-3.5 pt-2 pb-3 flex flex-col">
-          {locked ? <EnterpriseLock>{rows}</EnterpriseLock> : rows}
+          {locked ? <EnterpriseGroup>{rows}</EnterpriseGroup> : rows}
           {!locked && (
             <div className="mt-2 pt-2 border-t border-[var(--border)] flex items-center justify-end">
               <button type="button" onClick={onResetSection} className="text-[11px] text-[var(--fg-3)] hover:text-[var(--fg)] inline-flex items-center gap-1">
