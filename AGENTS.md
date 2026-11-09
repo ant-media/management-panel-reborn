@@ -6,9 +6,9 @@ Rewrite of the Ant Media Server admin panel. Replaces the legacy Angular console
 Vite 8 + React 19 + TypeScript + Tailwind + shadcn/ui + Recharts. pnpm, pinned via `packageManager`.
 
 ## Project state
-Released. The panel ships inside AMS: the legacy console keeps `/`, this panel lives at `/reborn-panel/`. Every page runs on the real REST API; a mock transport covers offline dev.
+Released. The panel ships inside AMS and is the default: it owns `/`, and the legacy console lives at `/classic-panel/`. Every page runs on the real REST API; a mock transport covers offline dev.
 
-Backend work done for the panel (analytics endpoints, `create-list`, cluster node notes) lives in Ant-Media-Server and Ant-Media-Enterprise. The legacy console's switch to this panel lives in Ant-Media-Management-Console, behind its `rebornSwitcher` build flag.
+Backend work done for the panel (analytics endpoints, `create-list`, cluster node notes) lives in Ant-Media-Server and Ant-Media-Enterprise. The legacy console's side (its `classic-panel/` base href and the switch to this panel) lives in Ant-Media-Management-Console, in its `classic` build config.
 
 ## Docs map (source of truth)
 Read the docs your task touches. Read TODO.md when picking up work.
@@ -63,7 +63,7 @@ Universal rules, any language, any repo area.
 - Backend (Ant-Media-Server) per-app metrics sampler: DB reads stay wrapped in `vertx.executeBlocking(..., ordered)`. A bare `setPeriodic` body blocks the event loop.
 - Charts: never `preserveAspectRatio="none"` with a fixed viewBox on anything that draws text/markers (ui-kit.md, LineChart).
 - Never change backend security behavior to fix panel compatibility; those fixes are frontend-only (hard project rule; RISKS.md, JWT lockout entry).
-- The panel is served from a subfolder of the AMS root webapp with a relative asset base, not from the origin root. So REST paths stay origin-absolute (`/rest/v2/...`) and the router stays hash-based. Both are load-bearing (docs/features/legacy-switcher.md).
+- The panel is built with a relative asset base so the same build runs from any folder of the AMS root webapp. That keeps REST paths origin-absolute (`/rest/v2/...`) and the router hash-based. Both are load-bearing (docs/features/legacy-switcher.md).
 - docs/BACKLOG.md is hard future scope: never pull an item from it into active work without explicit approval.
 
 ## Docs

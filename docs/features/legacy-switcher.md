@@ -1,16 +1,17 @@
 # Legacy panel switcher
 
 The new panel ships next to the old console, in the same AMS build. That is what
-`release.sh --with-legacy` builds and it is the only layout CI publishes. The old Angular console
-keeps `/`. The new panel goes into `/reborn-panel/`, a folder inside the same root webapp. Each panel
-keeps its own login page, and each one carries a switch above the card that links to the other.
-You pick a panel at the door, then log in there.
+`release.sh --with-legacy` builds and it is the only layout CI publishes. The new panel is the
+default and owns `/`. The old Angular console goes into `/classic-panel/`, a folder inside the same
+root webapp. Each panel keeps its own login page, and each one carries a switch above the card that
+links to the other. You pick a panel at the door, then log in there.
 
 **The short version**
 
 - Same webapp, same origin, same session cookie. Log in once and both panels see it.
 - Nothing routes. Both panels use hash routing, so the server only ever sees two static paths.
-- The panel build uses a relative asset base, so the same `dist/` runs from any folder.
+- The panel build uses a relative asset base, so the same `dist/` runs from any folder. The console
+  build does not: its base href is baked in.
 - The session is shared for free. *Who you are* is not, and there is no way to ask the backend.
   So each panel only trusts a session it created itself.
 
@@ -22,68 +23,87 @@ Every directory under `webapps/` becomes its own Tomcat context. That gives you 
 - the installer treats any unknown `webapps/` dir as a streaming app and unzips `StreamApp.war`
   over it on the next upgrade
 
-Folders *inside* an existing webapp are not scanned, so `root/reborn-panel/` avoids both. The
+Folders *inside* an existing webapp are not scanned, so `root/classic-panel/` avoids both. The
 rest works out of the box:
 
 - **Session.** Root's context path is `""`, so `JSESSIONID` has path `/` and covers the subfolder.
 - **Static files.** `AuthenticationFilter` is mapped to `/rest/*` only, and Tomcat's default servlet
-  serves the folder. The three `/*` filters (HSTS, CORS, IPFilterDashboard) already gate the old
-  console exactly the same way.
+  serves the folder. The three `/*` filters (HSTS, CORS, IPFilterDashboard) gate both panels the
+  same way.
 - **Packaging.** The maven assembly copies `src/main/server/webapps/root` whole, no include list, so
   a new folder ships with it.
 
 One thing to remember: the installer **replaces `webapps/root` on every upgrade** (it keeps only
-`red5-web.properties` and `streams/`). So the panel has to be in the release zip. A folder copied
-onto a customer box by hand is gone after the next upgrade.
+`red5-web.properties` and `streams/`). So both panels have to be in the release zip. Files copied
+onto a customer box by hand are gone after the next upgrade.
 
 ## Nothing routes
 
 Both panels use hash routing. Old: Angular `HashLocationStrategy` (`#/pages/login`). New:
 `createHashRouter` (`#/login`). Everything after `#` stays in the browser.
 
-So the server only ever sees `/` and `/reborn-panel/`, and serves an `index.html` for each. No
+So the server only ever sees `/` and `/classic-panel/`, and serves an `index.html` for each. No
 rewrite rule, no SPA fallback, no server-side switch. Switching panels is just a
 `window.location.href`.
+
+## The console's old links
+
+Bookmarks and older docs carry the console's hash routes on the bare origin: `#/applications/LiveApp`,
+`#/serverSettings`, `#/dashboard/overview`, `#/pages/login`. Those URLs load this panel, so
+`router.tsx` maps each one to its page here. The redirects sit outside `AuthShell`, so they land
+before the login guard records where to return. Old routes with no page here (`#/plugins`,
+`#/support`) fall through to Not Found. These redirects are the only place the old URLs still
+resolve; they are not a compat shim to clean up.
 
 ## The build does not care where it lives
 
 `vite.config.ts` sets `base: './'`. Assets come out relative (`./assets/index-<hash>.js`), so the
-browser resolves them against the folder the page came from. Rename the folder and the same build
-still works.
+browser resolves them against the folder the page came from. The panel sits at `/`, but nothing in
+the build depends on that.
 
 This holds because HashRouter needs no basename, REST paths are origin-absolute (`/rest/v2/...`),
 `mediaOrigin()` is `window.location.origin` (no path in it), and nothing reads
-`import.meta.env.BASE_URL`. Tomcat redirects `/reborn-panel` to `/reborn-panel/` before
-serving the page, so the trailing slash that relative paths need is always there.
+`import.meta.env.BASE_URL`.
 
 Two rules fall out of this, and breaking either one breaks the deploy:
 
 - **REST paths stay origin-absolute.** A relative one would resolve inside the panel folder and 404.
 - **No BrowserRouter.** A path router needs a real base, and a relative build cannot give it one.
 
-So `./release.sh` on its own packs the same `dist/` at the zip root, and the panel serves at `/`
-with no old console anywhere. The one thing that build cannot work out for itself is whether the
-old console is there, which is why the switch pill is a build flag: `--with-legacy` exports
-`PANEL_SWITCH=on`, vite bakes it in as `__LEGACY_SWITCH__`, and `PanelSwitch` renders. Off, the
-component is tree shaken out. `redeploy.sh` defaults it on, because it only ever deploys into the
-subfolder next to the console.
+The one thing the build cannot work out for itself is whether the old console is there, which is
+why the switch pill is a build flag: `--with-legacy` exports `PANEL_SWITCH=on`, vite bakes it in as
+`__LEGACY_SWITCH__`, and `PanelSwitch` renders, along with the welcome notice's pointer to the
+classic panel. Off, both drop out of the bundle. `redeploy.sh` turns it on when the server already
+has `classic-panel/`.
+
+## The console cares where it lives
+
+The Angular console is not folder-agnostic. Its `classic` build config (`npm run build:classic`,
+which `build-legacy.sh` runs) sets `baseHref` to `/classic-panel/`, and every asset path and link
+in it resolves against that base: `assets/...`, never `/assets/...`; `./` or `#/...`, never `/` or
+`/#/...`. A root-absolute path in the console either 404s or lands in this panel, which ends a
+session it did not create. So the folder name is fixed; the places that hardcode it are listed in
+RISKS.md (*An app named after a root path*).
 
 ## The name
 
-`reborn-panel`. App names match `^[a-zA-Z0-9_-]*$`, so someone could create an app with that
-name. Tomcat would register a context at `/reborn-panel`, it would win over root's folder, and
-the panel would 404 until that app is renamed. The backend reserves the name to stop that.
+`classic-panel`. App names match `^[a-zA-Z0-9_-]*$`, so someone could create an app with that
+name. Tomcat would register a context at `/classic-panel`, it would win over root's folder, and
+the console would 404 until that app is renamed. The backend reserves the name to stop that
+(see RISKS.md). The hyphen is deliberate: a bare `classic` or `legacy` may already be an app on a
+customer server, and would shadow the console on upgrade.
 
 ## The door switch
 
 Both login pages carry the same control above the login card: a two-segment pill, `Classic` and
-`New UI` with a BETA tag. The segment you are on is the solid one; the other is a plain link to the
-other panel's login page. Nothing is stored and nothing is posted, so the switch works before you
+`New UI`. The segment you are on is the solid one; the other is a plain link to the other panel's
+login page. Nothing is stored and nothing is posted, so the switch works before you
 have a session and it cannot get out of sync with one.
 
-- old console: `<a href="/reborn-panel/">`, in `login.component.html`, behind `*ngIf="rebornSwitcher"`.
-- new panel: `<a href="/">`, the `PanelSwitch` in `features/auth/login-page.tsx`, behind the
-  `legacySwitch` build flag.
+- old console: `<a [href]="newPanelUrl">` (`/` in the `classic` environment), in
+  `login.component.html`, behind `*ngIf="rebornSwitcher"`.
+- new panel: `<a href="/classic-panel/">`, the `PanelSwitch` in `features/auth/login-page.tsx`,
+  behind the `legacySwitch` build flag.
 
 Each link is a full page load, not a route, because these are two separate apps. Both hrefs are
 origin-absolute; the panel's relative asset base does not apply to them (see *The build does not
@@ -98,8 +118,9 @@ Switching costs a login. Both doors kill the session as you land on them, the ol
 `ngOnInit`, the new panel on boot when it finds a session it cannot identify. So you cannot carry a
 session sideways into a panel that does not know who you are.
 
-There is no saved preference, so a beta user opts in on every visit. That is what we want while it
-is a beta. Logging out of either panel drops you on that panel's own login page, switch included.
+There is no saved preference. The new panel is the default; someone who prefers the old console
+bookmarks `/classic-panel/`. Logging out of either panel drops you on that panel's own login page,
+switch included.
 
 The switch is only on the login pages, not the first-account form and not inside either panel. The
 door is the one place where changing your mind is free.
@@ -149,7 +170,7 @@ admin action. Nothing crashes and nothing logs you out, which is what makes it e
 
 Normally the panel you are using is the one that authenticated you, so its identity is in
 `ams.auth.user` and none of this comes up. The gap is a session created on the *other* door: log in
-on the old console, then open `/reborn-panel/` on that live session.
+on the old console, then open `/` on that live session.
 
 ## An unidentifiable session gets ended
 
@@ -162,10 +183,9 @@ format for the two repos to keep in step. What the old console still owes us is 
 must drop `ams.auth.user` when it ends the session (see *The old login page clears localStorage on
 mount*). That check is what makes "no stored user" mean "not ours" rather than "not written yet".
 
-It costs a re-login in one case: a live legacy session, then a direct visit to `/reborn-panel/`.
-Worth it. The alternative was the old console forwarding `{email, message}` through a localStorage
-key, which meant two codebases agreeing on the wire format of identity forever, to save a
-password prompt on a path nobody takes on purpose.
+It costs a re-login in one case: a live legacy session, then a visit to `/`. Worth it. The
+alternative was the old console forwarding `{email, message}` through a localStorage key, which
+meant two codebases agreeing on the wire format of identity forever.
 
 **The case it does not cover.** The rule fires on a *missing* stored user, not a *stale* one. Sign in
 to the panel as one admin, then sign in on the old console as a different one, and the panel would
@@ -181,18 +201,20 @@ change and a new AMS release, so it is left for later.
 
 ## Deploy
 
-- Build the panel, copy `dist/` into the folder that lands at `webapps/root/reborn-panel/`.
-- `redeploy.sh` targets `$AMS_DIR/webapps/root/reborn-panel` for local testing. It must not wipe
-  `webapps/root`, the old console lives there.
-- CI is handled outside this repo.
+- The panel's `dist/` lands at the top of `webapps/root`, the console's build in
+  `webapps/root/classic-panel/`.
+- `redeploy.sh` targets `$AMS_DIR/webapps/root` for local testing. It removes only the top-level
+  entries `dist/` ships, so `WEB-INF`, `META-INF`, `images/`, `streams/` and `classic-panel/`
+  survive.
+- CI builds and publishes the combined zip: [CI.md](../CI.md).
 
 ## The old login page clears localStorage on mount
 
 It also sends `DELETE /users/logout`. The logout is right: landing on the door means your old
 session dies. The `localStorage.clear()` beside it is not, because it wipes the whole origin,
 including the panel's `ams.theme`, `ams.beta.notice.seen` and the `{app}jwtToken` keys both panels
-share. Under `rebornSwitcher` it is a targeted `removeItem` list instead. It matters more with the
-switch than it did before: two doors means people bounce through `/` a lot.
+share. Under `rebornSwitcher` it is a targeted `removeItem` list instead. Two doors means people
+bounce through the classic login a lot, so this matters.
 
 The list is *the old console's own keys*, nothing else, and it stays that way: clearing only what you
 wrote is ordinary good manners on a shared origin, and it means the old console never has to know

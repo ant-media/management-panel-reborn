@@ -25,7 +25,7 @@ const panelBuild = {
 
 // Login-page switch pill to the classic console. Only the `release.sh --with-legacy` layout ships
 // the two panels side by side, so release.sh sets PANEL_SWITCH there; every other build, dev
-// included, leaves the pill off because there is no console at / to switch to.
+// included, leaves the pill off because there is no console in classic-panel/ to switch to.
 const legacySwitch = process.env.PANEL_SWITCH === 'on'
 
 export default defineConfig({
@@ -33,9 +33,9 @@ export default defineConfig({
     __PANEL_BUILD__: JSON.stringify(panelBuild),
     __LEGACY_SWITCH__: JSON.stringify(legacySwitch),
   },
-  // Served either from the AMS root webapp or from a subfolder of it, so assets must load
-  // relative, not from origin root. Safe because the router is hash-based and REST paths stay
-  // origin-absolute (see docs/features/legacy-switcher.md).
+  // Assets load relative, so the same build runs from the AMS root webapp or any folder under it.
+  // Safe because the router is hash-based and REST paths stay origin-absolute (see
+  // docs/features/legacy-switcher.md).
   base: './',
   plugins: [react(), tailwindcss()],
   resolve: {

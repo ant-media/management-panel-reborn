@@ -224,7 +224,7 @@ The mock (`mocks/broadcasts.ts`) answers both the same way.
 **Where:** `src/contexts/auth-context.tsx` (`ams.auth.user`) + `src/lib/auth/api.ts` (`toAuthUser`).
 **Cause:** there is no "who am I" endpoint. `authentication-status` is a bare boolean, and `GET /users` is admin-gated (and would not say which row is us). Identity appears in one place only: the `message` field of the `POST /users/authenticate` response. Only the panel that performs the login ever sees it.
 **Symptom:** boot on a session we did not create, no stored user, so `user = null`. Logged in, but rendered as nobody: `isAdmin` false, no scopes, "App user" in the sidebar, "Unknown user" in the account menu, admin actions hidden in the Users tab. Nothing crashes, nothing logs you out, so it is easy to miss.
-**Why it matters:** with the legacy switcher each panel has its own login page, so normally the panel you use is the one that authenticated you. The gap is a session created on the *other* door: log in on the old console, then open `/reborn-panel/` on that session.
+**Why it matters:** with the legacy switcher each panel has its own login page, so normally the panel you use is the one that authenticated you. The gap is a session created on the *other* door: log in on the old console, then open `/` on that session.
 **Mitigation:** the panel only trusts a session it created. On boot, authenticated with no stored user means the session is someone else's door (the legacy console shares the cookie), so it logs out and shows its own login page. Reasoning: [features/legacy-switcher.md](features/legacy-switcher.md).
 **Known gap:** the rule fires on a *missing* stored user, not a *stale* one, so signing into the panel as one admin and then into the old console as another leaves the panel showing the first admin's name and scopes on the second one's session. Accepted: it needs two admin accounts in one browser with the second using the old door, the server still enforces the real permissions, and a sign-out clears it. Closing it would mean the old console clearing `ams.auth.user`, which is the panel's key to own.
 **Watch:** don't "fix" that boot path by rendering the session anyway, and don't reintroduce identity passing through localStorage; it makes the two panels agree on a wire format forever. A backend `GET /current-user` retires this entry for real.
@@ -232,19 +232,19 @@ The mock (`mocks/broadcasts.ts`) answers both the same way.
 ## Deployment
 
 ### Relative asset base: three things are load-bearing
-**Where:** `vite.config.ts` (`base: './'`), deployed to `webapps/root/reborn-panel/` next to the old console at `/`. Why it is relative: [features/legacy-switcher.md](features/legacy-switcher.md).
+**Where:** `vite.config.ts` (`base: './'`), deployed to the top of `webapps/root`, with the old console in `classic-panel/` beside it. Why it is relative: [features/legacy-switcher.md](features/legacy-switcher.md).
 **Watch:** REST paths must stay **origin-absolute** (`/rest/v2/...`); a relative one would resolve inside the panel folder and 404. And **BrowserRouter is off the table**; a path router needs a real base, which a relative build cannot give it. Wanting one means freezing the folder name and setting `base` to the real deploy path.
-And **static assets go through the bundler**: `import logo from '@/assets/…'` so Vite emits a hashed file and resolves it against the module URL. A hand-written `/logo.png` (or a `public/` file referenced absolutely) resolves at the *origin* root and 404s from the subfolder. `index.html` is the one exception: the favicon lives in `public/` and is referenced as `./favicon.png`, relative to the served page.
+And **static assets go through the bundler**: `import logo from '@/assets/…'` so Vite emits a hashed file and resolves it against the module URL. A hand-written `/logo.png` (or a `public/` file referenced absolutely) resolves at the *origin* root and 404s from any other folder. `index.html` is the one exception: the favicon lives in `public/` and is referenced as `./favicon.png`, relative to the served page.
 
 ### The door must not fetch: it renders exactly when the server is gone
 `login-background.jpg` has no consumer but the login page, so its first fetch is that page's first mount, which happens when a restart kills the session: the request fails, a failed `background-image` never retries, and the door sits on its flat fallback looking like broken CSS.
 `main.tsx` warms it at boot and holds the `Image`, so it paints from memory; any new door asset needs the same or it has the same hole.
 
-### An app named `reborn-panel` makes the panel unreachable
-**Where:** the deploy path `webapps/root/reborn-panel/`.
-**Cause:** app names match `^[a-zA-Z0-9_-]*$`, so that name is creatable, and a Tomcat context at `/reborn-panel` wins over root serving the same path. The panel 404s until the app is renamed. Not a new class of problem (an app named `images` would shadow root's `images/` folder today), just load-bearing here.
-**Mitigation:** the backend reserves the name.
-**Watch:** rename the folder and the reservation has to move with it.
+### An app named after a root path shadows it
+**Where:** every top-level path `webapps/root` serves: `classic-panel/`, this panel's `assets/`, `rest/`, and a few more.
+**Cause:** app names match `^[a-zA-Z0-9_-]*$`, so `classic-panel` or `assets` is creatable, and a Tomcat context at `/classic-panel` wins over root serving the same path. The console (or this panel, or the REST API) 404s until the app is renamed.
+**Mitigation:** the backend reserves those names: `CommonRestService.RESERVED_APP_NAMES`, rejected on create in `RestServiceV2`. A new top-level folder or servlet in root needs its name added there. `create_app.sh` bypasses REST and is not covered.
+**Watch:** the folder name is hardcoded in five places that move together: `release.sh` (`LEGACY_SUBDIR`), the console's `classic` build config (`baseHref`), the panel's `PanelSwitch` link, the backend reservation, and Enterprise CI's zip layout check (`yml/build_server.yml`).
 
 ## Concurrency
 

@@ -116,8 +116,8 @@ either way; the clean replacement is a backend mint endpoint, tracked in
 
 ### Deployed next to the legacy console
 
-The panel does not own the origin root. It ships as a static folder inside the AMS root webapp
-(`webapps/root/reborn-panel/`), with the old Angular console still at `/`. Same webapp, same
+The panel owns the origin root: it ships as static files at the top of the AMS root webapp, with the
+old Angular console in a folder beside it (`webapps/root/classic-panel/`). Same webapp, same
 origin, same `JSESSIONID` (root's context path is `""`, so the cookie path is `/` and covers the
 folder). Log in once and both panels see the session.
 
@@ -129,8 +129,8 @@ stay true. Treat them as invariants: HashRouter, origin-absolute REST paths, and
 reading `window.location.origin`.
 
 The session is shared for free. Identity is not: the backend has no "who am I" endpoint, so only the
-panel that performed the login knows who you are. The old console hands it over in a localStorage
-key. Contract and reasoning: [features/legacy-switcher.md](features/legacy-switcher.md).
+panel that performed the login knows who you are, and each panel trusts only a session it created.
+Contract and reasoning: [features/legacy-switcher.md](features/legacy-switcher.md).
 
 ### Shared server state: one owner
 
