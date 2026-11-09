@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 
 // Transient status line for a tab/page. Pair with <ToastBanner> from
 // components/shared/toast. One toast at a time; a new flash() replaces the last.
-export type Toast = { kind: 'ok' | 'err'; message: string }
+// `warn` is a success with a caveat the user has to act on.
+export type Toast = { kind: 'ok' | 'warn' | 'err'; message: string }
 
 const TOAST_MS = 8000
 

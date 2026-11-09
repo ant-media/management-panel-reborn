@@ -18,10 +18,11 @@ export type BroadcastType =
   | 'streamSource'
   | 'VoD'
   | 'playlist'
+  | 'NDI'
 
 // Wire-side publish protocol, set by the server when ingest starts.
 // Used to drive the protocol badge in the list.
-export type PublishType = 'WebRTC' | 'RTMP' | 'Pull' | 'SRT' | 'HLS' | 'RTSP'
+export type PublishType = 'WebRTC' | 'RTMP' | 'Pull' | 'SRT' | 'HLS' | 'RTSP' | 'NDI'
 
 export type Broadcast = {
   streamId: string
@@ -45,7 +46,7 @@ export type Broadcast = {
   dashViewerLimit?: number
   webRTCViewerLimit?: number
 
-  // Ingest source (IP camera / stream source / playlist).
+  // Ingest source (IP camera / stream source / playlist). An NDI stream keeps its source name in streamUrl.
   ipAddr?: string
   username?: string
   password?: string
@@ -126,7 +127,7 @@ export const totalViewers = (b: Broadcast): number =>
 // Server-initiated streams: the server owns the ingest, so it can be started and stopped.
 // Push streams (WebRTC/RTMP publishers) end when the publisher disconnects; see streamAction.
 export const isStartable = (b: Broadcast) =>
-  b.type === 'ipCamera' || b.type === 'streamSource' || b.type === 'playlist'
+  b.type === 'ipCamera' || b.type === 'streamSource' || b.type === 'playlist' || b.type === 'NDI'
 
 // A VoD record carries no editable definition; every other type does.
 export const isEditable = (b: Broadcast) => b.type !== 'VoD'
